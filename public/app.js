@@ -7,17 +7,80 @@ const exams = []; // { id, name, questions: [{ success, date, points }] }
 const grid = document.getElementById("exam-grid");
 const addForm = document.getElementById("add-form");
 const nameInput = document.getElementById("exam-name");
+const subjectInput = document.getElementById("exam-subject");
 const countEl = document.getElementById("count");
 const clearBtn = document.getElementById("clear-all");
+const subjectBar = document.getElementById("subject-bar");
+
+// Subject filter: null means "הכל" (show everything)
+let activeSubject = null;
+
+function subjectKey(s) {
+    return (s || "").trim().toLowerCase();
+}
+
+function getSubjects() {
+    // Map lowercased subject -> first-seen original spelling, so that e.g.
+    // "Math" and "math" are the same button but keep the user's original casing.
+    const seen = new Map();
+    for (const e of exams) {
+        const s = (e.subject || "").trim();
+        if (!s) continue;
+        const key = subjectKey(s);
+        if (!seen.has(key)) seen.set(key, s);
+    }
+    return [...seen.values()];
+}
+
+function renderSubjectBar() {
+    const subjects = getSubjects();
+    // If the active subject no longer exists, fall back to "הכל"
+    if (activeSubject !== null && !subjects.some((s) => subjectKey(s) === subjectKey(activeSubject))) {
+        activeSubject = null;
+    }
+
+    subjectBar.innerHTML = "";
+    const makeBtn = (label, value) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subject-btn" + (value === activeSubject ? " active" : "");
+        btn.textContent = label;
+        btn.addEventListener("click", () => {
+            if (activeSubject === value) return;
+            activeSubject = value;
+            renderSubjectBar();
+            applyFilter();
+        });
+        subjectBar.appendChild(btn);
+    };
+
+    makeBtn("הכל", null);
+    subjects.forEach((s) => makeBtn(s, s));
+}
+
+function applyFilter() {
+    grid.querySelectorAll(".exam-card").forEach((card) => {
+        const exam = exams.find((x) => x.id === Number(card.dataset.id));
+        if (!exam) return;
+        const match = activeSubject === null || subjectKey(exam.subject) === subjectKey(activeSubject);
+        card.style.display = match ? "" : "none";
+    });
+}
+
+function refreshSubjects() {
+    renderSubjectBar();
+    applyFilter();
+}
 
 function emptyQuestion() {
     return { success: "", date: "", points: "" };
 }
 
-function makeExam(name) {
+function makeExam(name, subject) {
     return {
         id: nextId++,
         name,
+        subject,
         questions: Array.from({ length: QUESTION_COUNT }, emptyQuestion),
     };
 }
@@ -50,6 +113,14 @@ function buildCard(exam) {
     del.textContent = "✕";
     head.appendChild(del);
     card.appendChild(head);
+
+    // Subject badge (the מקצוע this exam is filtered by)
+    if (exam.subject && exam.subject.trim()) {
+        const badge = document.createElement("div");
+        badge.className = "subject-badge";
+        badge.textContent = exam.subject;
+        card.appendChild(badge);
+    }
 
     // Questions stacked vertically: one row per question
     const table = document.createElement("table");
@@ -138,14 +209,18 @@ function updateEmpty() {
         exams.length === 1 ? "בחינה אחת" : `${exams.length} בחינות`;
 }
 
-function addExam(name) {
-    const exam = makeExam(name);
+function addExam(name, subject) {
+    const exam = makeExam(name, subject);
     exams.push(exam);
+    // A new exam may not match the current subject filter — reset to "הכל" so it's visible.
+    activeSubject = null;
     const empty = grid.querySelector(".empty-msg");
     if (empty) empty.remove();
     grid.appendChild(buildCard(exam));
+    refreshSubjects();
     updateEmpty();
     nameInput.value = "";
+    subjectInput.value = "";
     nameInput.focus();
 }
 
@@ -154,12 +229,16 @@ function removeExam(id) {
     if (idx === -1) return;
     exams.splice(idx, 1);
     grid.querySelector(`.exam-card[data-id="${id}"]`)?.remove();
+    refreshSubjects();
     updateEmpty();
 }
 
 addForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    addExam(nameInput.value.trim());
+    const name = nameInput.value.trim();
+    const subject = subjectInput.value.trim();
+    if (!subject) return; // required — enforced by the input as well
+    addExam(name, subject);
 });
 
 clearBtn.addEventListener("click", () => {
@@ -167,6 +246,8 @@ clearBtn.addEventListener("click", () => {
     if (confirm("למחוק את כל הבחינות?")) {
         exams.length = 0;
         grid.innerHTML = "";
+        activeSubject = null;
+        refreshSubjects();
         updateEmpty();
     }
 });

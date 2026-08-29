@@ -68,6 +68,53 @@ body {
     margin-top: 18px;
 }
 
+.subject-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 8px;
+}
+
+/* Thin scrollbar for all modern browsers (incl. Safari) */
+.subject-bar::-webkit-scrollbar {
+    height: 6px;
+}
+
+.subject-bar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.subject-bar::-webkit-scrollbar-thumb {
+    background: #c7cbf3;
+    border-radius: 999px;
+}
+
+.subject-btn {
+    font: inherit;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.subject-btn:hover {
+    background: #eef0fb;
+    border-color: #c7cbf3;
+}
+
+.subject-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
 .add-form {
     display: flex;
     gap: 8px;
@@ -159,6 +206,18 @@ select:focus {
     align-items: center;
     padding: 10px 10px 8px;
     border-bottom: 1px solid var(--line);
+}
+
+.subject-badge {
+    margin: 8px 10px 0;
+    align-self: flex-start;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: #eef0fb;
+    border: 1px solid #d9dcf8;
+    border-radius: 999px;
+    padding: 2px 10px;
 }
 
 .cell {

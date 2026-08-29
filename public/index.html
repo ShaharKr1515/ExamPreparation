@@ -24,10 +24,14 @@
             </div>
         </div>
 
+        <div id="subject-bar" class="subject-bar" aria-label="סינון לפי מקצוע"></div>
+
         <div class="toolbar">
             <form id="add-form" class="add-form" autocomplete="off">
-                <input id="exam-name" type="text" placeholder="שם הבחינה (למשל: מתמטיקה, אנגלית, פיזיקה…)"
+                <input id="exam-name" type="text" placeholder="שם הבחינה (למשל: בחינת מתמטיקה 5 יח'…)"
                     aria-label="שם הבחינה">
+                <input id="exam-subject" type="text" required placeholder="* מקצוע (למשל: מתמטיקה, אנגלית, פיזיקה…)"
+                    aria-label="מקצוע">
                 <button type="submit" class="btn primary">+ הוספת בחינה</button>
             </form>
             <span id="count" class="count"></span>
