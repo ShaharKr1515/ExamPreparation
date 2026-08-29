@@ -135,7 +135,7 @@ function updateEmpty() {
     }
 
     countEl.textContent =
-        exams.length === 1 ? "בחיה אחת" : `${exams.length} בחינות`;
+        exams.length === 1 ? "בחינה אחת" : `${exams.length} בחינות`;
 }
 
 function addExam(name) {
