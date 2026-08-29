@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start server",
+            "type": "npm",
+            "script": "start",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "node",
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": "Server listening on port 3000"
+                }
+            }
+        }
+    ]
+}

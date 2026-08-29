@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "editor-browser",
+            "request": "launch",
+            "name": "Start Website",
+            "url": "http://localhost:3000",
+            "preLaunchTask": "Start server"
+        }
+    ]
+}
