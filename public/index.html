@@ -1,59 +1,44 @@
 <!doctype html>
 <html lang="he" dir="rtl">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>הכנה לבחינות</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-<div class="wrap">
-    <header class="page-header">
-        <h1>📝 הכנה לבחינות</h1>
-        <p class="subtitle">שורה = בחינה. בכל בחינה 5 שאלות, ולכל שאלה: הצלחה, תאריך אחרון ונקודות.</p>
-    </header>
 
-    <div class="notice" role="note">
-        <span aria-hidden="true">🗑️</span>
-        <div>
-            <strong>המידע אינו נשמר.</strong>
-            הנתונים נשמרים בזיכרון הדף בלבד — רענון הדף ימחק את כל מה שהוזן.
+<body>
+    <div class="wrap">
+        <header class="page-header">
+            <h1>📝 הכנה לבחינות</h1>
+            <p class="subtitle">עמודה = בחינה. בכל בחינה 5 שאלות (מסודרות אנכית), ולכל שאלה: הצלחה, תאריך אחרון ונקודות.
+            </p>
+        </header>
+
+        <div class="notice" role="note">
+            <span aria-hidden="true">🗑️</span>
+            <div>
+                <strong>המידע אינו נשמר.</strong>
+                הנתונים נשמרים בזיכרון הדף בלבד — רענון הדף ימחק את כל מה שהוזן.
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <form id="add-form" class="add-form" autocomplete="off">
+                <input id="exam-name" type="text" placeholder="שם הבחינה (למשל: מתמטיקה, אנגלית, פיזיקה…)"
+                    aria-label="שם הבחינה">
+                <button type="submit" class="btn primary">+ הוספת בחינה</button>
+            </form>
+            <span id="count" class="count"></span>
+            <button id="clear-all" class="btn danger-ghost" type="button">ניקוי הכול</button>
+        </div>
+
+        <div class="table-card">
+            <div id="exam-grid" class="exam-grid"></div>
         </div>
     </div>
-
-    <div class="toolbar">
-        <form id="add-form" class="add-form" autocomplete="off">
-            <input id="exam-name" type="text" placeholder="שם הבחינה (למשל: מתמטיקה, אנגלית, פיזיקה…)" aria-label="שם הבחינה">
-            <button type="submit" class="btn primary">+ הוספת בחינה</button>
-        </form>
-        <span id="count" class="count"></span>
-        <button id="clear-all" class="btn danger-ghost" type="button">ניקוי הכול</button>
-    </div>
-
-    <div class="table-card">
-        <table>
-            <thead>
-                <tr>
-                    <th class="name-col" rowspan="2">שם הבחינה</th>
-                    <th class="q-group" colspan="3">שאלה 1</th>
-                    <th class="q-group" colspan="3">שאלה 2</th>
-                    <th class="q-group" colspan="3">שאלה 3</th>
-                    <th class="q-group" colspan="3">שאלה 4</th>
-                    <th class="q-group" colspan="3">שאלה 5</th>
-                    <th class="row-actions" rowspan="2" aria-label="פעולות"></th>
-                </tr>
-                <tr>
-                    <th>הצלחה</th><th>תאריך אחרון</th><th>נקודות</th>
-                    <th>הצלחה</th><th>תאריך אחרון</th><th>נקודות</th>
-                    <th>הצלחה</th><th>תאריך אחרון</th><th>נקודות</th>
-                    <th>הצלחה</th><th>תאריך אחרון</th><th>נקודות</th>
-                    <th>הצלחה</th><th>תאריך אחרון</th><th>נקודות</th>
-                </tr>
-            </thead>
-            <tbody id="exam-body"></tbody>
-        </table>
-    </div>
-</div>
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
+
 </html>

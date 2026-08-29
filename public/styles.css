@@ -31,7 +31,7 @@ body {
 }
 
 .wrap {
-    max-width: 1280px;
+    max-width: 1360px;
     margin: 0 auto;
     padding: 28px 20px 72px;
 }
@@ -136,66 +136,80 @@ select:focus {
     box-shadow: 0 10px 30px rgba(29, 36, 51, 0.07);
 }
 
-table {
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-    min-width: 1180px;
+.exam-grid {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    align-items: stretch;
 }
 
-thead th {
-    background: #f7f8fd;
+.exam-card {
+    flex: 0 0 auto;
+    width: 320px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-head {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 10px 8px;
     border-bottom: 1px solid var(--line);
-    border-inline-start: 1px solid var(--line);
-    padding: 10px 12px;
-    font-size: 0.85rem;
-    text-align: center;
-    white-space: nowrap;
 }
 
-thead th:first-child {
-    border-inline-start: none;
-}
-
-thead tr:first-child th {
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-tbody td {
-    border-bottom: 1px solid var(--line);
-    border-inline-start: 1px solid var(--line);
-    padding: 8px;
-    vertical-align: middle;
-}
-
-tbody tr:last-child td {
-    border-bottom: none;
-}
-
-tbody tr:hover td {
-    background: #fafbff;
-}
-
-td .cell {
+.cell {
     width: 100%;
-    min-width: 74px;
+    min-width: 0;
     text-align: center;
-    padding: 7px 8px;
+    padding: 6px 4px;
+    font-size: 0.8rem;
 }
 
 .cell.exam-name {
-    min-width: 180px;
+    flex: 1;
     font-weight: 600;
     text-align: start;
 }
 
+.q-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.q-table th,
+.q-table td {
+    padding: 5px 4px;
+    text-align: center;
+    font-size: 0.78rem;
+}
+
+.q-table thead th {
+    background: #f7f8fd;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.q-table tbody tr+tr td {
+    border-top: 1px solid var(--line);
+}
+
+td.q-num {
+    width: 30px;
+    color: var(--muted);
+    font-weight: 700;
+}
+
 .cell.date {
-    min-width: 134px;
+    font-size: 0.72rem;
 }
 
 select.cell {
-    min-width: 94px;
+    min-width: 62px;
 }
 
 select.cell.ok {
@@ -212,24 +226,12 @@ select.cell.bad {
     font-weight: 600;
 }
 
-th.name-col,
-tbody td.sticky {
-    position: sticky;
-    inset-inline-start: 0;
-    background: #fff;
-    z-index: 1;
-    min-width: 190px;
-}
-
-thead th.name-col {
-    background: #f7f8fd;
-    z-index: 2;
-    text-align: start;
-    font-weight: 700;
-}
-
-tbody tr:hover td.sticky {
-    background: #fafbff;
+.card-foot {
+    margin-top: auto;
+    padding: 8px 10px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: center;
 }
 
 .delete-btn {
@@ -253,7 +255,7 @@ tbody tr:hover td.sticky {
     border-color: var(--bad-line);
 }
 
-tr.empty td {
+.empty-msg {
     padding: 34px 16px;
     text-align: center;
     color: var(--muted);

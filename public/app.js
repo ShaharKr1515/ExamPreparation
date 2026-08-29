@@ -4,7 +4,7 @@ let nextId = 1;
 // State lives only in memory — nothing is ever written to disk or storage.
 const exams = []; // { id, name, questions: [{ success, date, points }] }
 
-const tbody = document.getElementById("exam-body");
+const grid = document.getElementById("exam-grid");
 const addForm = document.getElementById("add-form");
 const nameInput = document.getElementById("exam-name");
 const countEl = document.getElementById("count");
@@ -27,23 +27,52 @@ function paintSuccess(sel) {
     sel.classList.toggle("bad", sel.value === "no");
 }
 
-function buildRow(exam) {
-    const tr = document.createElement("tr");
-    tr.dataset.id = exam.id;
+function buildCard(exam) {
+    const card = document.createElement("div");
+    card.className = "exam-card";
+    card.dataset.id = exam.id;
 
-    // Exam name (first column)
-    const nameTd = document.createElement("td");
-    nameTd.className = "sticky";
+    // Header: exam name + delete button
+    const head = document.createElement("div");
+    head.className = "card-head";
     const nameField = document.createElement("input");
     nameField.type = "text";
     nameField.className = "cell exam-name";
     nameField.placeholder = "ללא שם";
     nameField.value = exam.name;
-    nameTd.appendChild(nameField);
-    tr.appendChild(nameTd);
+    head.appendChild(nameField);
 
-    // 5 questions x (success, last date, points)
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "delete-btn";
+    del.title = "מחיקת בחינה";
+    del.setAttribute("aria-label", "מחיקת בחינה");
+    del.textContent = "✕";
+    head.appendChild(del);
+    card.appendChild(head);
+
+    // Questions stacked vertically: one row per question
+    const table = document.createElement("table");
+    table.className = "q-table";
+    const thead = document.createElement("thead");
+    const htr = document.createElement("tr");
+    ["שאלה", "הצלחה", "תאריך אחרון", "נקודות"].forEach((label) => {
+        const th = document.createElement("th");
+        th.textContent = label;
+        htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
     exam.questions.forEach((q, qi) => {
+        const tr = document.createElement("tr");
+
+        const numTd = document.createElement("td");
+        numTd.className = "q-num";
+        numTd.textContent = String(qi + 1);
+        tr.appendChild(numTd);
+
         // Success
         const sTd = document.createElement("td");
         const sel = document.createElement("select");
@@ -83,48 +112,38 @@ function buildRow(exam) {
         pIn.value = q.points;
         pTd.appendChild(pIn);
         tr.appendChild(pTd);
+
+        tbody.appendChild(tr);
     });
+    table.appendChild(tbody);
+    card.appendChild(table);
 
-    // Delete button
-    const actTd = document.createElement("td");
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "delete-btn";
-    del.title = "מחיקת בחינה";
-    del.setAttribute("aria-label", "מחיקת בחינה");
-    del.textContent = "✕";
-    actTd.appendChild(del);
-    tr.appendChild(actTd);
-
-    return tr;
+    return card;
 }
 
 function updateEmpty() {
-    const empty = tbody.querySelector("tr.empty");
+    const empty = grid.querySelector(".empty-msg");
     if (exams.length === 0) {
         if (!empty) {
-            const tr = document.createElement("tr");
-            tr.className = "empty";
-            const td = document.createElement("td");
-            td.colSpan = 2 + QUESTION_COUNT * 3;
-            td.textContent = "עדיין אין בחינות בטבלה — הוסף בחינה ראשונה באמצעות השורה למעלה.";
-            tr.appendChild(td);
-            tbody.prepend(tr);
+            const div = document.createElement("div");
+            div.className = "empty-msg";
+            div.textContent = "עדיין אין בחינות — הוסף בחינה ראשונה באמצעות השורה למעלה.";
+            grid.appendChild(div);
         }
     } else if (empty) {
         empty.remove();
     }
 
     countEl.textContent =
-        exams.length === 1 ? "בחיה אחת בטבלה" : `${exams.length} בחינות בטבלה`;
+        exams.length === 1 ? "בחיה אחת" : `${exams.length} בחינות`;
 }
 
 function addExam(name) {
     const exam = makeExam(name);
     exams.push(exam);
-    const empty = tbody.querySelector("tr.empty");
+    const empty = grid.querySelector(".empty-msg");
     if (empty) empty.remove();
-    tbody.appendChild(buildRow(exam));
+    grid.appendChild(buildCard(exam));
     updateEmpty();
     nameInput.value = "";
     nameInput.focus();
@@ -134,7 +153,7 @@ function removeExam(id) {
     const idx = exams.findIndex((e) => e.id === id);
     if (idx === -1) return;
     exams.splice(idx, 1);
-    tbody.querySelector(`tr[data-id="${id}"]`)?.remove();
+    grid.querySelector(`.exam-card[data-id="${id}"]`)?.remove();
     updateEmpty();
 }
 
@@ -145,16 +164,16 @@ addForm.addEventListener("submit", (e) => {
 
 clearBtn.addEventListener("click", () => {
     if (exams.length === 0) return;
-    if (confirm("למחוק את כל הבחינות מהטבלה?")) {
+    if (confirm("למחוק את כל הבחינות?")) {
         exams.length = 0;
-        tbody.innerHTML = "";
+        grid.innerHTML = "";
         updateEmpty();
     }
 });
 
 function syncField(target) {
-    const tr = target.closest("tr");
-    const exam = exams.find((x) => x.id === Number(tr?.dataset.id));
+    const card = target.closest(".exam-card");
+    const exam = exams.find((x) => x.id === Number(card?.dataset.id));
     if (!exam) return;
 
     if (target.classList.contains("exam-name")) {
@@ -170,17 +189,17 @@ function syncField(target) {
     }
 }
 
-tbody.addEventListener("input", (e) => {
+grid.addEventListener("input", (e) => {
     if (e.target.matches("input, select")) syncField(e.target);
 });
-tbody.addEventListener("change", (e) => {
+grid.addEventListener("change", (e) => {
     if (e.target.matches("select")) syncField(e.target);
 });
 
-tbody.addEventListener("click", (e) => {
+grid.addEventListener("click", (e) => {
     const btn = e.target.closest(".delete-btn");
     if (!btn) return;
-    removeExam(Number(btn.closest("tr").dataset.id));
+    removeExam(Number(btn.closest(".exam-card").dataset.id));
 });
 
 updateEmpty();
