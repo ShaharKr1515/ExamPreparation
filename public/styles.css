@@ -1,0 +1,261 @@
+:root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --ink: #1d2433;
+    --muted: #667085;
+    --line: #e4e8f1;
+    --accent: #4f46e5;
+    --ok-bg: #f0fdf4;
+    --ok-ink: #15803d;
+    --ok-line: #bbf7d0;
+    --bad-bg: #fef2f2;
+    --bad-ink: #b91c1c;
+    --bad-line: #fecaca;
+    --radius: 14px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    color-scheme: light;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", "Noto Sans Hebrew", Arial, sans-serif;
+    background: linear-gradient(180deg, #edf0f9 0%, var(--bg) 260px);
+    color: var(--ink);
+    line-height: 1.45;
+}
+
+.wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 28px 20px 72px;
+}
+
+.page-header h1 {
+    margin: 0 0 6px;
+    font-size: 1.7rem;
+}
+
+.page-header .subtitle {
+    margin: 0;
+    color: var(--muted);
+}
+
+.notice {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    color: #9a3412;
+    font-size: 0.92rem;
+    max-width: fit-content;
+}
+
+.toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+
+.add-form {
+    display: flex;
+    gap: 8px;
+    flex: 1 1 380px;
+}
+
+.add-form input[type="text"] {
+    flex: 1;
+}
+
+.count {
+    color: var(--muted);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.btn {
+    font: inherit;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    padding: 9px 14px;
+    cursor: pointer;
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn.primary:hover {
+    background: #4338ca;
+}
+
+.btn.danger-ghost {
+    background: transparent;
+    color: var(--bad-ink);
+    border-color: var(--bad-line);
+}
+
+.btn.danger-ghost:hover {
+    background: var(--bad-bg);
+}
+
+input,
+select {
+    font: inherit;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+}
+
+input:focus,
+select:focus {
+    outline: 2px solid rgba(79, 70, 229, 0.35);
+    border-color: var(--accent);
+}
+
+.table-card {
+    margin-top: 18px;
+    overflow-x: auto;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(29, 36, 51, 0.07);
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 1180px;
+}
+
+thead th {
+    background: #f7f8fd;
+    border-bottom: 1px solid var(--line);
+    border-inline-start: 1px solid var(--line);
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+thead th:first-child {
+    border-inline-start: none;
+}
+
+thead tr:first-child th {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+tbody td {
+    border-bottom: 1px solid var(--line);
+    border-inline-start: 1px solid var(--line);
+    padding: 8px;
+    vertical-align: middle;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover td {
+    background: #fafbff;
+}
+
+td .cell {
+    width: 100%;
+    min-width: 74px;
+    text-align: center;
+    padding: 7px 8px;
+}
+
+.cell.exam-name {
+    min-width: 180px;
+    font-weight: 600;
+    text-align: start;
+}
+
+.cell.date {
+    min-width: 134px;
+}
+
+select.cell {
+    min-width: 94px;
+}
+
+select.cell.ok {
+    background: var(--ok-bg);
+    color: var(--ok-ink);
+    border-color: var(--ok-line);
+    font-weight: 600;
+}
+
+select.cell.bad {
+    background: var(--bad-bg);
+    color: var(--bad-ink);
+    border-color: var(--bad-line);
+    font-weight: 600;
+}
+
+th.name-col,
+tbody td.sticky {
+    position: sticky;
+    inset-inline-start: 0;
+    background: #fff;
+    z-index: 1;
+    min-width: 190px;
+}
+
+thead th.name-col {
+    background: #f7f8fd;
+    z-index: 2;
+    text-align: start;
+    font-weight: 700;
+}
+
+tbody tr:hover td.sticky {
+    background: #fafbff;
+}
+
+.delete-btn {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.delete-btn:hover {
+    background: var(--bad-bg);
+    color: var(--bad-ink);
+    border-color: var(--bad-line);
+}
+
+tr.empty td {
+    padding: 34px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
