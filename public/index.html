@@ -12,7 +12,8 @@
     <div class="wrap">
         <header class="page-header">
             <h1>📝 הכנה לבחינות</h1>
-            <p class="subtitle">עמודה = בחינה. בכל בחינה 5 שאלות (מסודרות אנכית), ולכל שאלה: הצלחה, תאריך אחרון ונקודות.
+            <p class="subtitle">בחר מקצוע בלשוניות, ולחץ על בחינה כדי לפתוח את העמוד שלה. בכל בחינה 5 שאלות (מסודרות
+                אנכית), ולכל שאלה: הצלחה, תאריך אחרון ונקודות.
             </p>
         </header>
 
@@ -24,38 +25,54 @@
             </div>
         </div>
 
-        <div id="subject-bar" class="subject-bar" aria-label="סינון לפי מקצוע"></div>
+        <div id="subject-bar" class="subject-bar" aria-label="סינון לפי מקצוע" hidden></div>
 
-        <div class="toolbar">
-            <form id="add-form" class="add-form" autocomplete="off">
+        <!-- New subject row (opened from the "+ מקצוע חדש" button) -->
+        <form id="new-subject-form" class="add-row new-subject-row" autocomplete="off" hidden>
+            <input id="new-subject-input" type="text" placeholder="שם המקצוע החדש (למשל: מתמטיקה, אנגלית…)"
+                aria-label="שם מקצוע חדש">
+            <button type="submit" class="btn primary small">+ יצירת מקצוע</button>
+            <button type="button" id="new-subject-cancel" class="btn ghost small">ביטול</button>
+        </form>
+
+        <!-- EMPTY VIEW: shown while there are no subjects at all -->
+        <section id="empty-view">
+            <div class="table-card empty-state">
+                <h2>📚 אין עדיין מקצועות</h2>
+                <p>כדי להתחיל, צור מקצוע ראשון (למשל: מתמטיקה, אנגלית, פיזיקה…).<br>לאחר מכן תוכל להוסיף בחינות
+                    תחתיו — כל בחינה תקבל את המקצוע אוטומטית.</p>
+                <form id="first-subject-form" class="subject-create-form" autocomplete="off">
+                    <input id="first-subject-input" type="text" placeholder="שם המקצוע (למשל: מתמטיקה)"
+                        aria-label="שם מקצוע חדש">
+                    <button type="submit" class="btn primary">+ יצירת מקצוע</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- LIST VIEW: subject tabs + exam cards -->
+        <section id="list-view" hidden>
+            <form id="add-form" class="add-row" autocomplete="off" hidden>
                 <input id="exam-name" type="text" placeholder="שם הבחינה (למשל: בחינת מתמטיקה 5 יח'…)"
                     aria-label="שם הבחינה">
-                <div class="subject-dropdown" id="exam-subject-dd">
-                    <button type="button" id="exam-subject-btn" class="subject-select-btn placeholder"
-                        aria-haspopup="listbox" aria-expanded="false">
-                        <span id="exam-subject-label">* מקצוע (למשל: מתמטיקה, אנגלית, פיזיקה…)</span>
-                        <span class="caret" aria-hidden="true">▾</span>
-                    </button>
-                    <div id="exam-subject-menu" class="subject-menu" hidden>
-                        <ul id="exam-subject-list"></ul>
-                        <div class="subject-new-row">
-                            <input id="new-subject-input" type="text" placeholder="מקצוע חדש…" aria-label="מקצוע חדש">
-                            <button type="button" id="new-subject-add" class="btn primary small"
-                                title="הוספת מקצוע חדש">+</button>
-                        </div>
-                    </div>
-                </div>
+                <span id="add-hint" class="add-hint"></span>
                 <button type="submit" class="btn primary">+ הוספת בחינה</button>
+                <button type="button" id="add-cancel" class="btn ghost">ביטול</button>
             </form>
-            <span id="count" class="count"></span>
-            <button id="clear-all" class="btn danger-ghost" type="button">ניקוי הכול</button>
-        </div>
 
-        <div class="table-card">
-            <div id="exam-grid" class="exam-grid"></div>
-        </div>
+            <div class="toolbar">
+                <span id="count" class="count"></span>
+                <button id="clear-all" class="btn danger-ghost" type="button">ניקוי הכול</button>
+            </div>
+
+            <div class="table-card">
+                <div id="exam-grid" class="exam-grid"></div>
+            </div>
+        </section>
+
+        <!-- DETAIL VIEW: a single exam's page -->
+        <section id="detail-view" hidden></section>
     </div>
-    <script src="app.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 
 </html>

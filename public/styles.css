@@ -21,6 +21,11 @@
     box-sizing: border-box;
 }
 
+/* Keep the `hidden` attribute working even on elements with display rules */
+[hidden] {
+    display: none !important;
+}
+
 html {
     color-scheme: light;
 }
@@ -466,4 +471,163 @@ select.cell.bad {
     text-align: center;
     color: var(--muted);
     font-size: 0.95rem;
+}
+
+/* --- Add-exam row (opened from the "+ הוספת בחינה" tab) ------------------ */
+
+.add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 14px;
+    padding: 12px;
+    background: var(--card);
+    border: 1px solid #c7cbf3;
+    border-radius: var(--radius);
+    box-shadow: 0 6px 18px rgba(29, 36, 51, 0.06);
+}
+
+.add-row input[type="text"] {
+    flex: 1 1 240px;
+    min-width: 160px;
+}
+
+.add-row .btn.primary,
+.add-row .btn.ghost {
+    flex-shrink: 0;
+}
+
+.btn.ghost {
+    background: #fff;
+    color: var(--muted);
+    border-color: var(--line);
+}
+
+.btn.ghost:hover {
+    background: #f2f4fa;
+}
+
+.add-hint {
+    flex-basis: 100%;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+/* The "add exam" tab in the subject bar — visually distinct from filters */
+.subject-btn.add-tab {
+    border-style: dashed;
+    border-color: #c7cbf3;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.subject-btn.add-tab:hover {
+    background: #eef0fb;
+}
+
+.subject-btn.add-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    border-style: solid;
+    color: #fff;
+}
+
+/* --- Exam detail page ------------------------------------------------------ */
+
+.back-link {
+    font: inherit;
+    margin-top: 18px;
+    padding: 7px 12px;
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.detail-title-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 16px 18px;
+}
+
+.detail-title-card h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.subject-badge.inline {
+    display: inline-block;
+    margin: 0;
+    align-self: center;
+}
+
+.detail-table-wrap {
+    padding: 8px 16px 16px;
+}
+
+.detail-table th,
+.detail-table td {
+    padding: 9px 6px;
+    font-size: 0.9rem;
+}
+
+.detail-table .cell {
+    font-size: 0.9rem;
+    padding: 8px 6px;
+}
+
+.detail-table select.cell {
+    min-width: 120px;
+}
+
+.detail-table input[type="date"] {
+    max-width: 170px;
+}
+
+.detail-table input.points {
+    max-width: 110px;
+}
+
+/* --- "No subjects yet" screen ---------------------------------------------- */
+
+.empty-state {
+    margin-top: 18px;
+    padding: 44px 24px;
+    text-align: center;
+}
+
+.empty-state h2 {
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+}
+
+.empty-state p {
+    margin: 0 auto 20px;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+}
+
+.subject-create-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.subject-create-form input[type="text"] {
+    flex: 1;
+    min-width: 200px;
 }
