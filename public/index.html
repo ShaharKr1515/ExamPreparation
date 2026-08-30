@@ -30,8 +30,21 @@
             <form id="add-form" class="add-form" autocomplete="off">
                 <input id="exam-name" type="text" placeholder="שם הבחינה (למשל: בחינת מתמטיקה 5 יח'…)"
                     aria-label="שם הבחינה">
-                <input id="exam-subject" type="text" required placeholder="* מקצוע (למשל: מתמטיקה, אנגלית, פיזיקה…)"
-                    aria-label="מקצוע">
+                <div class="subject-dropdown" id="exam-subject-dd">
+                    <button type="button" id="exam-subject-btn" class="subject-select-btn placeholder"
+                        aria-haspopup="listbox" aria-expanded="false">
+                        <span id="exam-subject-label">* מקצוע (למשל: מתמטיקה, אנגלית, פיזיקה…)</span>
+                        <span class="caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div id="exam-subject-menu" class="subject-menu" hidden>
+                        <ul id="exam-subject-list"></ul>
+                        <div class="subject-new-row">
+                            <input id="new-subject-input" type="text" placeholder="מקצוע חדש…" aria-label="מקצוע חדש">
+                            <button type="button" id="new-subject-add" class="btn primary small"
+                                title="הוספת מקצוע חדש">+</button>
+                        </div>
+                    </div>
+                </div>
                 <button type="submit" class="btn primary">+ הוספת בחינה</button>
             </form>
             <span id="count" class="count"></span>

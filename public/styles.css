@@ -11,6 +11,9 @@
     --bad-bg: #fef2f2;
     --bad-ink: #b91c1c;
     --bad-line: #fecaca;
+    --stale-bg: #f3e8ff;
+    --stale-ink: #6b21a8;
+    --stale-line: #c084fc;
     --radius: 14px;
 }
 
@@ -123,6 +126,110 @@ body {
 
 .add-form input[type="text"] {
     flex: 1;
+}
+
+/* --- Subject dropdown (add form) ---------------------------------------- */
+
+.subject-dropdown {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.subject-select-btn {
+    font: inherit;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: start;
+}
+
+.subject-select-btn:focus {
+    outline: 2px solid rgba(79, 70, 229, 0.35);
+    border-color: var(--accent);
+}
+
+.subject-select-btn.placeholder span:first-child {
+    color: var(--muted);
+}
+
+.subject-select-btn .caret {
+    color: var(--muted);
+    flex-shrink: 0;
+}
+
+.subject-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    inset-inline-start: 0;
+    width: 100%;
+    min-width: 240px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(29, 36, 51, 0.14);
+    padding: 8px;
+    z-index: 30;
+}
+
+.subject-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.subject-option {
+    font: inherit;
+    width: 100%;
+    display: block;
+    text-align: start;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.subject-option:hover {
+    background: #eef0fb;
+}
+
+.subject-option.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+.subject-new-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+}
+
+.subject-new-row input {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    padding: 7px 9px;
+}
+
+.btn.small {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
 }
 
 .count {
@@ -265,6 +372,46 @@ td.q-num {
 
 .cell.date {
     font-size: 0.72rem;
+}
+
+/* Whole row green once success is achieved */
+.q-table tbody tr.row-ok td {
+    background: var(--ok-bg);
+    color: var(--ok-ink);
+}
+
+.q-table tbody tr.row-ok input.cell.date,
+.q-table tbody tr.row-ok select.cell {
+    border-color: var(--ok-line);
+}
+
+/* Whole row red when the question was failed */
+.q-table tbody tr.row-bad td {
+    background: var(--bad-bg);
+    color: var(--bad-ink);
+}
+
+.q-table tbody tr.row-bad input.cell.date,
+.q-table tbody tr.row-bad select.cell {
+    border-color: var(--bad-line);
+}
+
+/* Whole row purple when the last attempt is at least 3 days old and not successful yet */
+.q-table tbody tr.row-stale td {
+    background: var(--stale-bg);
+    color: var(--stale-ink);
+}
+
+.q-table tbody tr.row-stale input.cell.date,
+.q-table tbody tr.row-stale select.cell {
+    border-color: var(--stale-line);
+}
+
+/* In a purple row the success box is purple too (even when failed) */
+.q-table tbody tr.row-stale select.cell.bad {
+    background: var(--stale-bg);
+    color: var(--stale-ink);
+    border-color: var(--stale-line);
 }
 
 select.cell {

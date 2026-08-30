@@ -7,13 +7,23 @@ const exams = []; // { id, name, questions: [{ success, date, points }] }
 const grid = document.getElementById("exam-grid");
 const addForm = document.getElementById("add-form");
 const nameInput = document.getElementById("exam-name");
-const subjectInput = document.getElementById("exam-subject");
 const countEl = document.getElementById("count");
 const clearBtn = document.getElementById("clear-all");
 const subjectBar = document.getElementById("subject-bar");
 
+// Subject dropdown (custom, with in-menu "new subject" box)
+const subjectDropdown = document.getElementById("exam-subject-dd");
+const subjectBtn = document.getElementById("exam-subject-btn");
+const subjectLabel = document.getElementById("exam-subject-label");
+const subjectMenu = document.getElementById("exam-subject-menu");
+const subjectList = document.getElementById("exam-subject-list");
+const newSubjectInput = document.getElementById("new-subject-input");
+const newSubjectAddBtn = document.getElementById("new-subject-add");
+
 // Subject filter: null means "הכל" (show everything)
 let activeSubject = null;
+// The subject currently picked in the add-form dropdown.
+let selectedSubject = "";
 
 function subjectKey(s) {
     return (s || "").trim().toLowerCase();
@@ -69,8 +79,90 @@ function applyFilter() {
 
 function refreshSubjects() {
     renderSubjectBar();
+    renderSubjectMenu();
     applyFilter();
 }
+
+// --- Subject dropdown (add form) -------------------------------------------
+
+function setSubjectSelected(subject, { keepOpen = false } = {}) {
+    selectedSubject = subject || "";
+    if (subject) {
+        subjectBtn.classList.remove("placeholder");
+        subjectLabel.textContent = subject;
+    } else {
+        subjectBtn.classList.add("placeholder");
+        subjectLabel.textContent = "* מקצוע (למשל: מתמטיקה, אנגלית, פיזיקה…)";
+    }
+    renderSubjectMenu();
+    if (!keepOpen) closeSubjectMenu();
+}
+
+function renderSubjectMenu() {
+    const subjects = getSubjects();
+    subjectList.innerHTML = "";
+    for (const s of subjects) {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subject-option" + (s === selectedSubject ? " active" : "");
+        btn.textContent = s;
+        btn.addEventListener("click", () => setSubjectSelected(s));
+        li.appendChild(btn);
+        subjectList.appendChild(li);
+    }
+}
+
+function openSubjectMenu() {
+    renderSubjectMenu();
+    subjectMenu.hidden = false;
+    subjectBtn.setAttribute("aria-expanded", "true");
+    newSubjectInput.focus();
+}
+
+function closeSubjectMenu() {
+    if (subjectMenu.hidden) return;
+    subjectMenu.hidden = true;
+    subjectBtn.setAttribute("aria-expanded", "false");
+    newSubjectInput.value = "";
+}
+
+subjectBtn.addEventListener("click", () => {
+    if (subjectMenu.hidden) openSubjectMenu();
+    else closeSubjectMenu();
+});
+
+// Close when clicking anywhere outside the dropdown.
+document.addEventListener("click", (e) => {
+    if (!subjectDropdown.contains(e.target)) closeSubjectMenu();
+});
+
+function addNewSubject() {
+    const s = newSubjectInput.value.trim();
+    if (!s) return;
+    // If it already exists, just select it.
+    const existing = getSubjects().find((x) => subjectKey(x) === subjectKey(s));
+    setSubjectSelected(existing || s);
+}
+
+newSubjectAddBtn.addEventListener("click", addNewSubject);
+newSubjectInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        addNewSubject();
+    } else if (e.key === "Escape") {
+        closeSubjectMenu();
+    }
+});
+
+subjectBtn.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openSubjectMenu();
+    } else if (e.key === "Escape") {
+        closeSubjectMenu();
+    }
+});
 
 function emptyQuestion() {
     return { success: "", date: "", points: "" };
@@ -88,6 +180,37 @@ function makeExam(name, subject) {
 function paintSuccess(sel) {
     sel.classList.toggle("ok", sel.value === "yes");
     sel.classList.toggle("bad", sel.value === "no");
+}
+
+// Local date as YYYY-MM-DD (matches the <input type="date"> format).
+function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Whole days elapsed since a YYYY-MM-DD date (negative if in the future), or null.
+function daysSince(dateStr) {
+    const [y, m, d] = String(dateStr || "").split("-").map(Number);
+    if (!y || !m || !d) return null;
+    const then = new Date(y, m - 1, d);
+    const now = new Date();
+    const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((today0.getTime() - then.getTime()) / 86400000);
+}
+
+// Row states, in priority order:
+//  - green when success is achieved (always wins)
+//  - purple when the last attempt is at least 3 days old (regardless of outcome)
+//  - red when the question was failed within the last 3 days
+function refreshRow(tr, q) {
+    if (!tr) return;
+    const days = daysSince(q.date);
+    const ok = q.success === "yes";
+    const stale = !ok && days !== null && days >= 3;
+    const failed = !ok && !stale && q.success === "no";
+    tr.classList.toggle("row-ok", ok);
+    tr.classList.toggle("row-bad", failed);
+    tr.classList.toggle("row-stale", stale);
 }
 
 function buildCard(exam) {
@@ -184,6 +307,7 @@ function buildCard(exam) {
         pTd.appendChild(pIn);
         tr.appendChild(pTd);
 
+        refreshRow(tr, q);
         tbody.appendChild(tr);
     });
     table.appendChild(tbody);
@@ -220,7 +344,7 @@ function addExam(name, subject) {
     refreshSubjects();
     updateEmpty();
     nameInput.value = "";
-    subjectInput.value = "";
+    setSubjectSelected("");
     nameInput.focus();
 }
 
@@ -236,8 +360,8 @@ function removeExam(id) {
 addForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const name = nameInput.value.trim();
-    const subject = subjectInput.value.trim();
-    if (!subject) return; // required — enforced by the input as well
+    const subject = selectedSubject.trim();
+    if (!subject) return; // required — a subject must be picked from the dropdown
     addExam(name, subject);
 });
 
@@ -247,6 +371,7 @@ clearBtn.addEventListener("click", () => {
         exams.length = 0;
         grid.innerHTML = "";
         activeSubject = null;
+        setSubjectSelected("");
         refreshSubjects();
         updateEmpty();
     }
@@ -264,10 +389,21 @@ function syncField(target) {
 
     const field = target.dataset.field;
     const qi = Number(target.dataset.q);
-    if (field && !Number.isNaN(qi) && exam.questions[qi]) {
-        exam.questions[qi][field] = target.value;
-        if (field === "success") paintSuccess(target);
+    if (!field || Number.isNaN(qi) || !exam.questions[qi]) return;
+
+    const q = exam.questions[qi];
+    const tr = target.closest("tr");
+
+    // First touch on an empty row: stamp today's date automatically.
+    if ((field === "success" || field === "points") && !q.date) {
+        q.date = todayStr();
+        const dIn = tr?.querySelector('input[data-field="date"]');
+        if (dIn) dIn.value = q.date;
     }
+
+    q[field] = target.value;
+    if (field === "success") paintSuccess(target);
+    refreshRow(tr, q);
 }
 
 grid.addEventListener("input", (e) => {
