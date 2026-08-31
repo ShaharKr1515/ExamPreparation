@@ -78,9 +78,10 @@ body {
 
 .subject-bar {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     overflow-x: auto;
-    padding: 4px 2px 8px;
+    padding: 4px 2px 0;
+    border-bottom: 1px solid var(--line);
 }
 
 /* Thin scrollbar for all modern browsers (incl. Safari) */
@@ -97,30 +98,68 @@ body {
     border-radius: 999px;
 }
 
+/* Tab-style subject picker */
 .subject-btn {
     font: inherit;
     font-size: 0.9rem;
     white-space: nowrap;
     flex: 0 0 auto;
-    padding: 7px 16px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: #fff;
-    color: var(--ink);
+    position: relative;
+    padding: 8px 16px 10px;
+    border-radius: 10px 10px 0 0;
+    border: none;
+    background: transparent;
+    color: var(--muted);
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s;
 }
 
 .subject-btn:hover {
     background: #eef0fb;
-    border-color: #c7cbf3;
+    color: var(--ink);
 }
 
 .subject-btn.active {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* Accent underline on the active tab, sitting on the bar's bottom line */
+.subject-btn.active::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -2px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--accent);
+}
+
+/* Standalone "add exam" button — clearly separated below the subject tabs */
+.add-exam-standalone {
+    display: block;
+    margin-top: 24px;
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: 1px dashed #c7cbf3;
+    background: #fff;
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.add-exam-standalone:hover {
+    background: #eef0fb;
+    border-color: var(--accent);
+}
+
+.add-exam-standalone.active {
     background: var(--accent);
     border-color: var(--accent);
+    border-style: solid;
     color: #fff;
-    font-weight: 600;
 }
 
 .add-form {
@@ -513,23 +552,14 @@ select.cell.bad {
     color: var(--muted);
 }
 
-/* The "add exam" tab in the subject bar — visually distinct from filters */
+/* The "new subject" tab in the bar — visually distinct from subject tabs */
 .subject-btn.add-tab {
-    border-style: dashed;
-    border-color: #c7cbf3;
     color: var(--accent);
     font-weight: 600;
 }
 
-.subject-btn.add-tab:hover {
-    background: #eef0fb;
-}
-
-.subject-btn.add-tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    border-style: solid;
-    color: #fff;
+.subject-btn.add-tab.active::after {
+    background: #c7cbf3;
 }
 
 /* --- Exam detail page ------------------------------------------------------ */

@@ -19,7 +19,7 @@ export function createSubject(rawName) {
     return true;
 }
 
-/** Rebuild the tab bar: one tab per subject + "+ הוספת בחינה" + "+ מקצוע חדש". */
+/** Rebuild the tab bar: one tab per subject + "+ מקצוע חדש". */
 export function renderSubjectBar() {
     const subjects = getSubjects();
     // If the active subject no longer exists, fall back to the first one.
@@ -41,16 +41,6 @@ export function renderSubjectBar() {
         dom.subjectBar.appendChild(btn);
     });
 
-    // "Add exam" tab — opens the inline add row (exam is tagged with the active tab).
-    const addTab = document.createElement("button");
-    addTab.type = "button";
-    addTab.className = "subject-btn add-tab" + (addOpen ? " active" : "");
-    addTab.textContent = "+ הוספת בחינה";
-    addTab.addEventListener("click", () => {
-        if (!addOpen) openAddRow();
-    });
-    dom.subjectBar.appendChild(addTab);
-
     // "New subject" button at the end of the bar.
     const newBtn = document.createElement("button");
     newBtn.type = "button";
@@ -66,6 +56,7 @@ export function renderSubjectBar() {
 export function openAddRow() {
     addOpen = true;
     renderSubjectBar();
+    dom.addExamBtn.classList.toggle("active", addOpen);
     dom.addHint.textContent = getActiveSubject() ? `תיוג אוטומטי: ${getActiveSubject()}` : "בחר מקצוע בלשוניות למעלה";
     dom.addForm.hidden = false;
     dom.nameInput.focus();
@@ -76,6 +67,7 @@ export function closeAddRow() {
     addOpen = false;
     dom.addForm.hidden = true;
     renderSubjectBar();
+    dom.addExamBtn.classList.toggle("active", addOpen);
 }
 
 /** Open the inline "new subject" row under the tab bar. */
@@ -112,10 +104,15 @@ export function syncViews() {
     dom.listView.hidden = onDetail || !hasSubjects;
     dom.emptyView.hidden = hasSubjects || onDetail;
     dom.subjectBar.hidden = !hasSubjects;
+    dom.addExamBtn.hidden = !hasSubjects;
 }
 
-/** One-time wiring: cancel buttons for the inline rows. */
+/** One-time wiring: standalone add-exam button + cancel buttons for the inline rows. */
 export function wireSubjectEvents() {
+    dom.addExamBtn.addEventListener("click", () => {
+        if (addOpen) return;
+        openAddRow();
+    });
     dom.addCancel.addEventListener("click", closeAddRow);
     dom.newSubjectCancel.addEventListener("click", closeNewSubjectRow);
 }

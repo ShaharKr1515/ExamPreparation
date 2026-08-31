@@ -13,6 +13,7 @@ export const dom = {
     countEl: document.getElementById("count"),
     clearBtn: document.getElementById("clear-all"),
     subjectBar: document.getElementById("subject-bar"),
+    addExamBtn: document.getElementById("add-exam-btn"),
     firstSubjectForm: document.getElementById("first-subject-form"),
     firstSubjectInput: document.getElementById("first-subject-input"),
     newSubjectForm: document.getElementById("new-subject-form"),
