@@ -4,11 +4,12 @@ import { subjectKey, todayStr } from "../utils/examUtils.js";
 
 const ExamsContext = createContext(null);
 
-// State shape is unchanged for consumers:
+// State shape:
 //   exams: [{ id, name, subject (display string), questions: [{ success, date, points }] }]
 //   subjects: [name strings]          activeSubject: string | null  (pure UI state)
+//   subjectMeta: { [subjectName]: { studyStartDate, finalExamDate } }  (subject-level dates)
 function emptyState() {
-    return { exams: [], subjects: [], activeSubject: null };
+    return { exams: [], subjects: [], activeSubject: null, subjectMeta: {} };
 }
 
 export function ExamsProvider({ children }) {
@@ -107,17 +108,40 @@ export function ExamsProvider({ children }) {
     }
 
     // Duplicate names are handled consistently: an existing subject is never duplicated —
-    // we just switch to it.
-    async function addSubject(name) {
+    // we just switch to it. Creates `examCount` exams under the new subject.
+    async function addSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "" } = {}) {
         const trimmed = String(name || "").trim();
         if (!trimmed) return;
         try {
-            const subject = await api.createSubject(trimmed);
+            const { subject, exams } = await api.createSubject(trimmed, { examCount, studyStartDate, finalExamDate });
             setState((s) => {
                 const existing = s.subjects.find((x) => x.toLowerCase() === subject.name.toLowerCase());
                 if (existing) return { ...s, activeSubject: existing };
-                return { ...s, subjects: [...s.subjects, subject.name], activeSubject: subject.name };
+                return {
+                    ...s,
+                    subjects: [...s.subjects, subject.name],
+                    exams: [...s.exams, ...exams.map((e) => ({ ...e, subject: subject.name }))],
+                    activeSubject: subject.name,
+                    subjectMeta: {
+                        ...s.subjectMeta,
+                        [subject.name]: { studyStartDate: subject.study_start_date || "", finalExamDate: subject.final_exam_date || "" },
+                    },
+                };
             });
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    // Update the study start / final exam dates of a subject (subject-level data).
+    async function updateSubjectDates(name, { studyStartDate = "", finalExamDate = "" } = {}) {
+        setState((s) => ({
+            ...s,
+            subjectMeta: { ...s.subjectMeta, [name]: { studyStartDate, finalExamDate } },
+        }));
+        try {
+            await api.updateSubjectDates(name, { studyStartDate, finalExamDate });
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -128,15 +152,22 @@ export function ExamsProvider({ children }) {
     async function renameSubject(oldName, newName) {
         const trimmed = String(newName || "").trim();
         if (!trimmed || subjectKey(trimmed) === subjectKey(oldName)) return;
-        setState((s) => ({
-            ...s,
-            subjects: s.subjects.map((x) => (subjectKey(x) === subjectKey(oldName) ? trimmed : x)),
-            exams: s.exams.map((e) => (subjectKey(e.subject) === subjectKey(oldName) ? { ...e, subject: trimmed } : e)),
-            activeSubject:
-                s.activeSubject && subjectKey(s.activeSubject) === subjectKey(oldName)
-                    ? trimmed
-                    : s.activeSubject,
-        }));
+        setState((s) => {
+            const meta = {};
+            for (const [k, v] of Object.entries(s.subjectMeta)) {
+                meta[subjectKey(k) === subjectKey(oldName) ? trimmed : k] = v;
+            }
+            return {
+                ...s,
+                subjects: s.subjects.map((x) => (subjectKey(x) === subjectKey(oldName) ? trimmed : x)),
+                exams: s.exams.map((e) => (subjectKey(e.subject) === subjectKey(oldName) ? { ...e, subject: trimmed } : e)),
+                activeSubject:
+                    s.activeSubject && subjectKey(s.activeSubject) === subjectKey(oldName)
+                        ? trimmed
+                        : s.activeSubject,
+                subjectMeta: meta,
+            };
+        });
         try {
             await api.renameSubject(oldName, trimmed);
         } catch (e) {
@@ -147,15 +178,22 @@ export function ExamsProvider({ children }) {
 
     // Delete a subject and every exam under it.
     async function deleteSubject(name) {
-        setState((s) => ({
-            ...s,
-            subjects: s.subjects.filter((x) => subjectKey(x) !== subjectKey(name)),
-            exams: s.exams.filter((e) => subjectKey(e.subject) !== subjectKey(name)),
-            activeSubject:
-                s.activeSubject && subjectKey(s.activeSubject) === subjectKey(name)
-                    ? null
-                    : s.activeSubject,
-        }));
+        setState((s) => {
+            const meta = { ...s.subjectMeta };
+            for (const k of Object.keys(meta)) {
+                if (subjectKey(k) === subjectKey(name)) delete meta[k];
+            }
+            return {
+                ...s,
+                subjects: s.subjects.filter((x) => subjectKey(x) !== subjectKey(name)),
+                exams: s.exams.filter((e) => subjectKey(e.subject) !== subjectKey(name)),
+                activeSubject:
+                    s.activeSubject && subjectKey(s.activeSubject) === subjectKey(name)
+                        ? null
+                        : s.activeSubject,
+                subjectMeta: meta,
+            };
+        });
         try {
             await api.deleteSubject(name);
         } catch (e) {
@@ -180,6 +218,7 @@ export function ExamsProvider({ children }) {
             renameExam,
             updateQuestion,
             addSubject,
+            updateSubjectDates,
             renameSubject,
             deleteSubject,
             setActiveSubject,

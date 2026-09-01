@@ -3,30 +3,23 @@ import { ExamsProvider, useExams } from "./context/ExamsContext.jsx";
 import { useVisibleExams } from "./hooks/useVisibleExams.js";
 import AppHeader from "./components/AppHeader.jsx";
 import SubjectTabs from "./components/SubjectTabs.jsx";
-import NewSubjectRow from "./components/NewSubjectRow.jsx";
-import AddExamForm from "./components/AddExamForm.jsx";
+import NewSubjectModal from "./components/NewSubjectModal.jsx";
 import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
 import ListPage from "./pages/ListPage.jsx";
 
 /**
  * App shell: the header, subject tabs and the action toolbar
- * ("+ הוספת בחינה", exam count, "ניקוי הכול") above the list of exams.
+ * (subject-level study dates, exam count, "ניקוי הכול") above the list of exams.
  */
 function AppShell() {
-    const { state, loading, clearAll } = useExams();
-    const visible = useVisibleExams();
-    const [addOpen, setAddOpen] = useState(false);
+    const { state, loading } = useExams();
     const [subjectFormOpen, setSubjectFormOpen] = useState(false);
 
     const hasSubjects = state.subjects.length > 0;
 
-    // When the last subject disappears (clear-all), close any open inline rows —
-    // mirrors closeAddRow()/closeNewSubjectRow() in the old clearAll().
+    // When the last subject disappears (clear-all), close any open modal.
     useEffect(() => {
-        if (!hasSubjects) {
-            setAddOpen(false);
-            setSubjectFormOpen(false);
-        }
+        if (!hasSubjects) setSubjectFormOpen(false);
     }, [hasSubjects]);
 
     // While the backend is hydrating, show a spinner instead of flashing "no subjects".
@@ -43,30 +36,57 @@ function AppShell() {
                 <>
                     <SubjectTabs newOpen={subjectFormOpen} onNew={() => setSubjectFormOpen(true)} />
 
-                    <div className="toolbar">
-                        <button
-                            type="button"
-                            className={"btn add-exam-standalone" + (addOpen ? " active" : "")}
-                            onClick={() => setAddOpen(true)}
-                        >
-                            + הוספת בחינה
-                        </button>
-                        <span className="count">
-                            {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
-                        </span>
-                        <button type="button" className="btn danger-ghost" onClick={clearAll}>
-                            ניקוי הכול
-                        </button>
-                    </div>
+                    <Toolbar />
 
-                    {subjectFormOpen && <NewSubjectRow onClose={() => setSubjectFormOpen(false)} />}
-                    {addOpen && <AddExamForm onClose={() => setAddOpen(false)} />}
+                    {subjectFormOpen && <NewSubjectModal onClose={() => setSubjectFormOpen(false)} />}
 
                     <ListPage />
                 </>
             ) : (
                 <NoSubjectsScreen />
             )}
+        </div>
+    );
+}
+
+/** The action toolbar: subject-level study dates, exam count and "ניקוי הכול". */
+function Toolbar() {
+    const { state, clearAll, updateSubjectDates } = useExams();
+    const visible = useVisibleExams();
+    const active = state.activeSubject;
+    const meta = (state.subjectMeta || {})[active] || {};
+
+    function setDates(studyStartDate, finalExamDate) {
+        if (!active) return;
+        updateSubjectDates(active, { studyStartDate, finalExamDate });
+    }
+
+    return (
+        <div className="toolbar">
+            <label className="date-control">
+                <span>תאריך התחלת לימודים</span>
+                <input
+                    type="date"
+                    value={meta.studyStartDate || ""}
+                    onChange={(e) => setDates(e.target.value, meta.finalExamDate || "")}
+                    aria-label="תאריך התחלת לימודים"
+                />
+            </label>
+            <label className="date-control">
+                <span>תאריך בחינה סופית</span>
+                <input
+                    type="date"
+                    value={meta.finalExamDate || ""}
+                    onChange={(e) => setDates(meta.studyStartDate || "", e.target.value)}
+                    aria-label="תאריך בחינה סופית"
+                />
+            </label>
+            <span className="count">
+                {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
+            </span>
+            <button type="button" className="btn danger-ghost" onClick={clearAll}>
+                ניקוי הכול
+            </button>
         </div>
     );
 }

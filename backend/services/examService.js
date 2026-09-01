@@ -7,16 +7,38 @@ import { db } from "../db/database.js";
 
 // ---------- Subjects ----------
 
+// Must stay in sync with QUESTION_COUNT in src/utils/examUtils.js.
+const QUESTION_COUNT = 5;
+
 export function listSubjects() {
-    return db.prepare("SELECT id, name FROM subjects ORDER BY id").all();
+    return db.prepare("SELECT id, name, study_start_date, final_exam_date FROM subjects ORDER BY id").all();
 }
 
-/** Create a subject; if one with the same name already exists it is returned instead (no duplicates). */
-export function createSubject(name) {
+/**
+ * Create a subject with its study dates and `examCount` auto-created exams.
+ * If a subject with the same name already exists it is returned instead (no duplicates,
+ * no new exams).
+ */
+export function createSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "" } = {}) {
     const existing = db.prepare("SELECT * FROM subjects WHERE name = ? COLLATE NOCASE").get(name);
-    if (existing) return existing;
-    const info = db.prepare("INSERT INTO subjects (name) VALUES (?)").run(name);
-    return db.prepare("SELECT id, name FROM subjects WHERE id = ?").get(info.lastInsertRowid);
+    if (existing) return { subject: existing, exams: [] };
+
+    const info = db.prepare(
+        "INSERT INTO subjects (name, study_start_date, final_exam_date) VALUES (?, ?, ?)",
+    ).run(name, studyStartDate || "", finalExamDate || "");
+    const subjectId = Number(info.lastInsertRowid);
+
+    const exams = [];
+    for (let i = 1; i <= examCount; i++) {
+        exams.push(createExam(subjectId, `בחינה ${i}`, QUESTION_COUNT));
+    }
+    return { subject: db.prepare("SELECT * FROM subjects WHERE id = ?").get(subjectId), exams };
+}
+
+/** Update the study start / final exam dates of a subject (subject-level data). */
+export function updateSubjectDates(id, studyStartDate, finalExamDate) {
+    db.prepare("UPDATE subjects SET study_start_date = ?, final_exam_date = ? WHERE id = ?")
+        .run(studyStartDate || "", finalExamDate || "", id);
 }
 
 /** Look up a subject by its display name (case-insensitive). Returns the row or null. */
@@ -42,7 +64,7 @@ export function deleteSubject(id) {
 // ---------- Exams ----------
 
 /** Create an exam under a subject and seed it with `questionCount` empty questions. */
-export function createExam(subjectId, name, questionCount) {
+export function createExam(subjectId, name, questionCount = QUESTION_COUNT) {
     const info = db.prepare("INSERT INTO exams (subject_id, name) VALUES (?, ?)").run(subjectId, name);
     const examId = Number(info.lastInsertRowid);
 
@@ -142,9 +164,16 @@ export function getFullState() {
     }
     if (!activeSubject && subjects.length > 0) activeSubject = subjects[0].name;
 
+    // Subject-level data keyed by display name (dates used later for recommended completion dates).
+    const subjectMeta = {};
+    for (const s of subjects) {
+        subjectMeta[s.name] = { studyStartDate: s.study_start_date || "", finalExamDate: s.final_exam_date || "" };
+    }
+
     return {
         subjects: subjects.map((s) => s.name),
         exams,
         activeSubject,
+        subjectMeta,
     };
 }

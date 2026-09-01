@@ -12,8 +12,7 @@ router.post("/", (req, res) => {
     const subject = svc.findSubjectByName(subjectName);
     if (!subject) return res.status(404).json({ error: `Unknown subject: ${subjectName}` });
 
-    // QUESTION_COUNT must stay in sync with the frontend (src/utils/examUtils.js).
-    const exam = svc.createExam(Number(subject.id), name, 5);
+    const exam = svc.createExam(Number(subject.id), name);
     res.status(201).json({ ...exam, subject: subject.name });
 });
 

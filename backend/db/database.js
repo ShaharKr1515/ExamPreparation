@@ -25,7 +25,9 @@ db.exec("PRAGMA foreign_keys = ON;");
 db.exec(`
     CREATE TABLE IF NOT EXISTS subjects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE COLLATE NOCASE
+        name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+        study_start_date TEXT NOT NULL DEFAULT '',
+        final_exam_date TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS exams (
@@ -46,5 +48,14 @@ db.exec(`
 
     CREATE INDEX IF NOT EXISTS idx_exams_subject ON exams(subject_id);
 `);
+
+// Migration: add the subject-level date columns to databases created before they existed.
+const subjectCols = db.prepare("PRAGMA table_info(subjects)").all().map((c) => c.name);
+if (!subjectCols.includes("study_start_date")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN study_start_date TEXT NOT NULL DEFAULT ''");
+}
+if (!subjectCols.includes("final_exam_date")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN final_exam_date TEXT NOT NULL DEFAULT ''");
+}
 
 console.log(`[db] SQLite database at ${dbPath}`);

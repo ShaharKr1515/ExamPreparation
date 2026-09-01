@@ -29,8 +29,17 @@ export function fetchState() {
 }
 
 // Subjects are identified by name on the frontend, so we send/return names.
-export function createSubject(name) {
-    return request("/api/subjects", json({ name }));
+// Creates the subject with its study dates and `examCount` auto-created exams.
+export function createSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "" } = {}) {
+    return request("/api/subjects", json({ name, examCount, studyStartDate, finalExamDate }));
+}
+
+// Update the subject-level dates (study start / final exam).
+export function updateSubjectDates(name, { studyStartDate = "", finalExamDate = "" }) {
+    return request(`/api/subjects/${encodeURIComponent(name)}/dates`, {
+        method: "PATCH",
+        body: JSON.stringify({ studyStartDate, finalExamDate }),
+    });
 }
 
 // Rename a subject (by its current display name).

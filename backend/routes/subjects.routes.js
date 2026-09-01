@@ -8,11 +8,27 @@ router.get("/", (_req, res) => {
     res.json(svc.listSubjects());
 });
 
-// Create a subject. Duplicate names are never duplicated — the existing row is returned.
+// Create a subject with its study dates and `examCount` auto-created exams.
+// Duplicate names are never duplicated — the existing row (and no new exams) is returned.
 router.post("/", (req, res) => {
     const name = String(req.body?.name ?? "").trim();
     if (!name) return res.status(400).json({ error: "Subject name is required" });
-    res.status(201).json(svc.createSubject(name));
+    const examCount = Math.max(0, Math.min(50, Number(req.body?.examCount) || 0));
+    const studyStartDate = String(req.body?.studyStartDate ?? "");
+    const finalExamDate = String(req.body?.finalExamDate ?? "");
+    res.status(201).json(svc.createSubject(name, { examCount, studyStartDate, finalExamDate }));
+});
+
+// Update the subject-level dates (study start / final exam) of a subject.
+router.patch("/:id/dates", (req, res) => {
+    const subject = svc.findSubjectByName(String(req.params.id ?? ""));
+    if (!subject) return res.status(404).json({ error: `Unknown subject: ${req.params.id}` });
+    svc.updateSubjectDates(
+        Number(subject.id),
+        String(req.body?.studyStartDate ?? ""),
+        String(req.body?.finalExamDate ?? ""),
+    );
+    res.json(svc.findSubjectByName(String(req.params.id)));
 });
 
 // Rename a subject (identified by its current display name, like the rest of the API).

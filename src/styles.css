@@ -113,31 +113,6 @@ body {
     box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
 }
 
-/* "Add exam" pill button in the toolbar */
-.btn.add-exam-standalone {
-    display: inline-flex;
-    align-items: center;
-    padding: 9px 18px;
-    border-radius: 999px;
-    border: 1.5px solid var(--accent);
-    background: #fff;
-    color: var(--accent);
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-}
-
-.btn.add-exam-standalone:hover {
-    background: #eef0fb;
-}
-
-.btn.add-exam-standalone.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
-}
-
 .btn.small {
     padding: 6px 12px;
     border-radius: 8px;
@@ -372,30 +347,6 @@ select.cell.bad {
     font-size: 0.95rem;
 }
 
-/* --- Add-exam row (opened from the "+ הוספת בחינה" tab) ------------------ */
-
-.add-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-top: 14px;
-    padding: 12px;
-    background: var(--card);
-    border: 1px solid #c7cbf3;
-    border-radius: var(--radius);
-    box-shadow: 0 6px 18px rgba(29, 36, 51, 0.06);
-}
-
-.add-row input[type="text"] {
-    flex: 1 1 240px;
-    min-width: 160px;
-}
-
-.add-row .btn.primary,
-.add-row .btn.ghost {
-    flex-shrink: 0;
-}
-
 .btn.ghost {
     background: #fff;
     color: var(--muted);
@@ -500,4 +451,119 @@ select.cell.bad {
 .subject-create-form input[type="text"] {
     flex: 1;
     min-width: 200px;
+}
+
+/* --- Subject-level date controls in the toolbar ---------------------------- */
+
+.date-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+}
+
+.date-control span {
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.date-control input[type="date"] {
+    padding: 4px 6px;
+    border-radius: 7px;
+    font-size: 0.82rem;
+}
+
+/* --- New-subject modal ------------------------------------------------------ */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(29, 36, 51, 0.45);
+}
+
+.subject-modal {
+    width: min(480px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: 0 24px 60px rgba(29, 36, 51, 0.35);
+}
+
+.subject-modal h2 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.subject-modal .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.subject-modal .field > span {
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* --- "Add exam" card in the exams grid -------------------------------------- */
+
+.exam-card.add-exam-card {
+    width: 200px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #fff;
+    border: 2px dashed #c7cbf3;
+    border-radius: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.exam-card.add-exam-card:hover {
+    background: #eef0fb;
+    border-color: var(--accent);
+}
+
+.add-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    font-size: 1.9rem;
+    line-height: 1;
+    border-radius: 50%;
+    background: #eef0fb;
+}
+
+.add-label {
+    font-size: 0.85rem;
+    font-weight: 600;
 }
