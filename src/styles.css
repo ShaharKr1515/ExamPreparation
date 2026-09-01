@@ -511,7 +511,7 @@ select.cell.bad {
     gap: 4px;
 }
 
-.subject-modal .field > span {
+.subject-modal .field>span {
     font-size: 0.82rem;
     color: var(--muted);
 }
