@@ -8,11 +8,13 @@ RUN npm install
 
 COPY . .
 
+ENV DATABASE_PATH=/data/exampreparation.db
+
 RUN npm run build
 
 EXPOSE 3000
 
-# The SQLite DB lives at ./data/exampreparation.db by default. To persist it across
-# container rebuilds (Docker/Unraid), mount a volume there and/or set DATABASE_PATH, e.g.:
-#   -v /path/to/data:/app/data        or        -e DATABASE_PATH=/data/app.db
+# SQLite data is stored in /data.
+# Mount /data to a persistent host directory, e.g.:
+# /mnt/user/appdata/exampreparation -> /data
 CMD ["node", "backend/server.js"]
