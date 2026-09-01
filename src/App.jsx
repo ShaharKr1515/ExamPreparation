@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ExamsProvider, useExams } from "./context/ExamsContext.jsx";
+import { useVisibleExams } from "./hooks/useVisibleExams.js";
 import AppHeader from "./components/AppHeader.jsx";
 import SubjectTabs from "./components/SubjectTabs.jsx";
 import NewSubjectRow from "./components/NewSubjectRow.jsx";
+import AddExamForm from "./components/AddExamForm.jsx";
 import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
 import ListPage from "./pages/ListPage.jsx";
-import ExamDetailPage from "./pages/ExamDetailPage.jsx";
 
 /**
- * Shared shell: the header, notice, subject tabs and the standalone
- * "+ הוספת בחינה" button stay visible on BOTH the list page and the detail
- * page (same as the original syncViews() behavior).
+ * App shell: the header, subject tabs and the action toolbar
+ * ("+ הוספת בחינה", exam count, "ניקוי הכול") above the list of exams.
  */
 function AppShell() {
-    const { state, loading } = useExams();
+    const { state, loading, clearAll } = useExams();
+    const visible = useVisibleExams();
     const [addOpen, setAddOpen] = useState(false);
     const [subjectFormOpen, setSubjectFormOpen] = useState(false);
 
@@ -43,21 +43,26 @@ function AppShell() {
                 <>
                     <SubjectTabs newOpen={subjectFormOpen} onNew={() => setSubjectFormOpen(true)} />
 
-                    <button
-                        type="button"
-                        className={"btn add-exam-standalone" + (addOpen ? " active" : "")}
-                        onClick={() => setAddOpen(true)}
-                    >
-                        + הוספת בחינה
-                    </button>
+                    <div className="toolbar">
+                        <button
+                            type="button"
+                            className={"btn add-exam-standalone" + (addOpen ? " active" : "")}
+                            onClick={() => setAddOpen(true)}
+                        >
+                            + הוספת בחינה
+                        </button>
+                        <span className="count">
+                            {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
+                        </span>
+                        <button type="button" className="btn danger-ghost" onClick={clearAll}>
+                            ניקוי הכול
+                        </button>
+                    </div>
 
                     {subjectFormOpen && <NewSubjectRow onClose={() => setSubjectFormOpen(false)} />}
+                    {addOpen && <AddExamForm onClose={() => setAddOpen(false)} />}
 
-                    <Routes>
-                        <Route path="/" element={<ListPage addOpen={addOpen} onCloseAdd={() => setAddOpen(false)} />} />
-                        <Route path="/exam/:id" element={<ExamDetailPage />} />
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
+                    <ListPage />
                 </>
             ) : (
                 <NoSubjectsScreen />
@@ -69,9 +74,7 @@ function AppShell() {
 export default function App() {
     return (
         <ExamsProvider>
-            <BrowserRouter>
-                <AppShell />
-            </BrowserRouter>
+            <AppShell />
         </ExamsProvider>
     );
 }

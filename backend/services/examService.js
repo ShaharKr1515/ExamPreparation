@@ -24,6 +24,21 @@ export function findSubjectByName(name) {
     return db.prepare("SELECT * FROM subjects WHERE name = ? COLLATE NOCASE").get(name) || null;
 }
 
+/** Rename a subject. Throws when the new name is empty or already taken (case-insensitive). */
+export function renameSubject(id, newName) {
+    const name = String(newName ?? "").trim();
+    if (!name) throw Object.assign(new Error("Subject name is required"), { status: 400 });
+    const clash = db.prepare("SELECT id FROM subjects WHERE name = ? COLLATE NOCASE AND id != ?").get(name, id);
+    if (clash) throw Object.assign(new Error(`A subject named "${name}" already exists`), { status: 409 });
+    db.prepare("UPDATE subjects SET name = ? WHERE id = ?").run(name, id);
+}
+
+/** Delete a subject; its exams and questions are removed via FK cascade. */
+export function deleteSubject(id) {
+    const info = db.prepare("DELETE FROM subjects WHERE id = ?").run(id);
+    return Number(info.changes) > 0;
+}
+
 // ---------- Exams ----------
 
 /** Create an exam under a subject and seed it with `questionCount` empty questions. */

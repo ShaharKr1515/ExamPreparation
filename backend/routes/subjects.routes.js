@@ -15,4 +15,24 @@ router.post("/", (req, res) => {
     res.status(201).json(svc.createSubject(name));
 });
 
+// Rename a subject (identified by its current display name, like the rest of the API).
+router.patch("/:id", (req, res) => {
+    const subject = svc.findSubjectByName(String(req.params.id ?? ""));
+    if (!subject) return res.status(404).json({ error: `Unknown subject: ${req.params.id}` });
+    try {
+        svc.renameSubject(Number(subject.id), String(req.body?.name ?? ""));
+    } catch (e) {
+        return res.status(e.status || 500).json({ error: e.message });
+    }
+    res.json(svc.findSubjectByName(String(req.body?.name ?? "")));
+});
+
+// Delete a subject and everything under it.
+router.delete("/:id", (req, res) => {
+    const subject = svc.findSubjectByName(String(req.params.id ?? ""));
+    if (!subject) return res.status(404).json({ error: `Unknown subject: ${req.params.id}` });
+    svc.deleteSubject(Number(subject.id));
+    res.json({ ok: true });
+});
+
 export default router;

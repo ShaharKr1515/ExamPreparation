@@ -31,9 +31,6 @@ export default function AddExamForm({ onClose }) {
                 placeholder="שם הבחינה (למשל: בחינת מתמטיקה 5 יח'…)"
                 aria-label="שם הבחינה"
             />
-            <span className="add-hint">
-                {state.activeSubject ? `תיוג אוטומטי: ${state.activeSubject}` : "בחר מקצוע בלשוניות למעלה"}
-            </span>
             <button type="submit" className="btn primary">+ הוספת בחינה</button>
             <button type="button" className="btn ghost" onClick={onClose}>ביטול</button>
         </form>

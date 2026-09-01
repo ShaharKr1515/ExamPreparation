@@ -54,20 +54,6 @@ body {
     color: var(--muted);
 }
 
-.notice {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin-top: 16px;
-    padding: 10px 14px;
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    border-radius: 10px;
-    color: #9a3412;
-    font-size: 0.92rem;
-    max-width: fit-content;
-}
-
 .toolbar {
     display: flex;
     gap: 12px;
@@ -78,10 +64,12 @@ body {
 
 .subject-bar {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     overflow-x: auto;
-    padding: 4px 2px 0;
-    border-bottom: 1px solid var(--line);
+    margin-top: 18px;
+    padding: 6px;
+    background: #e9ecf5;
+    border-radius: 12px;
 }
 
 /* Thin scrollbar for all modern browsers (incl. Safari) */
@@ -98,15 +86,14 @@ body {
     border-radius: 999px;
 }
 
-/* Tab-style subject picker */
+/* Pill-style subject picker */
 .subject-btn {
     font: inherit;
     font-size: 0.9rem;
     white-space: nowrap;
     flex: 0 0 auto;
-    position: relative;
-    padding: 8px 16px 10px;
-    border-radius: 10px 10px 0 0;
+    padding: 8px 16px;
+    border-radius: 999px;
     border: none;
     background: transparent;
     color: var(--muted);
@@ -115,51 +102,40 @@ body {
 }
 
 .subject-btn:hover {
-    background: #eef0fb;
+    background: #d8dbea;
     color: var(--ink);
 }
 
 .subject-btn.active {
-    color: var(--accent);
-    font-weight: 600;
-}
-
-/* Accent underline on the active tab, sitting on the bar's bottom line */
-.subject-btn.active::after {
-    content: "";
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: -2px;
-    height: 3px;
-    border-radius: 999px;
     background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
 }
 
-/* Standalone "add exam" button — clearly separated below the subject tabs */
-.add-exam-standalone {
-    display: block;
-    margin-top: 24px;
-    padding: 8px 20px;
+/* "Add exam" pill button in the toolbar */
+.btn.add-exam-standalone {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 18px;
     border-radius: 999px;
-    border: 1px dashed #c7cbf3;
+    border: 1.5px solid var(--accent);
     background: #fff;
     color: var(--accent);
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
-.add-exam-standalone:hover {
+.btn.add-exam-standalone:hover {
     background: #eef0fb;
-    border-color: var(--accent);
 }
 
-.add-exam-standalone.active {
+.btn.add-exam-standalone.active {
     background: var(--accent);
     border-color: var(--accent);
-    border-style: solid;
     color: #fff;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
 .btn.small {
@@ -169,9 +145,19 @@ body {
 }
 
 .count {
-    color: var(--muted);
-    font-size: 0.9rem;
+    margin-inline-start: auto;
+    padding: 7px 14px;
+    background: #eef0fb;
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.85rem;
+    font-weight: 600;
     white-space: nowrap;
+}
+
+/* Pill shape for the clear-all button inside the toolbar */
+.toolbar .btn.danger-ghost {
+    border-radius: 999px;
 }
 
 .btn {
@@ -235,7 +221,7 @@ select:focus {
 
 .exam-card {
     flex: 0 0 auto;
-    width: 320px;
+    width: 460px;
     background: #fff;
     border: 1px solid var(--line);
     border-radius: 12px;
@@ -251,18 +237,6 @@ select:focus {
     border-bottom: 1px solid var(--line);
 }
 
-.subject-badge {
-    margin: 8px 10px 0;
-    align-self: flex-start;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--accent);
-    background: #eef0fb;
-    border: 1px solid #d9dcf8;
-    border-radius: 999px;
-    padding: 2px 10px;
-}
-
 .cell {
     width: 100%;
     min-width: 0;
@@ -273,6 +247,8 @@ select:focus {
 
 .cell.exam-name {
     flex: 1;
+    min-width: 240px;
+    font-size: 0.95rem;
     font-weight: 600;
     text-align: start;
 }
@@ -430,86 +406,66 @@ select.cell.bad {
     background: #f2f4fa;
 }
 
-.add-hint {
-    flex-basis: 100%;
-    font-size: 0.8rem;
-    color: var(--muted);
-}
-
 /* The "new subject" tab in the bar — visually distinct from subject tabs */
 .subject-btn.add-tab {
     color: var(--accent);
     font-weight: 600;
 }
 
-.subject-btn.add-tab.active::after {
-    background: #c7cbf3;
+.subject-btn.add-tab:hover:not(.active) {
+    background: #e2defc;
 }
 
-/* --- Exam detail page ------------------------------------------------------ */
-
-.back-link {
-    font: inherit;
-    margin-top: 18px;
-    padding: 7px 12px;
-    background: none;
-    border: none;
-    color: var(--accent);
-    cursor: pointer;
-    font-size: 0.9rem;
+.subject-btn.add-tab.active {
+    color: #fff;
 }
 
-.back-link:hover {
-    text-decoration: underline;
-}
+/* --- Subject popup menu (rename / delete) ---------------------------------- */
 
-.detail-title-card {
+.subject-menu {
+    z-index: 50;
+    width: 240px;
     display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-    padding: 16px 18px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 14px 38px rgba(29, 36, 51, 0.22);
+    transform-origin: top right;
+    animation: subject-menu-in 0.16s ease-out;
 }
 
-.detail-title-card h2 {
-    margin: 0;
-    font-size: 1.35rem;
-    flex: 1;
-    min-width: 0;
-    overflow-wrap: anywhere;
+@keyframes subject-menu-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
 
-.subject-badge.inline {
-    display: inline-block;
-    margin: 0;
-    align-self: center;
+.subject-menu .rename-input {
+    font-size: 0.85rem;
 }
 
-.detail-table-wrap {
-    padding: 8px 16px 16px;
+.subject-menu button.danger {
+    font: inherit;
+    padding: 8px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--bad-line);
+    background: transparent;
+    color: var(--bad-ink);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
 }
 
-.detail-table th,
-.detail-table td {
-    padding: 9px 6px;
-    font-size: 0.9rem;
-}
-
-.detail-table .cell {
-    font-size: 0.9rem;
-    padding: 8px 6px;
-}
-
-.detail-table select.cell {
-    min-width: 120px;
-}
-
-.detail-table input[type="date"] {
-    max-width: 170px;
-}
-
-.detail-table input.points {
-    max-width: 110px;
+.subject-menu button.danger:hover {
+    background: var(--bad-bg);
 }
 
 /* --- "No subjects yet" screen ---------------------------------------------- */

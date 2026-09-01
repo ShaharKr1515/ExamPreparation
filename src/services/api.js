@@ -33,6 +33,19 @@ export function createSubject(name) {
     return request("/api/subjects", json({ name }));
 }
 
+// Rename a subject (by its current display name).
+export function renameSubject(oldName, newName) {
+    return request(`/api/subjects/${encodeURIComponent(oldName)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: newName }),
+    });
+}
+
+// Delete a subject and all of its exams.
+export function deleteSubject(name) {
+    return request(`/api/subjects/${encodeURIComponent(name)}`, { method: "DELETE" });
+}
+
 export function addExam(subjectName, name) {
     return request("/api/exams", json({ subjectName, name }));
 }

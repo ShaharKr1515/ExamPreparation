@@ -47,10 +47,10 @@ function QuestionRow({ exam, q, qi }) {
     );
 }
 
-/** The 5-question table shared by list cards and the detail page. */
-export default function QuestionTable({ exam, detail = false }) {
+/** The 5-question table shown inside each exam card. */
+export default function QuestionTable({ exam }) {
     return (
-        <table className={"q-table" + (detail ? " detail-table" : "")}>
+        <table className="q-table">
             <thead>
                 <tr>
                     {QUESTION_HEADERS.map((label) => (

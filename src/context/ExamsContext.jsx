@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import * as api from "../services/api.js";
-import { todayStr } from "../utils/examUtils.js";
+import { subjectKey, todayStr } from "../utils/examUtils.js";
 
 const ExamsContext = createContext(null);
 
@@ -124,6 +124,46 @@ export function ExamsProvider({ children }) {
         }
     }
 
+    // Rename a subject; every reference to the old name is updated in place.
+    async function renameSubject(oldName, newName) {
+        const trimmed = String(newName || "").trim();
+        if (!trimmed || subjectKey(trimmed) === subjectKey(oldName)) return;
+        setState((s) => ({
+            ...s,
+            subjects: s.subjects.map((x) => (subjectKey(x) === subjectKey(oldName) ? trimmed : x)),
+            exams: s.exams.map((e) => (subjectKey(e.subject) === subjectKey(oldName) ? { ...e, subject: trimmed } : e)),
+            activeSubject:
+                s.activeSubject && subjectKey(s.activeSubject) === subjectKey(oldName)
+                    ? trimmed
+                    : s.activeSubject,
+        }));
+        try {
+            await api.renameSubject(oldName, trimmed);
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    // Delete a subject and every exam under it.
+    async function deleteSubject(name) {
+        setState((s) => ({
+            ...s,
+            subjects: s.subjects.filter((x) => subjectKey(x) !== subjectKey(name)),
+            exams: s.exams.filter((e) => subjectKey(e.subject) !== subjectKey(name)),
+            activeSubject:
+                s.activeSubject && subjectKey(s.activeSubject) === subjectKey(name)
+                    ? null
+                    : s.activeSubject,
+        }));
+        try {
+            await api.deleteSubject(name);
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
     // Pure UI state — which tab is selected. Never persisted server-side.
     function setActiveSubject(subject) {
         setState((s) => ({ ...s, activeSubject: subject }));
@@ -140,6 +180,8 @@ export function ExamsProvider({ children }) {
             renameExam,
             updateQuestion,
             addSubject,
+            renameSubject,
+            deleteSubject,
             setActiveSubject,
         }),
         [state, loading, error],
