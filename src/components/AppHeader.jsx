@@ -10,10 +10,10 @@ export default function AppHeader() {
             </header>
 
             <div className="notice" role="note">
-                <span aria-hidden="true">🗑️</span>
+                <span aria-hidden="true">�</span>
                 <div>
-                    <strong>המידע אינו נשמר.</strong>
-                    הנתונים נשמרים בזיכרון הדף בלבד — רענון הדף ימחק את כל מה שהוזן.
+                    <strong>המידע נשמר.</strong>
+                    הנתונים נשמרים על השרת — רענון הדף או חזרה אליו יציגו את מה שהוזן.
                 </div>
             </div>
         </>

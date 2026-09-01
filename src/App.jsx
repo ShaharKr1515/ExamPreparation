@@ -14,7 +14,7 @@ import ExamDetailPage from "./pages/ExamDetailPage.jsx";
  * page (same as the original syncViews() behavior).
  */
 function AppShell() {
-    const { state } = useExams();
+    const { state, loading } = useExams();
     const [addOpen, setAddOpen] = useState(false);
     const [subjectFormOpen, setSubjectFormOpen] = useState(false);
 
@@ -28,6 +28,12 @@ function AppShell() {
             setSubjectFormOpen(false);
         }
     }, [hasSubjects]);
+
+    // While the backend is hydrating, show a spinner instead of flashing "no subjects".
+    // (Must come AFTER all hooks — early returns before hooks break React's rules.)
+    if (loading) {
+        return <div className="wrap"><p className="empty-msg">טוען…</p></div>;
+    }
 
     return (
         <div className="wrap">

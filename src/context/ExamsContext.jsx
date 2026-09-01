@@ -1,102 +1,148 @@
-import React, { createContext, useContext, useMemo, useReducer } from "react";
-import { QUESTION_COUNT, makeQuestion, subjectKey, todayStr } from "../utils/examUtils.js";
-import { loadInitialData } from "../utils/storage.js";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import * as api from "../services/api.js";
+import { todayStr } from "../utils/examUtils.js";
 
 const ExamsContext = createContext(null);
 
-// In-memory id counter. When persistence is added later, seed this from the
-// highest loaded exam id (see src/utils/storage.js).
-let nextId = 1;
-
-function makeExam(name, subject) {
-    return {
-        id: nextId++,
-        name,
-        subject,
-        questions: Array.from({ length: QUESTION_COUNT }, makeQuestion),
-    };
-}
-
-function reducer(state, action) {
-    switch (action.type) {
-        case "add-exam": {
-            const subject = state.activeSubject;
-            if (!subject) return state; // no subjects → the add row can't be open anyway
-            return { ...state, exams: [...state.exams, makeExam(action.name, subject)] };
-        }
-
-        case "remove-exam":
-            return { ...state, exams: state.exams.filter((e) => e.id !== action.id) };
-
-        // Wipe every exam AND subject — back to the "create your first subject" screen.
-        case "clear-all":
-            return { exams: [], subjects: [], activeSubject: null };
-
-        case "rename-exam":
-            return {
-                ...state,
-                exams: state.exams.map((e) => (e.id === action.id ? { ...e, name: action.name } : e)),
-            };
-
-        case "update-question": {
-            const { examId, qi, field, value } = action;
-            return {
-                ...state,
-                exams: state.exams.map((exam) => {
-                    if (exam.id !== examId || !exam.questions[qi]) return exam;
-                    const questions = exam.questions.slice();
-                    const q = { ...questions[qi] };
-                    // First touch on an empty row: stamp today's date automatically.
-                    if ((field === "success" || field === "points") && !q.date) {
-                        q.date = todayStr();
-                    }
-                    q[field] = value;
-                    questions[qi] = q;
-                    return { ...exam, questions };
-                }),
-            };
-        }
-
-        // Duplicate names are handled consistently: an existing subject (matched
-        // case/whitespace-insensitively) is never duplicated — we just switch to it.
-        case "add-subject": {
-            const name = String(action.name || "").trim();
-            if (!name) return state;
-            const existing = state.subjects.find((s) => subjectKey(s) === subjectKey(name));
-            if (existing) return { ...state, activeSubject: existing };
-            return { ...state, subjects: [...state.subjects, name], activeSubject: name };
-        }
-
-        case "set-active-subject":
-            return { ...state, activeSubject: action.subject };
-
-        default:
-            return state;
-    }
+// State shape is unchanged for consumers:
+//   exams: [{ id, name, subject (display string), questions: [{ success, date, points }] }]
+//   subjects: [name strings]          activeSubject: string | null  (pure UI state)
+function emptyState() {
+    return { exams: [], subjects: [], activeSubject: null };
 }
 
 export function ExamsProvider({ children }) {
-    const [state, dispatch] = useReducer(reducer, undefined, loadInitialData);
+    const [state, setState] = useState(emptyState());
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Hydrate from the backend on mount.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const data = await api.fetchState();
+                if (!cancelled) setState(data);
+            } catch (e) {
+                console.error("Failed to load state", e);
+                if (!cancelled) setError(e.message || "Failed to load");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    // --- Actions: optimistic local update + API call (errors surfaced via `error`) ---
+
+    async function addExam(name) {
+        const subject = state.activeSubject;
+        if (!subject) return; // no subjects → the add row can't be open anyway
+        try {
+            const exam = await api.addExam(subject, name);
+            setState((s) => ({ ...s, exams: [...s.exams, exam] }));
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    async function removeExam(id) {
+        try {
+            await api.removeExam(id);
+            setState((s) => ({ ...s, exams: s.exams.filter((e) => e.id !== id) }));
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    // Wipe every exam AND subject — back to the "create your first subject" screen.
+    async function clearAll() {
+        if (!confirm("למחוק את כל הבחינות?")) return;
+        try {
+            await api.clearAll();
+            setState(emptyState());
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    async function renameExam(id, name) {
+        // Optimistic so the inline input stays responsive while typing.
+        setState((s) => ({ ...s, exams: s.exams.map((e) => (e.id === id ? { ...e, name } : e)) }));
+        try {
+            await api.renameExam(id, name);
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    async function updateQuestion(examId, qi, field, value) {
+        setState((s) => ({
+            ...s,
+            exams: s.exams.map((exam) => {
+                if (exam.id !== examId || !exam.questions[qi]) return exam;
+                const questions = exam.questions.slice();
+                const q = { ...questions[qi] };
+                // First touch on an empty row stamps today's date automatically.
+                if ((field === "success" || field === "points") && !q.date) {
+                    q.date = todayStr();
+                }
+                q[field] = value;
+                questions[qi] = q;
+                return { ...exam, questions };
+            }),
+        }));
+        try {
+            await api.updateQuestion(examId, qi, field, value);
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    // Duplicate names are handled consistently: an existing subject is never duplicated —
+    // we just switch to it.
+    async function addSubject(name) {
+        const trimmed = String(name || "").trim();
+        if (!trimmed) return;
+        try {
+            const subject = await api.createSubject(trimmed);
+            setState((s) => {
+                const existing = s.subjects.find((x) => x.toLowerCase() === subject.name.toLowerCase());
+                if (existing) return { ...s, activeSubject: existing };
+                return { ...s, subjects: [...s.subjects, subject.name], activeSubject: subject.name };
+            });
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    // Pure UI state — which tab is selected. Never persisted server-side.
+    function setActiveSubject(subject) {
+        setState((s) => ({ ...s, activeSubject: subject }));
+    }
 
     const value = useMemo(
         () => ({
             state,
-            addExam: (name) => dispatch({ type: "add-exam", name }),
-            removeExam: (id) => dispatch({ type: "remove-exam", id }),
-            clearAll: () => {
-                // Bug fix vs. the old vanilla version: clearing now works even when
-                // there are zero exams but subjects still exist.
-                if (state.exams.length === 0 && state.subjects.length === 0) return;
-                if (!confirm("למחוק את כל הבחינות?")) return;
-                dispatch({ type: "clear-all" });
-            },
-            renameExam: (id, name) => dispatch({ type: "rename-exam", id, name }),
-            updateQuestion: (examId, qi, field, value) =>
-                dispatch({ type: "update-question", examId, qi, field, value }),
-            addSubject: (name) => dispatch({ type: "add-subject", name }),
-            setActiveSubject: (subject) => dispatch({ type: "set-active-subject", subject }),
+            loading,
+            error,
+            addExam,
+            removeExam,
+            clearAll,
+            renameExam,
+            updateQuestion,
+            addSubject,
+            setActiveSubject,
         }),
-        [state],
+        [state, loading, error],
     );
 
     return <ExamsContext.Provider value={value}>{children}</ExamsContext.Provider>;
