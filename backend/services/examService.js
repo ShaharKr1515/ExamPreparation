@@ -11,21 +11,24 @@ import { db } from "../db/database.js";
 const QUESTION_COUNT = 5;
 
 export function listSubjects() {
-    return db.prepare("SELECT id, name, study_start_date, final_exam_date FROM subjects ORDER BY id").all();
+    return db
+        .prepare("SELECT id, name, study_start_date, final_exam_date, planned_exam_count FROM subjects ORDER BY id")
+        .all();
 }
 
 /**
  * Create a subject with its study dates and `examCount` auto-created exams.
- * If a subject with the same name already exists it is returned instead (no duplicates,
- * no new exams).
+ * The original `examCount` is persisted as `planned_exam_count` so the frontend can
+ * derive recommended due dates later. If a subject with the same name already exists
+ * it is returned instead (no duplicates, no new exams).
  */
 export function createSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "" } = {}) {
     const existing = db.prepare("SELECT * FROM subjects WHERE name = ? COLLATE NOCASE").get(name);
     if (existing) return { subject: existing, exams: [] };
 
     const info = db.prepare(
-        "INSERT INTO subjects (name, study_start_date, final_exam_date) VALUES (?, ?, ?)",
-    ).run(name, studyStartDate || "", finalExamDate || "");
+        "INSERT INTO subjects (name, study_start_date, final_exam_date, planned_exam_count) VALUES (?, ?, ?, ?)",
+    ).run(name, studyStartDate || "", finalExamDate || "", Math.max(0, Math.min(50, Number(examCount) || 0)));
     const subjectId = Number(info.lastInsertRowid);
 
     const exams = [];
@@ -164,10 +167,15 @@ export function getFullState() {
     }
     if (!activeSubject && subjects.length > 0) activeSubject = subjects[0].name;
 
-    // Subject-level data keyed by display name (dates used later for recommended completion dates).
+    // Subject-level data keyed by display name (dates + planned exam count, used later
+    // to derive recommended due dates on the frontend).
     const subjectMeta = {};
     for (const s of subjects) {
-        subjectMeta[s.name] = { studyStartDate: s.study_start_date || "", finalExamDate: s.final_exam_date || "" };
+        subjectMeta[s.name] = {
+            studyStartDate: s.study_start_date || "",
+            finalExamDate: s.final_exam_date || "",
+            plannedExamCount: Number(s.planned_exam_count) || 0,
+        };
     }
 
     return {

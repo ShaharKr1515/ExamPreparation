@@ -7,7 +7,8 @@ const ExamsContext = createContext(null);
 // State shape:
 //   exams: [{ id, name, subject (display string), questions: [{ success, date, points }] }]
 //   subjects: [name strings]          activeSubject: string | null  (pure UI state)
-//   subjectMeta: { [subjectName]: { studyStartDate, finalExamDate } }  (subject-level dates)
+//   subjectMeta: { [subjectName]: { studyStartDate, finalExamDate, plannedExamCount } }
+//     (subject-level data; due dates are derived from these, never stored)
 function emptyState() {
     return { exams: [], subjects: [], activeSubject: null, subjectMeta: {} };
 }
@@ -130,7 +131,11 @@ export function ExamsProvider({ children }) {
                     activeSubject: subject.name,
                     subjectMeta: {
                         ...s.subjectMeta,
-                        [subject.name]: { studyStartDate: subject.study_start_date || "", finalExamDate: subject.final_exam_date || "" },
+                        [subject.name]: {
+                            studyStartDate: subject.study_start_date || "",
+                            finalExamDate: subject.final_exam_date || "",
+                            plannedExamCount: Number(subject.planned_exam_count) || 0,
+                        },
                     },
                 };
             });
@@ -144,7 +149,11 @@ export function ExamsProvider({ children }) {
     async function updateSubjectDates(name, { studyStartDate = "", finalExamDate = "" } = {}) {
         setState((s) => ({
             ...s,
-            subjectMeta: { ...s.subjectMeta, [name]: { studyStartDate, finalExamDate } },
+            // Preserve plannedExamCount — only the dates change.
+            subjectMeta: {
+                ...s.subjectMeta,
+                [name]: { ...(s.subjectMeta[name] || {}), studyStartDate, finalExamDate },
+            },
         }));
         try {
             await api.updateSubjectDates(name, { studyStartDate, finalExamDate });

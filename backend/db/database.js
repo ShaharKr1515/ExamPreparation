@@ -27,7 +27,8 @@ db.exec(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE COLLATE NOCASE,
         study_start_date TEXT NOT NULL DEFAULT '',
-        final_exam_date TEXT NOT NULL DEFAULT ''
+        final_exam_date TEXT NOT NULL DEFAULT '',
+        planned_exam_count INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS exams (
@@ -56,6 +57,9 @@ if (!subjectCols.includes("study_start_date")) {
 }
 if (!subjectCols.includes("final_exam_date")) {
     db.exec("ALTER TABLE subjects ADD COLUMN final_exam_date TEXT NOT NULL DEFAULT ''");
+}
+if (!subjectCols.includes("planned_exam_count")) {
+    db.exec("ALTER TABLE subjects ADD COLUMN planned_exam_count INTEGER NOT NULL DEFAULT 0");
 }
 
 console.log(`[db] SQLite database at ${dbPath}`);

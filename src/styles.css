@@ -228,6 +228,22 @@ select:focus {
     text-align: start;
 }
 
+/* Exam name + its recommended due date, stacked in the card header. */
+.exam-name-col {
+    flex: 1;
+    min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recommended-due {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: start;
+    padding-inline-start: 4px;
+}
+
 .q-table {
     width: 100%;
     border-collapse: collapse;

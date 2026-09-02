@@ -26,6 +26,65 @@ export function daysSince(dateStr) {
     return Math.round((today0.getTime() - then.getTime()) / 86400000);
 }
 
+// ---------- Recommended exam due dates ----------
+
+/** Parse YYYY-MM-DD into whole UTC days since epoch, or null when invalid. */
+function parseUtcDay(dateStr) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr || ""));
+    if (!m) return null;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    // Reject impossible dates like 2026-02-31 (Date.UTC would roll them over).
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+    return Math.round(dt.getTime() / 86400000);
+}
+
+/** Whole UTC days since epoch as YYYY-MM-DD. */
+function dayToUtcStr(dayCount) {
+    const dt = new Date(dayCount * 86400000);
+    return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Recommended due date (YYYY-MM-DD) for each of `examCount` exams, or null when no
+ * date can be assigned. Pure UTC day math — no local-timezone/DST drift:
+ *
+ *   first exam:  studyStartDate + 3 days
+ *   interval:    (finalExamDate - studyStartDate - 2 days) / examCount
+ *   next exam:   previous due date + interval
+ *   a due date that lands on/after finalExamDate is not assigned.
+ *
+ * Returns an array of length `examCount` (index = exam order under the subject).
+ */
+export function calculateExamTargetDates(studyStartDate, finalExamDate, examCount) {
+    const count = Math.max(0, Math.floor(Number(examCount) || 0));
+    const result = new Array(count).fill(null);
+    if (count === 0) return result;
+
+    const startDay = parseUtcDay(studyStartDate);
+    const finalDay = parseUtcDay(finalExamDate);
+    if (startDay === null || finalDay === null) return result;
+
+    const firstDue = startDay + 3;
+    const interval = (finalDay - startDay - 2) / count;
+
+    for (let i = 0; i < count; i++) {
+        const dueDay = Math.round(firstDue + i * interval); // exam 1: firstDue, each next: previous + interval
+        if (dueDay >= finalDay) continue;                   // would land on/after the final exam → no date
+        result[i] = dayToUtcStr(dueDay);
+    }
+    return result;
+}
+
+/** Format YYYY-MM-DD as DD.MM.YYYY for display, or "" when invalid. */
+export function formatDisplayDate(dateStr) {
+    const [y, m, d] = String(dateStr || "").split("-");
+    if (!y || !m || !d) return "";
+    return `${d}.${m}.${y}`;
+}
+
 /** A fresh (empty) question. */
 export function makeQuestion() {
     return { success: "", date: "", points: "" };
