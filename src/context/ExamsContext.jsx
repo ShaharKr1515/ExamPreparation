@@ -113,14 +113,20 @@ export function ExamsProvider({ children }) {
         const trimmed = String(name || "").trim();
         if (!trimmed) return;
         try {
-            const { subject, exams } = await api.createSubject(trimmed, { examCount, studyStartDate, finalExamDate });
+            // The current API returns { subject, exams }; tolerate the legacy
+            // bare-subject shape too so a stale backend can't crash the UI.
+            const res = await api.createSubject(trimmed, { examCount, studyStartDate, finalExamDate });
+            const subject = (res && res.subject) || res;
+            const createdExams = Array.isArray(res?.exams)
+                ? res.exams.map((e) => ({ ...e, subject: e.subject || subject.name }))
+                : [];
             setState((s) => {
                 const existing = s.subjects.find((x) => x.toLowerCase() === subject.name.toLowerCase());
                 if (existing) return { ...s, activeSubject: existing };
                 return {
                     ...s,
                     subjects: [...s.subjects, subject.name],
-                    exams: [...s.exams, ...exams.map((e) => ({ ...e, subject: subject.name }))],
+                    exams: [...s.exams, ...createdExams],
                     activeSubject: subject.name,
                     subjectMeta: {
                         ...s.subjectMeta,
