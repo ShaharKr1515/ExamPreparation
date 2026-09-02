@@ -93,6 +93,26 @@ export function deleteExam(id) {
     return Number(row.subject_id);
 }
 
+/**
+ * Adjust the number of exams under a subject to `target`:
+ * creates missing exams (named by their position) or deletes the most recent
+ * ones when reducing. Returns the updated list of exams for that subject.
+ */
+export function adjustExamCount(subjectId, target) {
+    const existing = db.prepare("SELECT id FROM exams WHERE subject_id = ? ORDER BY id").all(subjectId);
+    if (target > existing.length) {
+        for (let i = existing.length + 1; i <= target; i++) {
+            createExam(subjectId, `בחינה ${i}`, QUESTION_COUNT);
+        }
+    } else if (target < existing.length) {
+        const toDelete = existing.slice(target).map((r) => Number(r.id));
+        for (const id of toDelete) deleteExam(id);
+    }
+    return db.prepare("SELECT * FROM exams WHERE subject_id = ? ORDER BY id")
+        .all(subjectId)
+        .map((row) => getExamById(Number(row.id)));
+}
+
 /** Wipe everything (the "ניקוי הכול" action): all questions, exams and subjects. */
 export function clearEverything() {
     db.exec("DELETE FROM questions");

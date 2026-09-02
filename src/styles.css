@@ -180,35 +180,49 @@ select:focus {
 
 .table-card {
     margin-top: 18px;
-    overflow-x: auto;
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: 0 10px 30px rgba(29, 36, 51, 0.07);
 }
 
+/* Max 3 cards per row; in RTL the rows flow right-to-left and wrap to new lines */
 .exam-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
     padding: 16px;
-    align-items: stretch;
+}
+
+@media (max-width: 980px) {
+    .exam-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .exam-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .exam-card {
-    flex: 0 0 auto;
-    width: 460px;
+    width: auto;
     background: #fff;
     border: 1px solid var(--line);
     border-radius: 12px;
+    overflow: hidden;
+    /* clip header backgrounds to the rounded corners */
     display: flex;
     flex-direction: column;
 }
 
+/* One header row: name | recommended due date | delete — separated by lines. */
 .card-head {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    padding: 10px 10px 8px;
+    align-items: stretch;
+    padding: 0;
+    /* no side gap — the X button's hover bg must reach the card edge */
     border-bottom: 1px solid var(--line);
 }
 
@@ -220,28 +234,42 @@ select:focus {
     font-size: 0.8rem;
 }
 
-.cell.exam-name {
-    flex: 1;
-    min-width: 240px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-align: start;
-}
-
-/* Exam name + its recommended due date, stacked in the card header. */
+/* Name + recommended due date, stacked in the first header compartment. */
 .exam-name-col {
     flex: 1;
-    min-width: 240px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
+.cell.exam-name {
+    width: 100%;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    border: none;
+    background: transparent;
+    padding: 8px 10px 6px;
+}
+
+/* The card clips anything drawn outside its bounds, so use an inset ring that
+   hugs the inner edge of the box. Only the top-right corner sits at the card's
+   rounded corner (RTL), so round just that one — the other three stay square. */
+.cell.exam-name:focus {
+    outline: none;
+    border-top-right-radius: 12px;
+    box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
+}
+
+/* Same size as the exam name, under it in the same compartment. */
 .recommended-due {
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-align: start;
-    padding-inline-start: 4px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+    border-top: 1px solid var(--line);
+    padding: 6px 10px 8px;
 }
 
 .q-table {
@@ -336,24 +364,26 @@ select.cell.bad {
 }
 
 .delete-btn {
-    width: 30px;
-    height: 30px;
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 42px;
     display: grid;
     place-items: center;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    background: #fff;
+    /* centered in its compartment */
+    border: none;
+    border-inline-start: 1px solid var(--line);
+    background: transparent;
     color: var(--muted);
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     line-height: 1;
     padding: 0;
+    transition: background 0.15s, color 0.15s;
 }
 
 .delete-btn:hover {
     background: var(--bad-bg);
     color: var(--bad-ink);
-    border-color: var(--bad-line);
 }
 
 .empty-msg {
@@ -487,7 +517,9 @@ select.cell.bad {
     white-space: nowrap;
 }
 
-.date-control input[type="date"] {
+.date-control input[type="date"],
+.date-control input[type="number"] {
+    width: 138px;
     padding: 4px 6px;
     border-radius: 7px;
     font-size: 0.82rem;
@@ -548,7 +580,7 @@ select.cell.bad {
 /* --- "Add exam" card in the exams grid -------------------------------------- */
 
 .exam-card.add-exam-card {
-    width: 200px;
+    width: auto;
     min-height: 150px;
     display: flex;
     flex-direction: column;

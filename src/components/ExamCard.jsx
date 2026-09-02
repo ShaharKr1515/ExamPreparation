@@ -26,7 +26,7 @@ export default function ExamCard({ exam }) {
 
     return (
         <div className="exam-card">
-            {/* Header: editable exam name (+ recommended due date under it) + delete button. */}
+            {/* Header: name + recommended due date (stacked) | delete button. */}
             <div className="card-head">
                 <div className="exam-name-col">
                     <input

@@ -16,6 +16,17 @@ router.post("/", (req, res) => {
     res.status(201).json({ ...exam, subject: subject.name });
 });
 
+// Adjust the number of exams under a subject to `target` (creates or deletes as needed).
+// Body: { target }. Returns the updated list of exams for that subject.
+router.patch("/count/:subjectName", (req, res) => {
+    const subject = svc.findSubjectByName(String(req.params.subjectName ?? ""));
+    if (!subject) return res.status(404).json({ error: `Unknown subject: ${req.params.subjectName}` });
+
+    const target = Math.max(0, Math.min(50, Number(req.body?.target) || 0));
+    const exams = svc.adjustExamCount(Number(subject.id), target);
+    res.json(exams.map((e) => ({ ...e, subject: subject.name })));
+});
+
 // Rename an exam.
 router.patch("/:id", (req, res) => {
     const id = Number(req.params.id);

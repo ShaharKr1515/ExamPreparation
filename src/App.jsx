@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ExamsProvider, useExams } from "./context/ExamsContext.jsx";
 import { useVisibleExams } from "./hooks/useVisibleExams.js";
 import AppHeader from "./components/AppHeader.jsx";
+import ExamCountControl from "./components/ExamCountControl.jsx";
 import SubjectTabs from "./components/SubjectTabs.jsx";
 import NewSubjectModal from "./components/NewSubjectModal.jsx";
 import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
@@ -81,6 +82,7 @@ function Toolbar() {
                     aria-label="תאריך בחינה סופית"
                 />
             </label>
+            <ExamCountControl subject={active} currentCount={visible.length} />
             <span className="count">
                 {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
             </span>

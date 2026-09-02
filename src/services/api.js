@@ -63,6 +63,15 @@ export function renameExam(id, name) {
     return request(`/api/exams/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
 }
 
+// Adjust the number of exams under a subject to `target` (creates/deletes as needed).
+// Returns the updated list of exams for that subject.
+export function adjustExamCount(subjectName, target) {
+    return request(`/api/exams/count/${encodeURIComponent(subjectName)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ target }),
+    });
+}
+
 export function removeExam(id) {
     return request(`/api/exams/${id}`, { method: "DELETE" });
 }

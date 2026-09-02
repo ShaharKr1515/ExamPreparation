@@ -61,6 +61,28 @@ export function ExamsProvider({ children }) {
         }
     }
 
+    // Bring the subject's exam total to `target` (server creates/deletes as needed).
+    // Resolves true on success, false on failure.
+    async function adjustExamCount(subjectName, target) {
+        try {
+            const updated = await api.adjustExamCount(subjectName, target);
+            setState((s) => ({
+                ...s,
+                exams: [
+                    // Keep every exam of other subjects in place…
+                    ...s.exams.filter((e) => subjectKey(e.subject) !== subjectKey(subjectName)),
+                    // …and swap in the server's fresh list for this subject.
+                    ...updated,
+                ],
+            }));
+            return true;
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+            return false;
+        }
+    }
+
     // Wipe every exam AND subject — back to the "create your first subject" screen.
     async function clearAll() {
         if (!confirm("למחוק את כל הבחינות?")) return;
@@ -229,6 +251,7 @@ export function ExamsProvider({ children }) {
             error,
             addExam,
             removeExam,
+            adjustExamCount,
             clearAll,
             renameExam,
             updateQuestion,
