@@ -1,6 +1,6 @@
 import { useExams } from "../context/ExamsContext.jsx";
 import QuestionTable from "./QuestionTable.jsx";
-import { calculateExamTargetDates, formatDisplayDate, subjectKey } from "../utils/examUtils.js";
+import { calculateExamTargetDates, dueLabel, formatDisplayDate, subjectKey } from "../utils/examUtils.js";
 
 /** A list-view card: editable name header + recommended due date + question table. */
 export default function ExamCard({ exam }) {
@@ -23,6 +23,8 @@ export default function ExamCard({ exam }) {
     );
     const index = siblings.findIndex((e) => e.id === exam.id);
     const dueDate = index >= 0 ? targetDates[index] : null;
+    // Relative label for the due date: "עוד יומיים", "היום", "איחול של X ימים"…
+    const relLabel = dueDate ? dueLabel(dueDate) : null;
 
     return (
         <div className="exam-card">
@@ -39,6 +41,7 @@ export default function ExamCard({ exam }) {
                     {dueDate && (
                         <div className="recommended-due">
                             יעד מומלץ: {formatDisplayDate(dueDate)}
+                            {relLabel ? ` (${relLabel})` : ""}
                         </div>
                     )}
                 </div>

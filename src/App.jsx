@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ExamsProvider, useExams } from "./context/ExamsContext.jsx";
+import { examIntervalDays, formatExamIntervalLabel } from "./utils/examUtils.js";
 import { useVisibleExams } from "./hooks/useVisibleExams.js";
 import AppHeader from "./components/AppHeader.jsx";
 import ExamCountControl from "./components/ExamCountControl.jsx";
@@ -83,6 +84,13 @@ function Toolbar() {
                 />
             </label>
             <ExamCountControl subject={active} currentCount={visible.length} />
+            {/* How often an exam must be completed, derived from the same math as the due dates. */}
+            {(() => {
+                const count = Number(meta.plannedExamCount) || visible.length;
+                const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
+                const label = formatExamIntervalLabel(intervalDays);
+                return label ? <span className="interval-hint">{label}</span> : null;
+            })()}
             <span className="count">
                 {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
             </span>

@@ -85,6 +85,51 @@ export function formatDisplayDate(dateStr) {
     return `${d}.${m}.${y}`;
 }
 
+/**
+ * Whole days between consecutive recommended due dates for a subject, or null
+ * when the interval can't be derived (missing/invalid dates, no exams). Same
+ * math as calculateExamTargetDates: (final - start - 2) / examCount.
+ */
+export function examIntervalDays(studyStartDate, finalExamDate, examCount) {
+    const count = Math.max(0, Math.floor(Number(examCount) || 0));
+    if (count === 0) return null;
+    const startDay = parseUtcDay(studyStartDate);
+    const finalDay = parseUtcDay(finalExamDate);
+    if (startDay === null || finalDay === null) return null;
+    return Math.max(1, Math.floor((finalDay - startDay - 2) / count));
+}
+
+/** "יום" / "יומיים" / "X ימים" for a whole-day count. */
+function daysWord(n) {
+    if (n === 1) return "יום";
+    if (n === 2) return "יומיים";
+    return `${n} ימים`;
+}
+
+/** Toolbar hint: how often an exam must be completed, e.g. "כל יומיים". */
+export function formatExamIntervalLabel(days) {
+    const n = Math.floor(Number(days));
+    if (!Number.isFinite(n) || n < 1) return null;
+    return `צריך להשלים מבחן כל ${daysWord(n)}`;
+}
+
+/**
+ * Relative label for a due date: "היום", "מחר", "עוד X ימים" — or the overdue
+ * form "איחול של X ימים". Returns null when the value is not a valid date.
+ */
+export function dueLabel(dateStr) {
+    const days = daysSince(dateStr); // whole days since then; negative = in the future
+    if (days === null) return null;
+    if (days < 0) {
+        const n = -days;
+        return `עוד ${n === 1 ? "יום" : n === 2 ? "יומיים" : `${n} ימים`}`;
+    }
+    if (days === 0) return "היום";
+    if (days === 1) return "איחול של יום";
+    if (days === 2) return "איחול של יומיים";
+    return `איחול של ${days} ימים`;
+}
+
 /** A fresh (empty) question. */
 export function makeQuestion() {
     return { success: "", date: "", points: "" };

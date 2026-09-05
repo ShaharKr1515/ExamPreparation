@@ -145,6 +145,17 @@ body {
     white-space: nowrap;
 }
 
+/* "צריך להשלים מבחן כל X ימים" — derived cadence hint, sits next to the count pill. */
+.interval-hint {
+    padding: 7px 14px;
+    background: #fdf3e0;
+    border-radius: 999px;
+    color: #8a5b00;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 /* Pill shape for the clear-all button inside the toolbar */
 .toolbar .btn.danger-ghost {
     border-radius: 999px;
