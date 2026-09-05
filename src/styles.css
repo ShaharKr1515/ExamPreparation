@@ -70,6 +70,8 @@ body {
     padding: 6px;
     background: #e9ecf5;
     border-radius: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #b3aef0 transparent;
 }
 
 /* Thin scrollbar for all modern browsers (incl. Safari) */
@@ -82,7 +84,7 @@ body {
 }
 
 .subject-bar::-webkit-scrollbar-thumb {
-    background: #c7cbf3;
+    background: #b3aef0;
     border-radius: 999px;
 }
 
@@ -106,11 +108,24 @@ body {
     color: var(--ink);
 }
 
+.subject-btn:focus-visible {
+    outline: none;
+    box-shadow:
+        inset 0 0 0 2px var(--accent),
+        inset 0 -3px 0 rgba(79, 70, 229, 0.5);
+}
+
 .subject-btn.active {
     background: var(--accent);
     color: #fff;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+.subject-btn.active:focus-visible {
+    box-shadow:
+        inset 0 0 0 2px #fff,
+        inset 0 -3px 0 rgba(255, 255, 255, 0.7);
 }
 
 .btn.small {
@@ -215,6 +230,7 @@ select:focus {
     /* clip header backgrounds to the rounded corners */
     display: flex;
     flex-direction: column;
+    box-shadow: 0 1px 3px rgba(29, 36, 51, 0.05);
 }
 
 /* One header row: name | recommended due date | delete — separated by lines. */
@@ -250,7 +266,11 @@ select:focus {
     text-align: center;
     border: none;
     background: transparent;
-    padding: 8px 10px 6px;
+    padding: 12px 14px 7px;
+}
+
+.cell.exam-name::placeholder {
+    color: var(--muted);
 }
 
 /* The card clips anything drawn outside its bounds, so use an inset ring that
@@ -262,14 +282,14 @@ select:focus {
     box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
 }
 
-/* Same size as the exam name, under it in the same compartment. */
+/* Secondary line under the name — clearly subordinate to it. */
 .recommended-due {
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.72rem;
+    font-weight: 600;
     color: var(--accent);
     text-align: center;
     border-top: 1px solid var(--line);
-    padding: 6px 10px 8px;
+    padding: 5px 14px 9px;
 }
 
 .q-table {
@@ -279,7 +299,7 @@ select:focus {
 
 .q-table th,
 .q-table td {
-    padding: 5px 4px;
+    padding: 7px 8px;
     text-align: center;
     font-size: 0.78rem;
 }
@@ -301,14 +321,21 @@ td.q-num {
     font-weight: 700;
 }
 
-.cell.date {
+.cell.date,
+.cell.points {
     font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
 }
 
 /* Whole row green once success is achieved */
 .q-table tbody tr.row-ok td {
     background: var(--ok-bg);
     color: var(--ok-ink);
+}
+
+/* 3px marker on the leading (RTL right) edge of a colored row */
+.q-table tbody tr.row-ok td:first-child {
+    box-shadow: inset -3px 0 0 var(--ok-ink);
 }
 
 .q-table tbody tr.row-ok input.cell.date,
@@ -322,6 +349,10 @@ td.q-num {
     color: var(--bad-ink);
 }
 
+.q-table tbody tr.row-bad td:first-child {
+    box-shadow: inset -3px 0 0 var(--bad-ink);
+}
+
 .q-table tbody tr.row-bad input.cell.date,
 .q-table tbody tr.row-bad select.cell {
     border-color: var(--bad-line);
@@ -331,6 +362,10 @@ td.q-num {
 .q-table tbody tr.row-stale td {
     background: var(--stale-bg);
     color: var(--stale-ink);
+}
+
+.q-table tbody tr.row-stale td:first-child {
+    box-shadow: inset -3px 0 0 var(--stale-ink);
 }
 
 .q-table tbody tr.row-stale input.cell.date,
@@ -346,7 +381,20 @@ td.q-num {
 }
 
 select.cell {
-    min-width: 62px;
+    min-width: 84px;
+}
+
+/* Phone widths: tighten the table so it fits inside the card */
+@media (max-width: 640px) {
+
+    .q-table th,
+    .q-table td {
+        padding-inline: 5px;
+    }
+
+    select.cell {
+        min-width: 78px;
+    }
 }
 
 select.cell.ok {
@@ -366,7 +414,7 @@ select.cell.bad {
 .delete-btn {
     flex: 0 0 auto;
     align-self: stretch;
-    width: 42px;
+    width: 46px;
     display: grid;
     place-items: center;
     /* centered in its compartment */
@@ -375,7 +423,6 @@ select.cell.bad {
     background: transparent;
     color: var(--muted);
     cursor: pointer;
-    font-size: 0.85rem;
     line-height: 1;
     padding: 0;
     transition: background 0.15s, color 0.15s;
@@ -384,6 +431,12 @@ select.cell.bad {
 .delete-btn:hover {
     background: var(--bad-bg);
     color: var(--bad-ink);
+}
+
+/* Inset ring (not outline) so it survives the card's overflow clip */
+.delete-btn:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
 }
 
 .empty-msg {
@@ -414,6 +467,7 @@ select.cell.bad {
 }
 
 .subject-btn.add-tab.active {
+    background: var(--accent);
     color: #fff;
 }
 
@@ -421,17 +475,24 @@ select.cell.bad {
 
 .subject-menu {
     z-index: 50;
-    width: 240px;
+    width: 248px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 10px;
+    gap: 8px;
+    padding: 12px;
     background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    box-shadow: 0 14px 38px rgba(29, 36, 51, 0.22);
+    border: 1px solid #d5dae6;
+    border-radius: 14px;
+    box-shadow: 0 18px 44px rgba(29, 36, 51, 0.24);
     transform-origin: top right;
     animation: subject-menu-in 0.16s ease-out;
+}
+
+.subject-menu .menu-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding-inline-start: 4px;
 }
 
 @keyframes subject-menu-in {
@@ -447,13 +508,13 @@ select.cell.bad {
 }
 
 .subject-menu .rename-input {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
 }
 
 .subject-menu button.danger {
     font: inherit;
-    padding: 8px 12px;
-    border-radius: 9px;
+    padding: 9px 12px;
+    border-radius: 10px;
     border: 1px solid var(--bad-line);
     background: transparent;
     color: var(--bad-ink);

@@ -62,6 +62,7 @@ export default function SubjectTabs({ newOpen, onNew }) {
                     key={s}
                     type="button"
                     data-subject={s}
+                    aria-haspopup="menu"
                     aria-expanded={menuFor === s}
                     className={"subject-btn" + (subjectKey(s) === subjectKey(state.activeSubject) ? " active" : "")}
                     onClick={(e) => toggleMenu(e, s)}
@@ -79,7 +80,17 @@ export default function SubjectTabs({ newOpen, onNew }) {
                     className="subject-menu"
                     role="menu"
                     style={{ position: "fixed", top: anchor.top, right: anchor.right }}
+                    onKeyDown={(e) => {
+                        // Arrow keys move between the menu's items.
+                        if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+                        const items = [...e.currentTarget.querySelectorAll(".rename-input, button.danger")];
+                        const i = items.indexOf(document.activeElement);
+                        const next = items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length];
+                        e.preventDefault();
+                        next.focus();
+                    }}
                 >
+                    <span className="menu-label">שם המקצוע</span>
                     <RenameMenuItem subject={menuFor} onDone={() => setMenuFor(null)} />
                     <button
                         type="button"
