@@ -211,18 +211,13 @@ select:focus {
     box-shadow: none;
 }
 
-/* Max 3 cards per row; in RTL the rows flow right-to-left and wrap to new lines */
+/* Max 2 cards per row; in RTL the rows flow right-to-left and wrap to new lines */
 .exam-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     padding: 0;
-}
-
-@media (max-width: 980px) {
-    .exam-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    align-items: start;
 }
 
 @media (max-width: 640px) {
@@ -291,6 +286,7 @@ select:focus {
     align-items: stretch;
     padding: 0;
     /* no side gap — the X button's hover bg must reach the card edge */
+    background: #fafbfd;
     border-bottom: 1px solid var(--line);
 }
 
@@ -307,47 +303,80 @@ select:focus {
     width: 100%;
     font-size: 0.95rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    caret-color: var(--accent);
     text-align: center;
     border: none;
     background: transparent;
-    padding: 12px 14px 7px;
+    padding: 10px 14px 8px;
+    line-height: 1.35;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.cell.exam-name:only-child {
+    padding: 13px 14px;
+}
+
+.cell.exam-name:hover {
+    background: rgba(238, 242, 246, 0.65);
 }
 
 .cell.exam-name::placeholder {
     color: var(--muted);
+    font-weight: 500;
+    opacity: 0.85;
 }
 
-/* The card clips anything drawn outside its bounds, so use an inset ring that
-   hugs the inner edge of the box. Only the top-right corner sits at the card's
-   rounded corner (RTL), so round just that one — the other three stay square. */
+/* Inset ring hugging the inner edge; curves with card's top corner */
 .cell.exam-name:focus {
     outline: none;
-    border-top-right-radius: 12px;
+    background: #ffffff;
+    border-start-start-radius: 11px;
+    border-top-right-radius: 11px;
     box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
 }
 
-/* Secondary line under the name — clearly subordinate to it. */
+/* Secondary line under the name — separated by a crisp line */
 .recommended-due {
-    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.73rem;
     font-weight: 600;
-    color: var(--accent);
-    text-align: center;
+    line-height: 1.3;
+    color: #475569;
+    background: #f8fafc;
     border-top: 1px solid var(--line);
-    padding: 5px 14px 9px;
+    padding: 6px 12px;
+}
+
+.recommended-due .due-main {
+    white-space: nowrap;
+}
+
+.recommended-due .due-rel {
+    font-weight: 500;
+    opacity: 0.85;
+    font-size: 0.7rem;
+    white-space: nowrap;
 }
 
 .recommended-due.overdue {
     color: var(--bad-ink);
+    background: rgba(239, 68, 68, 0.05);
 }
 
 .recommended-due.today {
     color: #b45309;
+    background: rgba(245, 158, 11, 0.07);
 }
 
 .delete-btn {
     flex: 0 0 auto;
     align-self: stretch;
-    width: 46px;
+    width: 44px;
     display: grid;
     place-items: center;
     /* centered in its compartment */
@@ -358,7 +387,11 @@ select:focus {
     cursor: pointer;
     line-height: 1;
     padding: 0;
-    transition: background 0.15s, color 0.15s;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.delete-btn svg {
+    transition: transform 0.15s ease;
 }
 
 .delete-btn:hover {
@@ -366,10 +399,26 @@ select:focus {
     color: var(--bad-ink);
 }
 
+.delete-btn:hover svg {
+    transform: scale(1.12);
+}
+
+.delete-btn:active {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.delete-btn:active svg {
+    transform: scale(0.92);
+}
+
 /* Inset ring (not outline) so it survives the card's overflow clip */
 .delete-btn:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
+    border-start-end-radius: 11px;
+    border-top-left-radius: 11px;
+    box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.4);
+    color: var(--bad-ink);
 }
 
 .cell {
@@ -572,10 +621,6 @@ td.q-num {
 
 /* Phone widths: tighten the table so it fits inside the card */
 @media (max-width: 640px) {
-    .card-head {
-        padding: 10px 10px 8px;
-    }
-
     .q-table th,
     .q-table td {
         padding-inline: 4px;
@@ -1027,47 +1072,65 @@ td.q-num.q-num-sub {
     justify-content: center;
     width: 100%;
     min-height: 28px;
+    height: 28px;
     box-sizing: border-box;
 }
 
-/* Sub-question appearing (accordion expansion) & disappearing (accordion collapse) animations */
+/* Sub-question row expansion (accordion enter) & collapse (accordion exit) animations */
 @keyframes subCellInnerEnter {
     0% {
-        max-height: 0;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
         opacity: 0;
-        transform: translateY(-8px);
-        overflow: hidden;
+        transform: translateY(-8px) scaleY(0.6);
+        overflow: hidden !important;
     }
 
-    40% {
-        opacity: 0.4;
+    30% {
+        opacity: 0.2;
+    }
+
+    60% {
+        opacity: 0.7;
     }
 
     100% {
-        max-height: 50px;
+        height: 28px;
+        min-height: 28px;
+        max-height: 28px;
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scaleY(1);
         overflow: visible;
     }
 }
 
 @keyframes subCellInnerExit {
     0% {
-        max-height: 50px;
+        height: 28px;
+        min-height: 28px;
+        max-height: 28px;
         opacity: 1;
-        transform: translateY(0);
-        overflow: hidden;
+        transform: translateY(0) scale(1);
+        overflow: hidden !important;
     }
 
-    45% {
+    25% {
         opacity: 0.2;
     }
 
-    100% {
-        max-height: 0;
+    45% {
         opacity: 0;
-        transform: translateY(-8px);
-        overflow: hidden;
+        transform: translateY(-6px) scale(0.96);
+    }
+
+    100% {
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        opacity: 0;
+        transform: translateY(-6px) scale(0.96);
+        overflow: hidden !important;
     }
 }
 
@@ -1075,19 +1138,36 @@ td.q-num.q-num-sub {
     0% {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
-        border-top-color: transparent;
+        line-height: 0 !important;
+        border-top-color: transparent !important;
         background-color: #e0e7ff;
     }
 
     50% {
         background-color: #eef2ff;
+        border-top-color: #c7d2fe;
     }
 
     100% {
         padding-top: 6px;
         padding-bottom: 6px;
+        line-height: normal;
         border-top-color: #cbd5e1;
         background-color: #f8fafc;
+    }
+}
+
+@keyframes subRowFirstTdEnter {
+    0% {
+        box-shadow: inset -4px 0 0 transparent;
+    }
+
+    50% {
+        box-shadow: inset -4px 0 0 #a5b4fc;
+    }
+
+    100% {
+        box-shadow: inset -4px 0 0 #818cf8;
     }
 }
 
@@ -1099,7 +1179,7 @@ td.q-num.q-num-sub {
         border-top-color: #fca5a5;
     }
 
-    40% {
+    35% {
         background-color: #fef2f2;
         border-top-color: transparent;
     }
@@ -1107,17 +1187,25 @@ td.q-num.q-num-sub {
     100% {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
-        border-top-color: transparent;
-        background-color: transparent;
+        line-height: 0 !important;
+        border-top-color: transparent !important;
+        border-bottom-color: transparent !important;
+        background-color: transparent !important;
     }
 }
 
 .q-table tbody tr.row-sub.row-sub-enter td {
-    animation: subRowTdEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: subRowTdEnter 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-sub.row-sub-enter td:first-child {
+    animation:
+        subRowTdEnter 0.34s cubic-bezier(0.16, 1, 0.3, 1) both,
+        subRowFirstTdEnter 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .q-table tbody tr.row-sub.row-sub-enter .q-cell-inner {
-    animation: subCellInnerEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: subCellInnerEnter 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .q-table tbody tr.row-sub.row-sub-exit {
@@ -1131,8 +1219,8 @@ td.q-num.q-num-sub {
 }
 
 .q-table tbody tr.row-sub.row-sub-exit td:first-child {
-    box-shadow: none;
-    transition: box-shadow 0.2s ease;
+    box-shadow: inset -4px 0 0 transparent !important;
+    transition: box-shadow 0.15s ease;
 }
 
 .q-table tbody tr.row-sub.row-sub-exit .q-cell-inner {
@@ -1142,8 +1230,8 @@ td.q-num.q-num-sub {
 .q-table tbody tr.row-sub.row-sub-exit .cell,
 .q-table tbody tr.row-sub.row-sub-exit .points-cell,
 .q-table tbody tr.row-sub.row-sub-exit .sub-q-indicator {
-    opacity: 0.2;
-    transition: opacity 0.2s ease;
+    opacity: 0;
+    transition: opacity 0.18s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1156,14 +1244,14 @@ td.q-num.q-num-sub {
     .q-table tbody tr.row-sub.row-sub-enter .q-cell-inner,
     .q-table tbody tr.row-sub.row-sub-exit td,
     .q-table tbody tr.row-sub.row-sub-exit .q-cell-inner {
-        animation: none;
-        transition: none;
+        animation: none !important;
+        transition: none !important;
     }
 
     .add-sub-label,
     .add-sub-label>span,
     .points-cell,
     .points-cell .cell.points {
-        transition: none;
+        transition: none !important;
     }
 }

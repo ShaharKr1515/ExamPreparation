@@ -78,14 +78,19 @@ function DeleteSubButton({ label, onDelete, isExiting }) {
 }
 
 /** One editable row (success select, date input, points input) for question qi. */
-function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete }) {
+function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete, onRowExit }) {
     const { updateQuestion } = useExams();
     const stateClass = questionRowState(q); // "ok" | "stale" | "bad" | null
     const [isExiting, setIsExiting] = useState(false);
+    const rowRef = useRef(null);
 
     const handleDelete = () => {
         if (isExiting) return;
         setIsExiting(true);
+        if (onRowExit) {
+            const h = rowRef.current ? rowRef.current.offsetHeight : 40;
+            onRowExit(h);
+        }
         setTimeout(() => {
             if (onDelete) {
                 onDelete(q.id, qi);
@@ -103,7 +108,7 @@ function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete }) {
         .join(" ");
 
     return (
-        <tr className={rowClass}>
+        <tr ref={rowRef} className={rowClass}>
             <td className={`q-num ${q.sub ? "q-num-sub" : ""}`}>
                 <div className="q-cell-inner">
                     {q.sub ? (
@@ -183,41 +188,41 @@ function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete }) {
 }
 
 /** The question table shown inside each exam card. */
-export default function QuestionTable({ exam }) {
+export default function QuestionTable({ exam, onRowExit }) {
     const { deleteQuestion } = useExams();
     const labels = getQuestionLabels(exam.questions);
 
-    const prevExamIdRef = useRef(exam.id);
-    const prevQuestionsRef = useRef(exam.questions);
+    const [prevExamId, setPrevExamId] = useState(exam.id);
+    const [prevQuestions, setPrevQuestions] = useState(exam.questions);
     const [enteringIds, setEnteringIds] = useState(() => new Set());
 
-    useEffect(() => {
-        if (prevExamIdRef.current !== exam.id) {
-            prevExamIdRef.current = exam.id;
-            prevQuestionsRef.current = exam.questions;
-            setEnteringIds(new Set());
-            return;
-        }
-
-        const prevIds = new Set(prevQuestionsRef.current.map((q) => q.id));
+    // Synchronous state adjustment during render (React standard pattern):
+    // Ensures newly added sub-question rows render with `isEntering = true` on frame 0,
+    // guaranteeing the accordion expansion animation begins smoothly without any 1-frame pop-in.
+    if (prevExamId !== exam.id) {
+        setPrevExamId(exam.id);
+        setPrevQuestions(exam.questions);
+        setEnteringIds(new Set());
+    } else if (prevQuestions !== exam.questions) {
+        const prevIds = new Set(prevQuestions.map((q) => q.id));
         const newSubIds = exam.questions
             .filter((q) => q.sub && q.id && !prevIds.has(q.id))
             .map((q) => q.id);
 
-        prevQuestionsRef.current = exam.questions;
-
+        setPrevQuestions(exam.questions);
         if (newSubIds.length > 0) {
             setEnteringIds((prev) => new Set([...prev, ...newSubIds]));
-            const timer = setTimeout(() => {
-                setEnteringIds((prev) => {
-                    const next = new Set(prev);
-                    newSubIds.forEach((id) => next.delete(id));
-                    return next;
-                });
-            }, 500);
-            return () => clearTimeout(timer);
         }
-    }, [exam.id, exam.questions]);
+    }
+
+    // Clean up enteringIds after animation finishes
+    useEffect(() => {
+        if (enteringIds.size === 0) return;
+        const timer = setTimeout(() => {
+            setEnteringIds(new Set());
+        }, 450);
+        return () => clearTimeout(timer);
+    }, [enteringIds]);
 
     const handleDeleteQuestion = (qId, qi) => {
         const currentIdx = exam.questions.findIndex((q) => q.id === qId);
@@ -243,6 +248,7 @@ export default function QuestionTable({ exam }) {
                         labelInfo={labels[qi] || { display: String(qi + 1), aria: `שאלה ${qi + 1}` }}
                         isEntering={enteringIds.has(q.id)}
                         onDelete={handleDeleteQuestion}
+                        onRowExit={onRowExit}
                     />
                 ))}
             </tbody>
