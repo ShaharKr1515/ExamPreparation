@@ -32,6 +32,7 @@
     font-weight: 500;
     color: var(--muted);
     white-space: nowrap;
+    -webkit-user-select: none;
     user-select: none;
 }
 

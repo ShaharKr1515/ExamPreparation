@@ -310,6 +310,7 @@ td.q-num.q-num-sub {
     font-size: 0.76rem;
     font-weight: 600;
     cursor: default;
+    -webkit-user-select: none;
     user-select: none;
     padding: 2px 6px;
     white-space: nowrap;
@@ -377,6 +378,7 @@ td.q-num.q-num-sub {
     background: #f1f5f9;
     border-radius: var(--radius-sm);
     cursor: default;
+    -webkit-user-select: none;
     user-select: none;
     direction: rtl;
     white-space: nowrap;
