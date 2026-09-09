@@ -56,4 +56,26 @@ router.patch("/:id/questions/:position", (req, res) => {
     res.json({ ok: true });
 });
 
+// Add an empty sub-question after a given position (or at the end when omitted).
+router.post("/:id/questions", (req, res) => {
+    const examId = Number(req.params.id);
+    if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
+
+    const rawAfter = req.body?.afterPosition;
+    const afterPosition = rawAfter == null ? null : Math.max(0, Number(rawAfter));
+    const exam = svc.addQuestion(examId, afterPosition);
+    res.status(201).json(exam);
+});
+
+// Delete a question (e.g. sub-question) at a given position.
+router.delete("/:id/questions/:pos", (req, res) => {
+    const examId = Number(req.params.id);
+    const position = Number(req.params.pos);
+    if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
+    if (!Number.isInteger(position) || position < 0) return res.status(400).json({ error: "Invalid position" });
+
+    const exam = svc.deleteQuestion(examId, position);
+    res.json(exam);
+});
+
 export default router;

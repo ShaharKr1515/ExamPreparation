@@ -7,6 +7,9 @@
         "/^cmd /c \"node _devcheck\\.mjs\"$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "ForEach-Object": true,
+        "ConvertFrom-Json": true,
+        "Get-NetTCPConnection": true
     }
 }

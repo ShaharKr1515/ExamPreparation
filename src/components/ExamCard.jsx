@@ -1,10 +1,20 @@
+import { useState } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
 import QuestionTable from "./QuestionTable.jsx";
-import { calculateExamTargetDates, dueLabel, formatDisplayDate, subjectKey } from "../utils/examUtils.js";
+import { calculateExamTargetDates, daysSince, dueLabel, formatDisplayDate, subjectKey } from "../utils/examUtils.js";
 
 /** A list-view card: editable name header + recommended due date + question table. */
-export default function ExamCard({ exam }) {
+export default function ExamCard({ exam, isEntering }) {
     const { state, renameExam, removeExam } = useExams();
+    const [isExiting, setIsExiting] = useState(false);
+
+    const handleDelete = () => {
+        if (isExiting) return;
+        setIsExiting(true);
+        setTimeout(() => {
+            removeExam(exam.id);
+        }, 280);
+    };
 
     // Recommended due date for this exam's position under its subject (derived, not stored).
     const metaKey = Object.keys(state.subjectMeta || {}).find(
@@ -23,12 +33,22 @@ export default function ExamCard({ exam }) {
     );
     const index = siblings.findIndex((e) => e.id === exam.id);
     const dueDate = index >= 0 ? targetDates[index] : null;
-    // Relative label for the due date: "עוד יומיים", "היום", "איחול של X ימים"…
+    // Relative label for the due date: "עוד יומיים", "היום", "איחור של X ימים"…
     const relLabel = dueDate ? dueLabel(dueDate) : null;
+    const days = dueDate ? daysSince(dueDate) : null;
+    const dueTone = days === null ? "" : days > 0 ? "overdue" : days === 0 ? "today" : "upcoming";
+
+    const cardClass = [
+        "exam-card",
+        isEntering ? "exam-card-enter" : "",
+        isExiting ? "exam-card-exit" : "",
+    ]
+        .filter(Boolean)
+        .join(" ");
 
     return (
-        <div className="exam-card">
-            {/* Header: name + recommended due date (stacked) | delete button. */}
+        <div className={cardClass}>
+            {/* Header: name + recommended due date (stacked) | delete button separated by lines. */}
             <div className="card-head">
                 <div className="exam-name-col">
                     <input
@@ -36,10 +56,11 @@ export default function ExamCard({ exam }) {
                         className="cell exam-name"
                         placeholder="ללא שם"
                         value={exam.name}
+                        aria-label="שם בחינה"
                         onChange={(e) => renameExam(exam.id, e.target.value)}
                     />
                     {dueDate && (
-                        <div className="recommended-due">
+                        <div className={`recommended-due ${dueTone}`}>
                             יעד מומלץ: {formatDisplayDate(dueDate)}
                             {relLabel ? ` (${relLabel})` : ""}
                         </div>
@@ -50,7 +71,7 @@ export default function ExamCard({ exam }) {
                     className="delete-btn"
                     title="מחיקת בחינה"
                     aria-label="מחיקת בחינה"
-                    onClick={() => removeExam(exam.id)}
+                    onClick={handleDelete}
                 >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                         <path d="M6 6l12 12M18 6L6 18" />

@@ -146,6 +146,62 @@ export function updateQuestion(examId, position, field, value) {
     db.prepare(`UPDATE questions SET ${column} = ? WHERE exam_id = ? AND position = ?`).run(value, examId, position);
 }
 
+/**
+ * Insert a new empty sub-question (סעיף) after `afterPosition`, shifting later
+ * positions up by one — or at the end when `afterPosition` is null.
+ */
+export function addQuestion(examId, afterPosition = null) {
+    db.exec("BEGIN");
+    try {
+        let newPos;
+        if (Number.isInteger(afterPosition)) {
+            // Shift later positions up by one — highest first, so each row moves into a slot
+            // that is already free (a single `position = position + 1` UPDATE would trip the
+            // UNIQUE constraint on intermediate states).
+            const shifted = db.prepare(
+                "SELECT id, position FROM questions WHERE exam_id = ? AND position > ? ORDER BY position DESC",
+            ).all(examId, afterPosition);
+            for (const row of shifted) {
+                db.prepare("UPDATE questions SET position = ? WHERE id = ?").run(row.position + 1, row.id);
+            }
+            newPos = afterPosition + 1;
+        } else {
+            const last = db.prepare("SELECT MAX(position) AS m FROM questions WHERE exam_id = ?").get(examId);
+            newPos = (last?.m ?? -1) + 1;
+        }
+        db.prepare(
+            "INSERT INTO questions (exam_id, position, success, last_date, points, is_sub) VALUES (?, ?, '', '', '', 1)",
+        ).run(examId, newPos);
+        db.exec("COMMIT");
+    } catch (e) {
+        db.exec("ROLLBACK");
+        throw e;
+    }
+    return getExamById(examId);
+}
+
+/**
+ * Delete a question (e.g. sub-question) at `position`, shifting later
+ * positions down by one.
+ */
+export function deleteQuestion(examId, position) {
+    db.exec("BEGIN");
+    try {
+        db.prepare("DELETE FROM questions WHERE exam_id = ? AND position = ?").run(examId, position);
+        const shifted = db.prepare(
+            "SELECT id, position FROM questions WHERE exam_id = ? AND position > ? ORDER BY position ASC",
+        ).all(examId, position);
+        for (const row of shifted) {
+            db.prepare("UPDATE questions SET position = ? WHERE id = ?").run(row.position - 1, row.id);
+        }
+        db.exec("COMMIT");
+    } catch (e) {
+        db.exec("ROLLBACK");
+        throw e;
+    }
+    return getExamById(examId);
+}
+
 // ---------- Read helpers (shared shape) ----------
 
 function rowToExam(row) {
@@ -154,8 +210,15 @@ function rowToExam(row) {
         id: Number(row.id),
         name: row.name,
         subjectId: Number(row.subject_id),
-        // Frontend shape: `subject` is the display string; `questions[i] = {success, date, points}`.
-        questions: qs.map((q) => ({ success: q.success, date: q.last_date, points: q.points })),
+        // Frontend shape: `subject` is the display string;
+        // `questions[i] = { id, success, date, points, sub }`.
+        questions: qs.map((q) => ({
+            id: Number(q.id),
+            success: q.success,
+            date: q.last_date,
+            points: q.points,
+            sub: !!q.is_sub,
+        })),
     };
 }
 

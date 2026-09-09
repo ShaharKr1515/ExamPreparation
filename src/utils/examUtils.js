@@ -115,7 +115,7 @@ export function formatExamIntervalLabel(days) {
 
 /**
  * Relative label for a due date: "היום", "מחר", "עוד X ימים" — or the overdue
- * form "איחול של X ימים". Returns null when the value is not a valid date.
+ * form "איחור של X ימים". Returns null when the value is not a valid date.
  */
 export function dueLabel(dateStr) {
     const days = daysSince(dateStr); // whole days since then; negative = in the future
@@ -125,9 +125,9 @@ export function dueLabel(dateStr) {
         return `עוד ${n === 1 ? "יום" : n === 2 ? "יומיים" : `${n} ימים`}`;
     }
     if (days === 0) return "היום";
-    if (days === 1) return "איחול של יום";
-    if (days === 2) return "איחול של יומיים";
-    return `איחול של ${days} ימים`;
+    if (days === 1) return "איחור של יום";
+    if (days === 2) return "איחור של יומיים";
+    return `איחור של ${days} ימים`;
 }
 
 /** A fresh (empty) question. */

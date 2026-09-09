@@ -130,6 +130,34 @@ export function ExamsProvider({ children }) {
         }
     }
 
+    // Add an empty sub-question to an exam (after index `afterIndex`, or at the end when null).
+    async function addQuestion(examId, afterIndex) {
+        try {
+            const updated = await api.addQuestion(examId, afterIndex ?? null);
+            setState((s) => ({
+                ...s,
+                exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
+            }));
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    // Delete a question (e.g. sub-question) at `position`.
+    async function deleteQuestion(examId, position) {
+        try {
+            const updated = await api.deleteQuestion(examId, position);
+            setState((s) => ({
+                ...s,
+                exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
+            }));
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
     // Duplicate names are handled consistently: an existing subject is never duplicated —
     // we just switch to it. Creates `examCount` exams under the new subject.
     async function addSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "" } = {}) {
@@ -255,6 +283,8 @@ export function ExamsProvider({ children }) {
             clearAll,
             renameExam,
             updateQuestion,
+            addQuestion,
+            deleteQuestion,
             addSubject,
             updateSubjectDates,
             renameSubject,

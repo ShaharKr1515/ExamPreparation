@@ -44,6 +44,7 @@ db.exec(`
         success TEXT NOT NULL DEFAULT '',
         last_date TEXT NOT NULL DEFAULT '',
         points TEXT NOT NULL DEFAULT '',
+        is_sub INTEGER NOT NULL DEFAULT 0,
         UNIQUE (exam_id, position)
     );
 
@@ -60,6 +61,10 @@ if (!subjectCols.includes("final_exam_date")) {
 }
 if (!subjectCols.includes("planned_exam_count")) {
     db.exec("ALTER TABLE subjects ADD COLUMN planned_exam_count INTEGER NOT NULL DEFAULT 0");
+}
+const questionCols = db.prepare("PRAGMA table_info(questions)").all().map((c) => c.name);
+if (!questionCols.includes("is_sub")) {
+    db.exec("ALTER TABLE questions ADD COLUMN is_sub INTEGER NOT NULL DEFAULT 0");
 }
 
 console.log(`[db] SQLite database at ${dbPath}`);

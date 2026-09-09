@@ -33,7 +33,7 @@ html {
 body {
     margin: 0;
     font-family: "Segoe UI", "Noto Sans Hebrew", Arial, sans-serif;
-    background: linear-gradient(180deg, #edf0f9 0%, var(--bg) 260px);
+    background: var(--bg);
     color: var(--ink);
     line-height: 1.45;
 }
@@ -206,10 +206,9 @@ select:focus {
 
 .table-card {
     margin-top: 18px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: 0 10px 30px rgba(29, 36, 51, 0.07);
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 /* Max 3 cards per row; in RTL the rows flow right-to-left and wrap to new lines */
@@ -217,7 +216,7 @@ select:focus {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
-    padding: 16px;
+    padding: 0;
 }
 
 @media (max-width: 980px) {
@@ -242,6 +241,48 @@ select:focus {
     display: flex;
     flex-direction: column;
     box-shadow: 0 1px 3px rgba(29, 36, 51, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Entrance & exit animations for exam cards */
+@keyframes examCardEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.94);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.008);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        box-shadow: 0 1px 3px rgba(29, 36, 51, 0.05);
+    }
+}
+
+@keyframes examCardExit {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(14px) scale(0.92);
+    }
+}
+
+.exam-card.exam-card-enter {
+    animation: examCardEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.exam-card.exam-card-exit {
+    animation: examCardExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
 }
 
 /* One header row: name | recommended due date | delete — separated by lines. */
@@ -253,21 +294,13 @@ select:focus {
     border-bottom: 1px solid var(--line);
 }
 
-.cell {
-    width: 100%;
-    min-width: 0;
-    text-align: center;
-    padding: 6px 4px;
-    font-size: 0.8rem;
-}
-
 /* Name + recommended due date, stacked in the first header compartment. */
 .exam-name-col {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0;
 }
 
 .cell.exam-name {
@@ -303,123 +336,12 @@ select:focus {
     padding: 5px 14px 9px;
 }
 
-.q-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.q-table th,
-.q-table td {
-    padding: 7px 8px;
-    text-align: center;
-    font-size: 0.78rem;
-}
-
-.q-table thead th {
-    background: #f7f8fd;
-    border-bottom: 1px solid var(--line);
-    color: var(--muted);
-    font-weight: 600;
-}
-
-.q-table tbody tr+tr td {
-    border-top: 1px solid var(--line);
-}
-
-td.q-num {
-    width: 30px;
-    color: var(--muted);
-    font-weight: 700;
-}
-
-.cell.date,
-.cell.points {
-    font-size: 0.72rem;
-    font-variant-numeric: tabular-nums;
-}
-
-/* Whole row green once success is achieved */
-.q-table tbody tr.row-ok td {
-    background: var(--ok-bg);
-    color: var(--ok-ink);
-}
-
-/* 3px marker on the leading (RTL right) edge of a colored row */
-.q-table tbody tr.row-ok td:first-child {
-    box-shadow: inset -3px 0 0 var(--ok-ink);
-}
-
-.q-table tbody tr.row-ok input.cell.date,
-.q-table tbody tr.row-ok select.cell {
-    border-color: var(--ok-line);
-}
-
-/* Whole row red when the question was failed */
-.q-table tbody tr.row-bad td {
-    background: var(--bad-bg);
+.recommended-due.overdue {
     color: var(--bad-ink);
 }
 
-.q-table tbody tr.row-bad td:first-child {
-    box-shadow: inset -3px 0 0 var(--bad-ink);
-}
-
-.q-table tbody tr.row-bad input.cell.date,
-.q-table tbody tr.row-bad select.cell {
-    border-color: var(--bad-line);
-}
-
-/* Whole row purple when the last attempt is at least 3 days old and not successful yet */
-.q-table tbody tr.row-stale td {
-    background: var(--stale-bg);
-    color: var(--stale-ink);
-}
-
-.q-table tbody tr.row-stale td:first-child {
-    box-shadow: inset -3px 0 0 var(--stale-ink);
-}
-
-.q-table tbody tr.row-stale input.cell.date,
-.q-table tbody tr.row-stale select.cell {
-    border-color: var(--stale-line);
-}
-
-/* In a purple row the success box is purple too (even when failed) */
-.q-table tbody tr.row-stale select.cell.bad {
-    background: var(--stale-bg);
-    color: var(--stale-ink);
-    border-color: var(--stale-line);
-}
-
-select.cell {
-    min-width: 84px;
-}
-
-/* Phone widths: tighten the table so it fits inside the card */
-@media (max-width: 640px) {
-
-    .q-table th,
-    .q-table td {
-        padding-inline: 5px;
-    }
-
-    select.cell {
-        min-width: 78px;
-    }
-}
-
-select.cell.ok {
-    background: var(--ok-bg);
-    color: var(--ok-ink);
-    border-color: var(--ok-line);
-    font-weight: 600;
-}
-
-select.cell.bad {
-    background: var(--bad-bg);
-    color: var(--bad-ink);
-    border-color: var(--bad-line);
-    font-weight: 600;
+.recommended-due.today {
+    color: #b45309;
 }
 
 .delete-btn {
@@ -448,6 +370,220 @@ select.cell.bad {
 .delete-btn:focus-visible {
     outline: none;
     box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
+}
+
+.cell {
+    width: 100%;
+    min-width: 0;
+    text-align: center;
+    padding: 6px 4px;
+    font-size: 0.8rem;
+}
+
+.q-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-variant-numeric: tabular-nums;
+}
+
+.q-table th,
+.q-table td {
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 0.78rem;
+    vertical-align: middle;
+}
+
+.q-table th:nth-child(1),
+.q-table td:nth-child(1) {
+    width: 50px;
+    padding: 6px 3px;
+}
+
+.q-table th:nth-child(2),
+.q-table td:nth-child(2) {
+    width: 90px;
+    padding: 6px 4px;
+}
+
+.q-table th:nth-child(3),
+.q-table td:nth-child(3) {
+    width: 126px;
+    padding: 6px 4px;
+}
+
+.q-table th:nth-child(4),
+.q-table td:nth-child(4) {
+    padding: 6px 6px;
+}
+
+.q-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--line);
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.q-table tbody tr {
+    transition: background-color 0.12s ease;
+}
+
+.q-table tbody tr:hover:not(.row-ok):not(.row-bad):not(.row-stale) {
+    background-color: #fbfcfe;
+}
+
+.q-table tbody tr+tr td {
+    border-top: 1px solid #edf0f5;
+}
+
+td.q-num {
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+/* Custom form inputs inside the question table */
+.q-table .cell {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 3px 6px;
+    font-size: 0.76rem;
+    border: 1px solid #d5d9e2;
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+.q-table .cell:hover:not(:focus) {
+    border-color: #b8bfc9;
+}
+
+.q-table .cell:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+/* Custom dropdown chevron for RTL select */
+.q-table select.cell {
+    min-width: 80px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 7px center;
+    background-size: 8px 5px;
+    padding-left: 18px;
+    padding-right: 6px;
+    font-weight: 500;
+}
+
+.q-table select.cell.ok {
+    background-color: var(--ok-bg);
+    color: var(--ok-ink);
+    border-color: var(--ok-line);
+    font-weight: 600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%231b643a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.q-table select.cell.bad {
+    background-color: var(--bad-bg);
+    color: var(--bad-ink);
+    border-color: var(--bad-line);
+    font-weight: 600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23a12a2a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Hide native number spin buttons */
+.cell.points::-webkit-inner-spin-button,
+.cell.points::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.cell.points {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Whole row green once success is achieved */
+.q-table tbody tr.row-ok td {
+    background: var(--ok-bg);
+    color: var(--ok-ink);
+}
+
+.q-table tbody tr.row-ok td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--ok-ink);
+}
+
+.q-table tbody tr.row-ok input.cell.date,
+.q-table tbody tr.row-ok input.cell.points {
+    border-color: var(--ok-line);
+    background: rgba(255, 255, 255, 0.85);
+}
+
+/* Whole row red when the question was failed */
+.q-table tbody tr.row-bad td {
+    background: var(--bad-bg);
+    color: var(--bad-ink);
+}
+
+.q-table tbody tr.row-bad td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--bad-ink);
+}
+
+.q-table tbody tr.row-bad input.cell.date,
+.q-table tbody tr.row-bad input.cell.points {
+    border-color: var(--bad-line);
+    background: rgba(255, 255, 255, 0.85);
+}
+
+/* Whole row purple when the last attempt is at least 3 days old and not successful yet */
+.q-table tbody tr.row-stale td {
+    background: var(--stale-bg);
+    color: var(--stale-ink);
+}
+
+.q-table tbody tr.row-stale td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--stale-ink);
+}
+
+.q-table tbody tr.row-stale input.cell.date,
+.q-table tbody tr.row-stale input.cell.points {
+    border-color: var(--stale-line);
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.q-table tbody tr.row-stale select.cell.bad {
+    background-color: var(--stale-bg);
+    color: var(--stale-ink);
+    border-color: var(--stale-line);
+}
+
+/* Phone widths: tighten the table so it fits inside the card */
+@media (max-width: 640px) {
+    .card-head {
+        padding: 10px 10px 8px;
+    }
+
+    .q-table th,
+    .q-table td {
+        padding-inline: 4px;
+    }
+
+    .q-table select.cell {
+        min-width: 74px;
+    }
 }
 
 .empty-msg {
@@ -543,6 +679,10 @@ select.cell.bad {
     margin-top: 18px;
     padding: 44px 24px;
     text-align: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(29, 36, 51, 0.07);
 }
 
 .empty-state h2 {
@@ -653,37 +793,377 @@ select.cell.bad {
 
 .exam-card.add-exam-card {
     width: auto;
-    min-height: 150px;
+    min-height: 160px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    background: #fff;
+    gap: 12px;
+    background: #ffffff;
     border: 2px dashed #c7cbf3;
     border-radius: 12px;
     color: var(--accent);
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
 }
 
 .exam-card.add-exam-card:hover {
-    background: #eef0fb;
+    background: linear-gradient(180deg, #ffffff 0%, #f4f6fe 100%);
     border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.14);
 }
 
-.add-icon {
+.exam-card.add-exam-card:hover .add-icon-circle {
+    transform: scale(1.1) rotate(90deg);
+    background: #e0e4fc;
+    color: #4338ca;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.exam-card.add-exam-card:active,
+.exam-card.add-exam-card.is-pressed {
+    transform: scale(0.96) translateY(0);
+    background: #eef0fb;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.1);
+}
+
+.add-icon-circle {
     display: grid;
     place-items: center;
     width: 48px;
     height: 48px;
-    font-size: 1.9rem;
-    line-height: 1;
     border-radius: 50%;
     background: #eef0fb;
+    color: var(--accent);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.add-icon-svg {
+    display: block;
 }
 
 .add-label {
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* --- Sub-question (סעיף) rows + "add sub" button ---------------------------- */
+
+.points-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    width: 100%;
+    transition: gap 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+
+/* Points input dynamically resizes during the add-sub hover animation so
+   the expanded label has room while never exceeding the card border. */
+.points-cell .cell.points {
+    width: 76px;
+    min-width: 44px;
+    max-width: 76px;
+    padding-inline: 4px;
+    transition:
+        width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1),
+        max-width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+
+/* When the add-sub button expands, smoothly contract points box & tighten spaces */
+.points-cell:has(.add-sub-btn:hover),
+.points-cell:has(.add-sub-btn:focus-visible) {
+    gap: 5px;
+}
+
+.points-cell:has(.add-sub-btn:hover) .cell.points,
+.points-cell:has(.add-sub-btn:focus-visible) .cell.points {
+    width: 48px;
+    max-width: 48px;
+}
+
+/* Icon-only button; its label expands on hover / keyboard focus. */
+.add-sub-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 5px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.2s, color 0.2s;
+}
+
+.add-sub-btn:hover {
+    background: #eef0fb;
+    color: var(--accent);
+}
+
+.delete-sub-btn:hover {
+    background: #fee2e2;
+    color: var(--bad-ink);
+}
+
+/* Inset ring for consistent focus style */
+.add-sub-btn:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
+}
+
+.delete-sub-btn:focus-visible {
+    box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.45);
+}
+
+/* The label is clipped to zero width until the button is hovered / focused */
+.add-sub-label {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition:
+        max-width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1),
+        opacity 0.2s ease 0.04s;
+}
+
+.add-sub-label>span {
+    display: inline-block;
+    padding-inline-start: 4px;
+    padding-inline-end: 2px;
+    /* constant breathing room from the icon */
+    font-size: 0.72rem;
+    font-weight: 600;
+    transform: translateX(4px);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.3, 1) 0.04s,
+        opacity 0.2s ease;
+}
+
+.add-sub-btn:hover .add-sub-label,
+.add-sub-btn:focus-visible .add-sub-label {
+    max-width: 96px;
+    opacity: 1;
+}
+
+.delete-sub-btn:hover .add-sub-label>span,
+.delete-sub-btn:focus-visible .add-sub-label>span {
+    color: var(--bad-ink);
+}
+
+.add-sub-btn:hover .add-sub-label>span,
+.add-sub-btn:focus-visible .add-sub-label>span {
+    transform: none;
+}
+
+/* Sub-question visual hierarchy and indentation */
+td.q-num.q-num-sub {
+    padding-inline-start: 14px;
+    text-align: start;
+}
+
+.sub-q-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    color: #4338ca;
+    box-shadow: 0 1px 2px rgba(67, 56, 202, 0.06);
+}
+
+.sub-tree-icon {
+    color: #6366f1;
+    flex-shrink: 0;
+}
+
+.sub-q-letter {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #3730a3;
+    line-height: 1;
+}
+
+/* Sub-question rows sit visually under their parent question */
+.q-table tbody tr.row-sub td {
+    border-top: 1px dashed #cbd5e1;
+}
+
+.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-stale) td {
+    background-color: #f8fafc;
+}
+
+.q-table tbody tr.row-sub:hover:not(.row-ok):not(.row-bad):not(.row-stale) td {
+    background-color: #f1f5f9;
+}
+
+/* Clear hierarchy bar along the leading edge */
+.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-stale) td:first-child {
+    box-shadow: inset -4px 0 0 #818cf8;
+}
+
+/* Cell content wrapper for seamless layout height animations */
+.q-cell-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 28px;
+    box-sizing: border-box;
+}
+
+/* Sub-question appearing (accordion expansion) & disappearing (accordion collapse) animations */
+@keyframes subCellInnerEnter {
+    0% {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-8px);
+        overflow: hidden;
+    }
+
+    40% {
+        opacity: 0.4;
+    }
+
+    100% {
+        max-height: 50px;
+        opacity: 1;
+        transform: translateY(0);
+        overflow: visible;
+    }
+}
+
+@keyframes subCellInnerExit {
+    0% {
+        max-height: 50px;
+        opacity: 1;
+        transform: translateY(0);
+        overflow: hidden;
+    }
+
+    45% {
+        opacity: 0.2;
+    }
+
+    100% {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-8px);
+        overflow: hidden;
+    }
+}
+
+@keyframes subRowTdEnter {
+    0% {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border-top-color: transparent;
+        background-color: #e0e7ff;
+    }
+
+    50% {
+        background-color: #eef2ff;
+    }
+
+    100% {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        border-top-color: #cbd5e1;
+        background-color: #f8fafc;
+    }
+}
+
+@keyframes subRowTdExit {
+    0% {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        background-color: #fee2e2;
+        border-top-color: #fca5a5;
+    }
+
+    40% {
+        background-color: #fef2f2;
+        border-top-color: transparent;
+    }
+
+    100% {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border-top-color: transparent;
+        background-color: transparent;
+    }
+}
+
+.q-table tbody tr.row-sub.row-sub-enter td {
+    animation: subRowTdEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-sub.row-sub-enter .q-cell-inner {
+    animation: subCellInnerEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit {
+    pointer-events: none;
+    line-height: 0;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit td {
+    animation: subRowTdExit 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    line-height: 0;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit td:first-child {
+    box-shadow: none;
+    transition: box-shadow 0.2s ease;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit .q-cell-inner {
+    animation: subCellInnerExit 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit .cell,
+.q-table tbody tr.row-sub.row-sub-exit .points-cell,
+.q-table tbody tr.row-sub.row-sub-exit .sub-q-indicator {
+    opacity: 0.2;
+    transition: opacity 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .exam-card.exam-card-enter,
+    .exam-card.exam-card-exit,
+    .exam-card.add-exam-card,
+    .exam-card.add-exam-card .add-icon-circle,
+    .q-table tbody tr.row-sub.row-sub-enter td,
+    .q-table tbody tr.row-sub.row-sub-enter .q-cell-inner,
+    .q-table tbody tr.row-sub.row-sub-exit td,
+    .q-table tbody tr.row-sub.row-sub-exit .q-cell-inner {
+        animation: none;
+        transition: none;
+    }
+
+    .add-sub-label,
+    .add-sub-label>span,
+    .points-cell,
+    .points-cell .cell.points {
+        transition: none;
+    }
 }
