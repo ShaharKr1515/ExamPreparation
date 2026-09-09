@@ -1,0 +1,499 @@
+/* ==========================================================================
+   Question Table Component
+   ========================================================================== */
+
+.q-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-variant-numeric: tabular-nums;
+}
+
+.q-table th,
+.q-table td {
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 0.78rem;
+    vertical-align: middle;
+}
+
+.q-table tbody td {
+    background-color: #ffffff;
+    transition: background-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.q-table tbody td:first-child {
+    box-shadow: inset -3.5px 0 0 transparent;
+    transition: background-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.q-table th:nth-child(1),
+.q-table td:nth-child(1) {
+    width: 44px;
+    padding: 6px 4px;
+}
+
+.q-table th:nth-child(2),
+.q-table td:nth-child(2) {
+    width: 98px;
+    padding: 6px 4px;
+}
+
+.q-table th:nth-child(3),
+.q-table td:nth-child(3) {
+    width: 120px;
+    padding: 6px 4px;
+}
+
+.q-table th:nth-child(4),
+.q-table td:nth-child(4) {
+    width: 114px;
+    padding: 6px 4px;
+}
+
+.q-table th:nth-child(5) {
+    padding: 6px 6px;
+    text-align: end;
+    padding-inline-end: 38px;
+}
+
+.q-table td:nth-child(5) {
+    padding: 6px 6px;
+    padding-inline-end: 12px;
+}
+
+.q-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--line);
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.q-table tbody tr {
+    transition: background-color 0.18s ease;
+}
+
+.q-table tbody tr:not(.row-sub):hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
+    background-color: #f8fafc;
+}
+
+.q-table tbody tr+tr td {
+    border-top: 1px solid #f1f5f9;
+}
+
+td.q-num {
+    color: #334155;
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+/* Custom Table Inputs */
+.q-table .cell {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 3px 6px;
+    font-size: 0.78rem;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-sm);
+    background: #ffffff;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.q-table .cell:hover:not(:focus) {
+    border-color: #94a3b8;
+}
+
+.q-table .cell:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-ring);
+}
+
+/* RTL Dropdown Chevron */
+.q-table select.cell {
+    min-width: 82px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 7px center;
+    background-size: 8px 5px;
+    padding-left: 18px;
+    padding-right: 6px;
+    font-weight: 500;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.q-table select.cell.ok {
+    background-color: var(--ok-bg);
+    color: var(--ok-ink);
+    border-color: var(--ok-line);
+    font-weight: 600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23065f46' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.q-table select.cell.bad {
+    background-color: var(--bad-bg);
+    color: var(--bad-ink);
+    border-color: var(--bad-line);
+    font-weight: 600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23991b1b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.q-table select.cell.half {
+    background-color: var(--half-bg);
+    color: var(--half-ink);
+    border-color: var(--half-line);
+    font-weight: 600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%2392400e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Row Mastery Highlight States */
+.q-table tbody tr.row-ok td {
+    background-color: var(--ok-bg);
+    color: var(--ok-ink);
+}
+
+.q-table tbody tr.row-ok td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--ok-border-indicator);
+}
+
+.q-table tbody tr.row-ok input.cell.date,
+.q-table tbody tr.row-ok input.cell.points {
+    border-color: var(--ok-line);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.q-table tbody tr.row-bad td {
+    background-color: var(--bad-bg);
+    color: var(--bad-ink);
+}
+
+.q-table tbody tr.row-bad td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--bad-border-indicator);
+}
+
+.q-table tbody tr.row-bad input.cell.date,
+.q-table tbody tr.row-bad input.cell.points {
+    border-color: var(--bad-line);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.q-table tbody tr.row-half td {
+    background-color: var(--half-bg);
+    color: var(--half-ink);
+}
+
+.q-table tbody tr.row-half td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--half-border-indicator);
+}
+
+.q-table tbody tr.row-half input.cell.date,
+.q-table tbody tr.row-half input.cell.points {
+    border-color: var(--half-line);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.q-table tbody tr.row-stale td {
+    background-color: var(--stale-bg);
+    color: var(--stale-ink);
+}
+
+.q-table tbody tr.row-stale td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--stale-border-indicator);
+}
+
+.q-table tbody tr.row-stale input.cell.date,
+.q-table tbody tr.row-stale input.cell.points {
+    border-color: var(--stale-line);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.q-table tbody tr.row-stale select.cell.bad,
+.q-table tbody tr.row-stale select.cell.half {
+    background-color: var(--stale-bg);
+    color: var(--stale-ink);
+    border-color: var(--stale-line);
+}
+
+/* Sub-question Row Styling */
+td.q-num.q-num-sub {
+    padding-inline-start: 12px;
+    text-align: start;
+}
+
+.sub-q-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.sub-tree-icon {
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.sub-q-letter {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #475569;
+    line-height: 1;
+}
+
+.q-table tbody tr.row-sub td {
+    border-top: 1px dashed #cbd5e1;
+    border-bottom: 1px dashed #cbd5e1;
+}
+
+.q-table tbody tr.row-sub + tr:not(.row-sub) td {
+    border-top: 1px dashed #cbd5e1;
+}
+
+.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
+    background-color: #f8fafc;
+}
+
+.q-table tbody tr.row-sub:hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
+    background-color: #f1f5f9;
+}
+
+.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td:first-child {
+    box-shadow: inset -3.5px 0 0 #94a3b8;
+}
+
+/* Ensure row with hovered timer tooltip has stacking priority over rows above it */
+.q-table tbody tr:has(.timer-cell:hover),
+.q-table tbody tr:has(.timer-btn:focus-visible) {
+    position: relative;
+    z-index: 25;
+}
+
+/* --- Summation Indicators & Badges ---------------------------------------- */
+
+/* Status Sum Badge */
+.status-sum-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    min-width: 82px;
+    height: 30px;
+    box-sizing: border-box;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--line-strong);
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: default;
+    user-select: none;
+    padding: 2px 6px;
+    white-space: nowrap;
+    animation: sumBadgeFadeIn 0.24s ease-out;
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.status-sum-badge:hover {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+}
+
+.status-sum-badge.sum-value-updated {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.28);
+}
+
+.status-sum-badge.ok {
+    background: var(--ok-bg);
+    border-color: var(--ok-line);
+    color: var(--ok-ink);
+}
+
+.status-sum-badge.ok.sum-value-updated {
+    background: var(--ok-bg);
+    border-color: var(--ok-line);
+    box-shadow: 0 0 0 3px var(--ok-line);
+}
+
+.status-sum-badge.bad {
+    background: var(--bad-bg);
+    border-color: var(--bad-line);
+    color: var(--bad-ink);
+}
+
+.status-sum-badge.bad.sum-value-updated {
+    background: var(--bad-bg);
+    border-color: var(--bad-line);
+    box-shadow: 0 0 0 3px var(--bad-line);
+}
+
+.status-sum-badge.half {
+    background: var(--half-bg);
+    border-color: var(--half-line);
+    color: var(--half-ink);
+}
+
+.status-sum-badge.half.sum-value-updated {
+    background: var(--half-bg);
+    border-color: var(--half-line);
+    box-shadow: 0 0 0 3px var(--half-line);
+}
+
+/* Timer Sum Badge */
+.timer-sum-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 30px;
+    padding: 2px 8px;
+    box-sizing: border-box;
+    border: 1px dashed var(--line-strong);
+    background: #f1f5f9;
+    border-radius: var(--radius-sm);
+    cursor: default;
+    user-select: none;
+    direction: rtl;
+    white-space: nowrap;
+    animation: sumBadgeFadeIn 0.24s ease-out;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+}
+
+.timer-sum-badge:hover {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.timer-sum-badge.sum-value-updated {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.28);
+}
+
+.timer-sum-badge.sum-value-updated .timer-sum-digits {
+    color: #0f172a;
+}
+
+.timer-sum-digits {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #64748b;
+    display: inline-block;
+    transition: color 0.25s ease;
+}
+
+.timer-sum-badge.has-time .timer-sum-digits {
+    color: #475569;
+    font-weight: 700;
+}
+
+/* Animation when regular inputs restore after all sub-questions are removed */
+@keyframes cellFadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.cell-restore-enter {
+    animation: cellFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.timer-sum-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #64748b;
+    background: #e2e8f0;
+    padding: 1px 4px;
+    border-radius: 4px;
+    line-height: 1.2;
+}
+
+/* Timer Sum inside Row Highlight States */
+.q-table tbody tr.row-ok .timer-sum-badge {
+    background: #f1f5f9;
+    border-color: var(--ok-line);
+}
+.q-table tbody tr.row-ok .timer-sum-badge .timer-sum-digits {
+    color: var(--ok-ink);
+}
+.q-table tbody tr.row-ok .timer-sum-badge .timer-sum-label {
+    background: var(--ok-line);
+    color: var(--ok-ink);
+}
+
+.q-table tbody tr.row-bad .timer-sum-badge {
+    background: #f1f5f9;
+    border-color: var(--bad-line);
+}
+.q-table tbody tr.row-bad .timer-sum-badge .timer-sum-digits {
+    color: var(--bad-ink);
+}
+.q-table tbody tr.row-bad .timer-sum-badge .timer-sum-label {
+    background: var(--bad-line);
+    color: var(--bad-ink);
+}
+
+.q-table tbody tr.row-half .timer-sum-badge {
+    background: #f1f5f9;
+    border-color: var(--half-line);
+}
+.q-table tbody tr.row-half .timer-sum-badge .timer-sum-digits {
+    color: var(--half-ink);
+}
+.q-table tbody tr.row-half .timer-sum-badge .timer-sum-label {
+    background: var(--half-line);
+    color: var(--half-ink);
+}
+
+.q-table tbody tr.row-stale .timer-sum-badge {
+    background: #f1f5f9;
+    border-color: var(--stale-line);
+}
+.q-table tbody tr.row-stale .timer-sum-badge .timer-sum-digits {
+    color: var(--stale-ink);
+}
+.q-table tbody tr.row-stale .timer-sum-badge .timer-sum-label {
+    background: var(--stale-line);
+    color: var(--stale-ink);
+}
+
+.q-table tbody tr.row-ok .timer-sum-badge.sum-value-updated {
+    box-shadow: 0 0 0 3px var(--ok-line);
+}
+.q-table tbody tr.row-bad .timer-sum-badge.sum-value-updated {
+    box-shadow: 0 0 0 3px var(--bad-line);
+}
+.q-table tbody tr.row-half .timer-sum-badge.sum-value-updated {
+    box-shadow: 0 0 0 3px var(--half-line);
+}

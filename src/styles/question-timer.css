@@ -1,0 +1,148 @@
+/* ==========================================================================
+   Question Timer & Tooltips
+   ========================================================================== */
+
+.timer-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    position: relative;
+    direction: rtl;
+}
+
+.timer-digits {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #475569;
+    min-width: 38px;
+    text-align: center;
+    transition: color 0.18s ease;
+    user-select: none;
+}
+
+.timer-digits.has-time {
+    color: #1e293b;
+}
+
+.timer-digits.is-running {
+    color: var(--accent, #4f46e5);
+    font-weight: 700;
+}
+
+.timer-btn-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: var(--radius-sm, 6px);
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.timer-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+}
+
+.timer-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.timer-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent, #4f46e5);
+}
+
+.timer-btn-start:hover {
+    background: #eef2ff;
+    color: var(--accent, #4f46e5);
+    border-color: #c7d2fe;
+}
+
+.timer-btn-pause {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+.timer-btn-pause:hover {
+    background: #fde68a;
+    color: #92400e;
+    border-color: #fcd34d;
+}
+
+.timer-btn-reset {
+    color: #94a3b8;
+}
+
+.timer-btn-reset:hover:not(:disabled) {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.timer-btn-reset:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* Hover Tooltip Above the Buttons */
+.timer-tooltip {
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%) translateY(3px);
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.69rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.16s ease, transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s ease;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22);
+    z-index: 100;
+}
+
+.timer-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: #0f172a transparent transparent transparent;
+}
+
+.timer-btn-wrap:hover .timer-tooltip,
+.timer-btn:focus-visible + .timer-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}

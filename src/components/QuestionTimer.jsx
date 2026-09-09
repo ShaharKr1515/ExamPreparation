@@ -6,7 +6,7 @@ import { formatTimer } from "../utils/examUtils.js";
  * Hover text appears above the buttons via custom CSS tooltips.
  * Persists elapsed time to database on pause, reset, and periodically while running.
  */
-export default function QuestionTimer({ initialSeconds = 0, onSave, onStart, questionLabel = "שאלה" }) {
+export default function QuestionTimer({ initialSeconds = 0, onSave, onStart, questionLabel = "שאלה", className = "" }) {
     const [seconds, setSeconds] = useState(initialSeconds);
     const [isRunning, setIsRunning] = useState(false);
 
@@ -127,7 +127,7 @@ export default function QuestionTimer({ initialSeconds = 0, onSave, onStart, que
     const playPauseAria = isRunning ? `השהה טיימר ${questionLabel}` : `התחל טיימר ${questionLabel}`;
 
     return (
-        <div className="timer-cell">
+        <div className={`timer-cell ${className}`.trim()}>
             <span
                 className={`timer-digits ${isRunning ? "is-running" : ""} ${seconds > 0 ? "has-time" : ""}`}
                 aria-label={`זמן שנמדד: ${formatTimer(seconds)}`}

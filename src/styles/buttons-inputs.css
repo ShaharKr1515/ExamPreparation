@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Shared Button & Form Input Styles
+   ========================================================================== */
+
+/* General Button Styles */
+.btn {
+    font: inherit;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    padding: 9px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.18s ease;
+}
+
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--accent);
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.28), 0 2px 6px -1px rgba(79, 70, 229, 0.2);
+}
+
+.btn.primary:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn.primary:active {
+    transform: translateY(0);
+}
+
+.btn.ghost {
+    background: #ffffff;
+    color: var(--muted);
+    border-color: var(--line);
+}
+
+.btn.ghost:hover {
+    background: #f1f5f9;
+    color: var(--ink);
+    border-color: #cbd5e1;
+}
+
+/* Base Inputs & Selects */
+input,
+select {
+    font: inherit;
+    padding: 8px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: #ffffff;
+    color: var(--ink);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+}

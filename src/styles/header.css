@@ -1,0 +1,40 @@
+/* ==========================================================================
+   Page Header
+   ========================================================================== */
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px;
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--accent-light);
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.14), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    border: 1px solid #e0e7ff;
+    flex-shrink: 0;
+}
+
+.page-header .subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    max-width: 780px;
+}

@@ -1,0 +1,71 @@
+/* ==========================================================================
+   "Add Exam" Card Placeholder
+   ========================================================================== */
+
+.exam-card.add-exam-card {
+    width: auto;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: var(--radius-lg);
+    color: var(--accent);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.exam-card.add-exam-card:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #f5f7ff 100%);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+}
+
+.exam-card.add-exam-card:hover .add-icon-circle {
+    transform: scale(1.08) rotate(90deg);
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);
+}
+
+.exam-card.add-exam-card:active,
+.exam-card.add-exam-card.is-pressed {
+    transform: scale(0.97) translateY(0);
+    background: #eef2ff;
+    box-shadow: var(--shadow-sm);
+}
+
+.add-icon-circle {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-pill);
+    background: #eef2ff;
+    color: var(--accent);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.add-icon-svg {
+    display: block;
+}
+
+.add-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}

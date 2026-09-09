@@ -1,0 +1,404 @@
+/* ==========================================================================
+   Points Input, Sub-question Actions & Accordion Animations
+   ========================================================================== */
+
+.points-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    position: relative;
+    width: 100%;
+    transition: gap 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+
+.points-cell .cell.points {
+    width: 76px;
+    min-width: 44px;
+    max-width: 76px;
+    padding-inline: 4px;
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1),
+        max-width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+
+.cell.points::-webkit-inner-spin-button,
+.cell.points::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.cell.points {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Points Sum Badge */
+.points-cell .cell.points.points-sum-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-style: dashed;
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 700;
+    cursor: default;
+    user-select: none;
+    overflow: hidden;
+    padding-inline: 4px;
+    box-sizing: border-box;
+    animation: sumBadgeFadeIn 0.24s ease-out;
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.points-cell .cell.points.points-sum-badge:hover {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    color: #334155;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.points-sum-value {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+    display: inline-block;
+    transition: color 0.25s ease;
+}
+
+.points-sum-unit {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.points-cell:has(.add-sub-btn:hover),
+.points-cell:has(.add-sub-btn:focus-visible) {
+    gap: 5px;
+}
+
+.points-cell:has(.add-sub-btn:hover) .cell.points,
+.points-cell:has(.add-sub-btn:focus-visible) .cell.points {
+    width: 48px;
+    max-width: 48px;
+}
+
+.points-cell:has(.add-sub-btn:hover) .points-sum-badge,
+.points-cell:has(.add-sub-btn:focus-visible) .points-sum-badge {
+    gap: 2px;
+}
+
+.points-cell:has(.add-sub-btn:hover) .points-sum-badge .points-sum-unit,
+.points-cell:has(.add-sub-btn:focus-visible) .points-sum-badge .points-sum-unit {
+    display: none;
+}
+
+/* Sum Badge Entrance Animation — Pure opacity fade-in, NO jumping / scaling */
+@keyframes sumBadgeFadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.points-cell .cell.points.points-sum-badge.sum-value-updated {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.28);
+}
+
+.points-cell .cell.points.points-sum-badge.sum-value-updated .points-sum-value {
+    color: #0f172a;
+}
+
+.cell.cell-restore-enter {
+    animation: cellFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Points Sum inside Row Highlight States */
+.q-table tbody tr.row-ok .points-sum-badge {
+    background-color: #f1f5f9;
+    border-color: var(--ok-line);
+    color: var(--ok-ink);
+}
+
+.q-table tbody tr.row-ok .points-cell .cell.points.points-sum-badge.sum-value-updated {
+    box-shadow: 0 0 0 3px var(--ok-line);
+}
+
+.q-table tbody tr.row-bad .points-sum-badge {
+    background-color: #f1f5f9;
+    border-color: var(--bad-line);
+    color: var(--bad-ink);
+}
+
+.q-table tbody tr.row-bad .points-cell .cell.points.points-sum-badge.sum-value-updated {
+    box-shadow: 0 0 0 3px var(--bad-line);
+}
+
+.q-table tbody tr.row-half .points-sum-badge {
+    background-color: #f1f5f9;
+    border-color: var(--half-line);
+    color: var(--half-ink);
+}
+
+.q-table tbody tr.row-half .points-cell .cell.points.points-sum-badge.sum-value-updated {
+    box-shadow: 0 0 0 3px var(--half-line);
+}
+
+.q-table tbody tr.row-stale .points-sum-badge {
+    background-color: #f1f5f9;
+    border-color: var(--stale-line);
+    color: var(--stale-ink);
+}
+
+/* Sub-question Action Buttons */
+.add-sub-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.18s ease;
+}
+
+.add-sub-btn:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: var(--accent);
+}
+
+.delete-sub-btn:hover {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: var(--bad-ink);
+}
+
+.add-sub-btn:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
+}
+
+.delete-sub-btn:focus-visible {
+    box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.45);
+}
+
+.add-sub-label {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1),
+        opacity 0.2s ease 0.04s;
+}
+
+.add-sub-label>span {
+    display: inline-block;
+    padding-inline-start: 4px;
+    padding-inline-end: 2px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transform: translateX(4px);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.3, 1) 0.04s,
+        opacity 0.2s ease;
+}
+
+.add-sub-btn:hover .add-sub-label,
+.add-sub-btn:focus-visible .add-sub-label {
+    max-width: 96px;
+    opacity: 1;
+}
+
+.delete-sub-btn:hover .add-sub-label>span,
+.delete-sub-btn:focus-visible .add-sub-label>span {
+    color: var(--bad-ink);
+}
+
+.add-sub-btn:hover .add-sub-label>span,
+.add-sub-btn:focus-visible .add-sub-label>span {
+    transform: none;
+}
+
+/* Accordion Cell Wrappers */
+.q-cell-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 30px;
+    height: 30px;
+    box-sizing: border-box;
+}
+
+/* Sub-question Accordion Animations */
+@keyframes subCellInnerEnter {
+    0% {
+        height: 0;
+        min-height: 0;
+        max-height: 0;
+        opacity: 0;
+        transform: scaleY(0.4);
+        transform-origin: top center;
+        overflow: hidden;
+    }
+
+    30% {
+        opacity: 0.2;
+    }
+
+    60% {
+        opacity: 0.7;
+    }
+
+    100% {
+        height: 30px;
+        min-height: 30px;
+        max-height: 30px;
+        opacity: 1;
+        transform: scaleY(1);
+        transform-origin: top center;
+        overflow: visible;
+    }
+}
+
+@keyframes subCellInnerExit {
+    0% {
+        height: 30px;
+        min-height: 30px;
+        max-height: 30px;
+        opacity: 1;
+        transform: scaleY(1);
+        transform-origin: top center;
+        overflow: hidden;
+    }
+
+    25% {
+        opacity: 0.2;
+    }
+
+    100% {
+        height: 0;
+        min-height: 0;
+        max-height: 0;
+        opacity: 0;
+        transform: scaleY(0.4);
+        transform-origin: top center;
+        overflow: hidden;
+    }
+}
+
+@keyframes subRowTdEnter {
+    0% {
+        padding-top: 0;
+        padding-bottom: 0;
+        line-height: 0;
+        font-size: 0;
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+        background-color: #e2e8f0;
+    }
+
+    50% {
+        background-color: #f1f5f9;
+        border-top-color: #cbd5e1;
+        border-bottom-color: #cbd5e1;
+    }
+
+    100% {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        line-height: normal;
+        font-size: 0.78rem;
+        border-top-color: #cbd5e1;
+        border-bottom-color: #cbd5e1;
+        background-color: #f8fafc;
+    }
+}
+
+@keyframes subRowFirstTdEnter {
+    0% {
+        box-shadow: inset -3.5px 0 0 transparent;
+    }
+
+    50% {
+        box-shadow: inset -3.5px 0 0 #cbd5e1;
+    }
+
+    100% {
+        box-shadow: inset -3.5px 0 0 #94a3b8;
+    }
+}
+
+@keyframes subRowTdExit {
+    0% {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        line-height: normal;
+        font-size: 0.78rem;
+        background-color: #fee2e2;
+        border-top-color: #cbd5e1;
+        border-bottom-color: #cbd5e1;
+    }
+
+    35% {
+        background-color: #fef2f2;
+    }
+
+    100% {
+        padding-top: 0;
+        padding-bottom: 0;
+        line-height: 0;
+        font-size: 0;
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+        background-color: transparent;
+    }
+}
+
+.q-table tbody tr.row-sub.row-sub-enter td {
+    animation: subRowTdEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-sub.row-sub-enter td:first-child {
+    animation: subRowTdEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both,
+        subRowFirstTdEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-sub.row-sub-enter .q-cell-inner {
+    animation: subCellInnerEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit {
+    pointer-events: none;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit td {
+    animation: subRowTdExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit td:first-child {
+    box-shadow: inset -3.5px 0 0 transparent !important;
+    transition: box-shadow 0.15s ease;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit .q-cell-inner {
+    animation: subCellInnerExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.q-table tbody tr.row-sub.row-sub-exit .cell,
+.q-table tbody tr.row-sub.row-sub-exit .points-cell,
+.q-table tbody tr.row-sub.row-sub-exit .sub-q-indicator {
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}

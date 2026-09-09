@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
 import {
     questionRowState,
@@ -93,19 +93,23 @@ function QuestionRow({
     q,
     qi,
     subQuestions = [],
+    activeSubQuestions = subQuestions,
     insertAfterIndex,
     labelInfo,
     isEntering,
+    isExiting,
     onDelete,
 }) {
     const { updateQuestion } = useExams();
-    const [isExiting, setIsExiting] = useState(false);
 
-    const hasSubQuestions = !q.sub && subQuestions.length > 0;
-    const derivedSuccess = hasSubQuestions ? deriveParentSuccess(subQuestions) : "";
-    const derivedPoints = hasSubQuestions ? computeSubQuestionsPointsSum(subQuestions) : "";
-    const derivedTimerSeconds = hasSubQuestions ? computeSubQuestionsTimerSum(subQuestions) : 0;
-    const effectiveDate = hasSubQuestions ? (q.date || getLatestDate(subQuestions)) : q.date;
+    const hadSubQuestions = !q.sub && subQuestions.length > 0;
+    const hasSubQuestions = !q.sub && activeSubQuestions.length > 0;
+    const isLastSubExiting = hadSubQuestions && !hasSubQuestions;
+
+    const derivedSuccess = hasSubQuestions ? deriveParentSuccess(activeSubQuestions) : "";
+    const derivedPoints = hasSubQuestions ? computeSubQuestionsPointsSum(activeSubQuestions) : "";
+    const derivedTimerSeconds = hasSubQuestions ? computeSubQuestionsTimerSum(activeSubQuestions) : 0;
+    const effectiveDate = hasSubQuestions ? (q.date || getLatestDate(activeSubQuestions)) : q.date;
     const effectiveSuccess = hasSubQuestions ? derivedSuccess : q.success;
 
     const stateClass = questionRowState({
@@ -113,21 +117,72 @@ function QuestionRow({
         date: effectiveDate,
     }); // "ok" | "stale" | "bad" | "half" | null
 
-    const handleDelete = () => {
-        if (isExiting) return;
-        setIsExiting(true);
-        setTimeout(() => {
-            if (onDelete) {
-                onDelete(q.id, qi);
-            }
-        }, 280);
-    };
+    const prevHadSubRef = useRef(hasSubQuestions);
+    const [isRestoringInputs, setIsRestoringInputs] = useState(false);
+
+    useEffect(() => {
+        if (prevHadSubRef.current && !hasSubQuestions) {
+            setIsRestoringInputs(true);
+            const t = setTimeout(() => setIsRestoringInputs(false), 450);
+            return () => clearTimeout(t);
+        }
+        prevHadSubRef.current = hasSubQuestions;
+    }, [hasSubQuestions]);
+
+    const shouldAnimateRestore = isLastSubExiting || isRestoringInputs;
+
+    const [pointsPulse, setPointsPulse] = useState(false);
+    const [timerPulse, setTimerPulse] = useState(false);
+    const [statusPulse, setStatusPulse] = useState(false);
+
+    const prevPointsRef = useRef(derivedPoints);
+    const prevTimerRef = useRef(derivedTimerSeconds);
+    const prevSuccessRef = useRef(effectiveSuccess);
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        isFirstRender.current = false;
+    }, []);
+
+    useEffect(() => {
+        if (isFirstRender.current) return;
+        if (hasSubQuestions && prevPointsRef.current !== derivedPoints) {
+            prevPointsRef.current = derivedPoints;
+            setPointsPulse(true);
+            const t = setTimeout(() => setPointsPulse(false), 400);
+            return () => clearTimeout(t);
+        }
+        prevPointsRef.current = derivedPoints;
+    }, [derivedPoints, hasSubQuestions]);
+
+    useEffect(() => {
+        if (isFirstRender.current) return;
+        if (hasSubQuestions && prevTimerRef.current !== derivedTimerSeconds) {
+            prevTimerRef.current = derivedTimerSeconds;
+            setTimerPulse(true);
+            const t = setTimeout(() => setTimerPulse(false), 400);
+            return () => clearTimeout(t);
+        }
+        prevTimerRef.current = derivedTimerSeconds;
+    }, [derivedTimerSeconds, hasSubQuestions]);
+
+    useEffect(() => {
+        if (isFirstRender.current) return;
+        if (hasSubQuestions && prevSuccessRef.current !== effectiveSuccess) {
+            prevSuccessRef.current = effectiveSuccess;
+            setStatusPulse(true);
+            const t = setTimeout(() => setStatusPulse(false), 400);
+            return () => clearTimeout(t);
+        }
+        prevSuccessRef.current = effectiveSuccess;
+    }, [effectiveSuccess, hasSubQuestions]);
 
     const rowClass = [
         stateClass ? `row-${stateClass}` : "",
         q.sub ? "row-sub" : "",
         isEntering ? "row-sub-enter" : "",
         isExiting ? "row-sub-exit" : "",
+        shouldAnimateRestore ? "row-restoring" : "",
     ]
         .filter(Boolean)
         .join(" ");
@@ -172,11 +227,10 @@ function QuestionRow({
                                     : effectiveSuccess === "half"
                                     ? "half"
                                     : ""
-                            }`}
+                            } ${statusPulse ? "sum-value-updated" : ""}`}
                             title={`סטטוס מחושב לפי הסעיפים: ${SUCCESS_LABELS[effectiveSuccess] || "—"}`}
                             aria-label={`סטטוס מחושב לפי הסעיפים: ${SUCCESS_LABELS[effectiveSuccess] || "—"}`}
                         >
-                            <span className="sum-symbol-small" aria-hidden="true">Σ</span>
                             <span>{SUCCESS_LABELS[effectiveSuccess] || "—"}</span>
                         </div>
                     ) : (
@@ -189,7 +243,8 @@ function QuestionRow({
                                     ? " bad"
                                     : q.success === "half"
                                     ? " half"
-                                    : "")
+                                    : "") +
+                                (shouldAnimateRestore ? " cell-restore-enter" : "")
                             }
                             value={q.success}
                             aria-label={`סטטוס ${labelInfo.aria}`}
@@ -220,16 +275,16 @@ function QuestionRow({
                 <div className="q-cell-inner">
                     {hasSubQuestions ? (
                         <div
-                            className={`timer-sum-badge ${derivedTimerSeconds > 0 ? "has-time" : ""}`}
+                            className={`timer-sum-badge ${derivedTimerSeconds > 0 ? "has-time" : ""} ${timerPulse ? "sum-value-updated" : ""}`}
                             title={`סכום זמני הסעיפים: ${formatTimer(derivedTimerSeconds)}`}
                             aria-label={`סכום זמני הסעיפים: ${formatTimer(derivedTimerSeconds)}`}
                         >
-                            <span className="sum-symbol-small" aria-hidden="true">Σ</span>
                             <span className="timer-sum-digits">{formatTimer(derivedTimerSeconds)}</span>
                             <span className="timer-sum-label">סה״כ</span>
                         </div>
                     ) : (
                         <QuestionTimer
+                            className={shouldAnimateRestore ? "cell-restore-enter" : ""}
                             initialSeconds={q.timerSeconds || 0}
                             onSave={(secs) => updateQuestion(exam.id, qi, "timerSeconds", secs)}
                             onStart={() => {
@@ -249,11 +304,10 @@ function QuestionRow({
                     <div className="points-cell">
                         {hasSubQuestions ? (
                             <div
-                                className="cell points points-sum-badge"
+                                className={`cell points points-sum-badge ${pointsPulse ? "sum-value-updated" : ""}`}
                                 title={`סכום נקודות הסעיפים: ${derivedPoints}`}
                                 aria-label={`סכום נקודות הסעיפים: ${derivedPoints}`}
                             >
-                                <span className="sum-symbol-small" aria-hidden="true">Σ</span>
                                 <span className="points-sum-value">{derivedPoints}</span>
                                 <span className="points-sum-unit">נק'</span>
                             </div>
@@ -262,7 +316,7 @@ function QuestionRow({
                                 type="number"
                                 min="0"
                                 inputMode="numeric"
-                                className="cell points"
+                                className={`cell points ${shouldAnimateRestore ? "cell-restore-enter" : ""}`}
                                 placeholder="נק'"
                                 value={q.points}
                                 aria-label={`נקודות ל${labelInfo.aria}`}
@@ -270,7 +324,11 @@ function QuestionRow({
                             />
                         )}
                         {q.sub ? (
-                            <DeleteSubButton label={labelInfo.aria} onDelete={handleDelete} isExiting={isExiting} />
+                            <DeleteSubButton
+                                label={labelInfo.aria}
+                                onDelete={() => onDelete(q.id, qi)}
+                                isExiting={isExiting}
+                            />
                         ) : (
                             <AddSubButton examId={exam.id} afterIndex={insertAfterIndex ?? qi} mainLabel={labelInfo.display} />
                         )}
@@ -289,6 +347,7 @@ export default function QuestionTable({ exam }) {
     const [prevExamId, setPrevExamId] = useState(exam.id);
     const [prevQuestions, setPrevQuestions] = useState(exam.questions);
     const [enteringIds, setEnteringIds] = useState(() => new Set());
+    const [exitingIds, setExitingIds] = useState(() => new Set());
 
     // Synchronous state adjustment during render (React standard pattern):
     // Ensures newly added sub-question rows render with `isEntering = true` on frame 0,
@@ -297,6 +356,7 @@ export default function QuestionTable({ exam }) {
         setPrevExamId(exam.id);
         setPrevQuestions(exam.questions);
         setEnteringIds(new Set());
+        setExitingIds(new Set());
     } else if (prevQuestions !== exam.questions) {
         const prevIds = new Set(prevQuestions.map((q) => q.id));
         const newSubIds = exam.questions
@@ -318,9 +378,21 @@ export default function QuestionTable({ exam }) {
         return () => clearTimeout(timer);
     }, [enteringIds]);
 
-    const handleDeleteQuestion = (qId, qi) => {
-        const currentIdx = exam.questions.findIndex((q) => q.id === qId);
-        deleteQuestion(exam.id, currentIdx !== -1 ? currentIdx : qi);
+    const handleDeleteQuestion = async (qId, qi) => {
+        if (exitingIds.has(qId)) return;
+        setExitingIds((prev) => new Set([...prev, qId]));
+
+        try {
+            await new Promise((resolve) => setTimeout(resolve, 280));
+            const currentIdx = exam.questions.findIndex((q) => q.id === qId);
+            await deleteQuestion(exam.id, currentIdx !== -1 ? currentIdx : qi);
+        } finally {
+            setExitingIds((prev) => {
+                const next = new Set(prev);
+                next.delete(qId);
+                return next;
+            });
+        }
     };
 
     return (
@@ -346,6 +418,8 @@ export default function QuestionTable({ exam }) {
                         }
                     }
 
+                    const activeSubQuestions = subQuestions.filter((sq) => !exitingIds.has(sq.id));
+
                     return (
                         <QuestionRow
                             key={q.id ?? qi}
@@ -353,9 +427,11 @@ export default function QuestionTable({ exam }) {
                             q={q}
                             qi={qi}
                             subQuestions={subQuestions}
+                            activeSubQuestions={activeSubQuestions}
                             insertAfterIndex={insertAfterIndex}
                             labelInfo={labels[qi] || { display: String(qi + 1), aria: `שאלה ${qi + 1}` }}
                             isEntering={enteringIds.has(q.id)}
+                            isExiting={exitingIds.has(q.id)}
                             onDelete={handleDeleteQuestion}
                         />
                     );

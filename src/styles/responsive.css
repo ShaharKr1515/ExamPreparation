@@ -1,0 +1,79 @@
+/* ==========================================================================
+   Mobile Responsiveness & Accessibility (Reduced Motion)
+   ========================================================================== */
+
+/* Mobile Breakpoint */
+@media (max-width: 640px) {
+    .wrap {
+        padding: 20px 14px 60px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .count {
+        margin-inline-start: 0;
+        text-align: center;
+    }
+
+    .q-table th,
+    .q-table td {
+        padding-inline: 3px;
+    }
+
+    .q-table th:nth-child(5) {
+        padding-inline-end: 14px;
+    }
+
+    .q-table td:nth-child(5) {
+        padding-inline-end: 4px;
+    }
+
+    .q-table select.cell {
+        min-width: 76px;
+    }
+}
+
+/* Reduced Motion (Accessibility) */
+@media (prefers-reduced-motion: reduce) {
+    .exam-card.exam-card-enter,
+    .exam-card.exam-card-exit,
+    .exam-card.add-exam-card,
+    .exam-card.add-exam-card .add-icon-circle,
+    .q-table tbody tr.row-sub.row-sub-enter td,
+    .q-table tbody tr.row-sub.row-sub-enter .q-cell-inner,
+    .q-table tbody tr.row-sub.row-sub-exit td,
+    .q-table tbody tr.row-sub.row-sub-exit .q-cell-inner,
+    .exam-grid.exam-grid-enter,
+    .interval-hint,
+    .empty-state,
+    .subject-menu,
+    .subject-menu.is-closing,
+    .modal-backdrop.is-entering,
+    .modal-backdrop.is-closing,
+    .subject-modal.is-entering,
+    .subject-modal.is-closing,
+    .points-cell .cell.points.points-sum-badge,
+    .timer-sum-badge,
+    .status-sum-badge,
+    .points-cell .cell.points.points-sum-badge.sum-value-updated,
+    .timer-sum-badge.sum-value-updated,
+    .status-sum-badge.sum-value-updated,
+    .points-cell .cell.points.points-sum-badge.sum-value-updated .points-sum-value,
+    .timer-sum-badge.sum-value-updated .timer-sum-digits,
+    .cell-restore-enter {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .add-sub-label,
+    .add-sub-label>span,
+    .points-cell,
+    .points-cell .cell.points,
+    .timer-btn,
+    .timer-tooltip {
+        transition: none !important;
+    }
+}

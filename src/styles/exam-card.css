@@ -1,0 +1,209 @@
+/* ==========================================================================
+   Exam Card Component
+   ========================================================================== */
+
+.exam-card {
+    width: auto;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.2s ease;
+}
+
+.exam-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: var(--shadow-card-hover);
+}
+
+/* Card Transitions */
+@keyframes examCardEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.005);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        box-shadow: var(--shadow-card);
+    }
+}
+
+@keyframes examCardExit {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.94);
+    }
+}
+
+.exam-card.exam-card-enter {
+    animation: examCardEnter 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.exam-card.exam-card-exit {
+    animation: examCardExit 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+}
+
+/* Card Header Compartment */
+.card-head {
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    background: var(--card-subtle);
+    border-bottom: 1px solid var(--line);
+}
+
+.exam-name-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.cell.exam-name {
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    caret-color: var(--accent);
+    text-align: center;
+    border: none;
+    background: transparent;
+    padding: 11px 14px 9px;
+    line-height: 1.35;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cell.exam-name:only-child {
+    padding: 13px 14px;
+}
+
+.cell.exam-name:hover {
+    background: rgba(241, 245, 249, 0.65);
+}
+
+.cell.exam-name::placeholder {
+    color: var(--muted);
+    font-weight: 400;
+    opacity: 0.75;
+}
+
+.cell.exam-name:focus {
+    outline: none;
+    background: #ffffff;
+    border-start-start-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
+}
+
+/* Recommended Due Date Strip */
+.recommended-due {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #475569;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    padding: 7px 12px;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.recommended-due .due-main {
+    white-space: nowrap;
+}
+
+.recommended-due .due-rel {
+    font-weight: 500;
+    font-size: 0.72rem;
+    opacity: 0.88;
+    white-space: nowrap;
+}
+
+.recommended-due.overdue {
+    color: #b91c1c;
+    background: #fff5f5;
+    border-top-color: #fecaca;
+}
+
+.recommended-due.today {
+    color: #b45309;
+    background: #fffbeb;
+    border-top-color: #fde68a;
+}
+
+.recommended-due.upcoming {
+    color: #475569;
+    background: #f8fafc;
+}
+
+/* Card Delete Button */
+.delete-btn {
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 44px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-inline-start: 1px solid var(--line);
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.delete-btn svg {
+    transition: transform 0.15s ease;
+}
+
+.delete-btn:hover {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.delete-btn:hover svg {
+    transform: scale(1.12);
+}
+
+.delete-btn:active {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.delete-btn:active svg {
+    transform: scale(0.92);
+}
+
+.delete-btn:focus-visible {
+    outline: none;
+    border-start-end-radius: var(--radius-lg);
+    border-top-left-radius: var(--radius-lg);
+    box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.45);
+    color: #ef4444;
+}
