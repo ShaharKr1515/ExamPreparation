@@ -2,6 +2,23 @@
 
 A personal exam preparation management application that helps students organize their study schedule and track mastery progress across multiple subjects.
 
+## Technology Stack
+
+### Frontend
+- **React 18** - Modern component-based UI with hooks and Context API
+- **Vite** - Lightning-fast build tool and development server
+- **Modular CSS** - Component-scoped styling with CSS variables
+
+### Backend
+- **Node.js** - Server-side JavaScript runtime
+- **Express 5** - Minimalist web framework
+- **SQLite** - Embedded relational database for local persistence
+- **RESTful API** - Clean separation between frontend and backend
+
+### DevOps
+- **Docker** - Containerization support included
+- **ES Modules** - Modern JavaScript module system
+
 ## Overview
 
 This web application combines **mastery tracking** with **intelligent scheduling** to help students prepare for exams efficiently. It tracks per-question progress while automatically calculating recommended due dates for practice exams based on your final exam schedule.
@@ -13,18 +30,6 @@ This web application combines **mastery tracking** with **intelligent scheduling
 - **Question-Level Tracking**: Mark each question as successful/failed, record last attempt dates, and assign point values
 - **Visual Progress Monitoring**: See at a glance which questions need work and which exams are coming up
 - **Clean Interface**: Hebrew RTL interface designed for focused study sessions
-
-## Technology Stack
-
-### Frontend
-- **React 18** - Modern component-based UI
-- **Vite** - Fast build tool and dev server
-- **Context API** - State management
-
-### Backend
-- **Node.js** with Express 5
-- **SQLite** - Local database for persistent storage
-- **RESTful API** - Clean separation between frontend and backend
 
 ## Architecture Highlights
 
