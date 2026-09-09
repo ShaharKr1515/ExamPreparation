@@ -45,6 +45,7 @@ db.exec(`
         last_date TEXT NOT NULL DEFAULT '',
         points TEXT NOT NULL DEFAULT '',
         is_sub INTEGER NOT NULL DEFAULT 0,
+        timer_seconds INTEGER NOT NULL DEFAULT 0,
         UNIQUE (exam_id, position)
     );
 
@@ -65,6 +66,9 @@ if (!subjectCols.includes("planned_exam_count")) {
 const questionCols = db.prepare("PRAGMA table_info(questions)").all().map((c) => c.name);
 if (!questionCols.includes("is_sub")) {
     db.exec("ALTER TABLE questions ADD COLUMN is_sub INTEGER NOT NULL DEFAULT 0");
+}
+if (!questionCols.includes("timer_seconds")) {
+    db.exec("ALTER TABLE questions ADD COLUMN timer_seconds INTEGER NOT NULL DEFAULT 0");
 }
 
 console.log(`[db] SQLite database at ${dbPath}`);

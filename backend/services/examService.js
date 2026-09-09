@@ -72,7 +72,7 @@ export function createExam(subjectId, name, questionCount = QUESTION_COUNT) {
     const examId = Number(info.lastInsertRowid);
 
     const insertQ = db.prepare(
-        "INSERT INTO questions (exam_id, position, success, last_date, points) VALUES (?, ?, '', '', '')",
+        "INSERT INTO questions (exam_id, position, success, last_date, points, timer_seconds) VALUES (?, ?, '', '', '', 0)",
     );
     for (let i = 0; i < questionCount; i++) {
         insertQ.run(examId, i);
@@ -129,21 +129,28 @@ function todayStr() {
 }
 
 // Frontend field name -> DB column. The UI sends `date`; the table stores it as `last_date`.
-const FIELD_TO_COLUMN = { success: "success", date: "last_date", points: "points" };
+const FIELD_TO_COLUMN = {
+    success: "success",
+    date: "last_date",
+    points: "points",
+    timerSeconds: "timer_seconds",
+    timer_seconds: "timer_seconds",
+};
 
 /** Update one field of a single question (by 0-based position). */
 export function updateQuestion(examId, position, field, value) {
     const column = FIELD_TO_COLUMN[field];
     if (!column) throw new Error(`Invalid question field: ${field}`);
 
-    // Preserve the original UX: the first touch on success/points stamps today's date.
-    if (field === "success" || field === "points") {
+    // Preserve the original UX: the first touch on success/points/timer stamps today's date if empty.
+    if (field === "success" || field === "points" || field === "timerSeconds" || field === "timer_seconds") {
         db.prepare(
             "UPDATE questions SET last_date = ? WHERE exam_id = ? AND position = ? AND (last_date IS NULL OR last_date = '')",
         ).run(todayStr(), examId, position);
     }
 
-    db.prepare(`UPDATE questions SET ${column} = ? WHERE exam_id = ? AND position = ?`).run(value, examId, position);
+    const val = column === "timer_seconds" ? Math.max(0, Math.round(Number(value) || 0)) : value;
+    db.prepare(`UPDATE questions SET ${column} = ? WHERE exam_id = ? AND position = ?`).run(val, examId, position);
 }
 
 /**
@@ -170,7 +177,7 @@ export function addQuestion(examId, afterPosition = null) {
             newPos = (last?.m ?? -1) + 1;
         }
         db.prepare(
-            "INSERT INTO questions (exam_id, position, success, last_date, points, is_sub) VALUES (?, ?, '', '', '', 1)",
+            "INSERT INTO questions (exam_id, position, success, last_date, points, is_sub, timer_seconds) VALUES (?, ?, '', '', '', 1, 0)",
         ).run(examId, newPos);
         db.exec("COMMIT");
     } catch (e) {
@@ -211,13 +218,14 @@ function rowToExam(row) {
         name: row.name,
         subjectId: Number(row.subject_id),
         // Frontend shape: `subject` is the display string;
-        // `questions[i] = { id, success, date, points, sub }`.
+        // `questions[i] = { id, success, date, points, sub, timerSeconds }`.
         questions: qs.map((q) => ({
             id: Number(q.id),
             success: q.success,
             date: q.last_date,
             points: q.points,
             sub: !!q.is_sub,
+            timerSeconds: Number(q.timer_seconds) || 0,
         })),
     };
 }

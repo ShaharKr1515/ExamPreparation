@@ -130,9 +130,94 @@ export function dueLabel(dateStr) {
     return `איחור של ${days} ימים`;
 }
 
+/** Format total seconds as MM:SS (e.g. 00:00, 05:23). */
+export function formatTimer(totalSeconds) {
+    const s = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
 /** A fresh (empty) question. */
 export function makeQuestion() {
-    return { success: "", date: "", points: "" };
+    return { success: "", date: "", points: "", timerSeconds: 0 };
+}
+
+export const SUCCESS_LABELS = {
+    "": "—",
+    yes: "הצלחה",
+    half: "הצלחה חלקית",
+    no: "כישלון",
+};
+
+/**
+ * Derive the mastery/success status of a parent question based on its sub-questions:
+ *  - "yes": all subquestions are "yes"
+ *  - "no": all subquestions are "no", or all answered subquestions are "no" with none successful/half
+ *  - "": all subquestions are unset
+ *  - "half": any combination of mixed success, partial completion, or any subquestion marked "half"
+ */
+export function deriveParentSuccess(subQuestions = []) {
+    if (!subQuestions || subQuestions.length === 0) return "";
+
+    let yesCount = 0;
+    let noCount = 0;
+    let halfCount = 0;
+    let unsetCount = 0;
+
+    for (const sq of subQuestions) {
+        if (sq.success === "yes") yesCount++;
+        else if (sq.success === "no") noCount++;
+        else if (sq.success === "half") halfCount++;
+        else unsetCount++;
+    }
+
+    if (unsetCount === subQuestions.length) return "";
+    if (yesCount === subQuestions.length) return "yes";
+    if (noCount === subQuestions.length) return "no";
+    if (noCount > 0 && yesCount === 0 && halfCount === 0) return "no";
+
+    return "half";
+}
+
+/**
+ * Calculate the total points across sub-questions.
+ * Returns formatted string representation (e.g. "25", "12.5", "0").
+ */
+export function computeSubQuestionsPointsSum(subQuestions = []) {
+    if (!subQuestions || subQuestions.length === 0) return "0";
+    let sum = 0;
+    let hasAnyNumeric = false;
+    for (const sq of subQuestions) {
+        if (sq.points !== "" && sq.points != null && !isNaN(Number(sq.points))) {
+            sum += Number(sq.points);
+            hasAnyNumeric = true;
+        }
+    }
+    if (!hasAnyNumeric) return "0";
+    return String(Math.round(sum * 100) / 100);
+}
+
+/**
+ * Calculate total timer seconds across sub-questions.
+ */
+export function computeSubQuestionsTimerSum(subQuestions = []) {
+    if (!subQuestions || subQuestions.length === 0) return 0;
+    return subQuestions.reduce((acc, sq) => acc + (Number(sq.timerSeconds) || 0), 0);
+}
+
+/**
+ * Find the most recent date string (YYYY-MM-DD) among sub-questions.
+ */
+export function getLatestDate(subQuestions = []) {
+    if (!subQuestions || subQuestions.length === 0) return "";
+    let latest = "";
+    for (const sq of subQuestions) {
+        if (sq.date && (!latest || sq.date > latest)) {
+            latest = sq.date;
+        }
+    }
+    return latest;
 }
 
 /**
@@ -140,6 +225,7 @@ export function makeQuestion() {
  *  - "ok" when success is achieved (always wins)
  *  - "stale" when the last attempt is at least 3 days old (regardless of outcome)
  *  - "bad" when the question was failed within the last 3 days
+ *  - "half" when the question was partially successful within the last 3 days
  */
 export function questionRowState(q) {
     const ok = q.success === "yes";
@@ -148,5 +234,6 @@ export function questionRowState(q) {
     const stale = days !== null && days >= 3;
     if (stale) return "stale";
     if (q.success === "no") return "bad";
+    if (q.success === "half") return "half";
     return null;
 }

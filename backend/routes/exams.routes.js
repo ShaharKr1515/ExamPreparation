@@ -50,8 +50,8 @@ router.patch("/:id/questions/:position", (req, res) => {
     if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
 
     const body = req.body ?? {};
-    for (const field of ["success", "date", "points"]) {
-        if (field in body) svc.updateQuestion(examId, position, field, String(body[field] ?? ""));
+    for (const field of ["success", "date", "points", "timerSeconds", "timer_seconds"]) {
+        if (field in body) svc.updateQuestion(examId, position, field, body[field]);
     }
     res.json({ ok: true });
 });

@@ -34,6 +34,11 @@
     --bad-line: #fecaca;
     --bad-border-indicator: #ef4444;
 
+    --half-bg: #fffbeb;
+    --half-ink: #92400e;
+    --half-line: #fde68a;
+    --half-border-indicator: #f59e0b;
+
     --stale-bg: #f5f3ff;
     --stale-ink: #5b21b6;
     --stale-line: #ddd6fe;
@@ -694,29 +699,35 @@ select:focus {
 
 .q-table th:nth-child(1),
 .q-table td:nth-child(1) {
-    width: 52px;
+    width: 44px;
     padding: 6px 4px;
 }
 
 .q-table th:nth-child(2),
 .q-table td:nth-child(2) {
-    width: 92px;
+    width: 98px;
     padding: 6px 4px;
 }
 
 .q-table th:nth-child(3),
 .q-table td:nth-child(3) {
-    width: 128px;
+    width: 120px;
     padding: 6px 4px;
 }
 
-.q-table th:nth-child(4) {
+.q-table th:nth-child(4),
+.q-table td:nth-child(4) {
+    width: 114px;
+    padding: 6px 4px;
+}
+
+.q-table th:nth-child(5) {
     padding: 6px 6px;
     text-align: end;
     padding-inline-end: 38px;
 }
 
-.q-table td:nth-child(4) {
+.q-table td:nth-child(5) {
     padding: 6px 6px;
     padding-inline-end: 12px;
 }
@@ -734,7 +745,7 @@ select:focus {
     transition: background-color 0.18s ease;
 }
 
-.q-table tbody tr:hover:not(.row-ok):not(.row-bad):not(.row-stale) {
+.q-table tbody tr:hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) {
     background-color: #f8fafc;
 }
 
@@ -808,6 +819,14 @@ td.q-num {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%23991b1b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
 }
 
+.q-table select.cell.half {
+    background-color: var(--half-bg);
+    color: var(--half-ink);
+    border-color: var(--half-line);
+    font-weight: 600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%2392400e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+}
+
 .cell.points::-webkit-inner-spin-button,
 .cell.points::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -850,6 +869,21 @@ td.q-num {
     background: rgba(255, 255, 255, 0.9);
 }
 
+.q-table tbody tr.row-half td {
+    background: var(--half-bg);
+    color: var(--half-ink);
+}
+
+.q-table tbody tr.row-half td:first-child {
+    box-shadow: inset -3.5px 0 0 var(--half-border-indicator);
+}
+
+.q-table tbody tr.row-half input.cell.date,
+.q-table tbody tr.row-half input.cell.points {
+    border-color: var(--half-line);
+    background: rgba(255, 255, 255, 0.9);
+}
+
 .q-table tbody tr.row-stale td {
     background: var(--stale-bg);
     color: var(--stale-ink);
@@ -865,7 +899,8 @@ td.q-num {
     background: rgba(255, 255, 255, 0.9);
 }
 
-.q-table tbody tr.row-stale select.cell.bad {
+.q-table tbody tr.row-stale select.cell.bad,
+.q-table tbody tr.row-stale select.cell.half {
     background-color: var(--stale-bg);
     color: var(--stale-ink);
     border-color: var(--stale-line);
@@ -913,16 +948,328 @@ td.q-num.q-num-sub {
     border-top: 1px dashed #cbd5e1;
 }
 
-.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-stale) td {
+.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
     background-color: #fafbfc;
 }
 
-.q-table tbody tr.row-sub:hover:not(.row-ok):not(.row-bad):not(.row-stale) td {
+.q-table tbody tr.row-sub:hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
     background-color: #f1f5f9;
 }
 
-.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-stale) td:first-child {
+.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td:first-child {
     box-shadow: inset -3.5px 0 0 #818cf8;
+}
+
+/* Ensure row with hovered timer tooltip has stacking priority over rows above it */
+.q-table tbody tr:has(.timer-cell:hover),
+.q-table tbody tr:has(.timer-btn:focus-visible) {
+    position: relative;
+    z-index: 25;
+}
+
+/* --- Question Timer -------------------------------------------------------- */
+
+.timer-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    position: relative;
+    direction: rtl;
+}
+
+.timer-digits {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #475569;
+    min-width: 38px;
+    text-align: center;
+    transition: color 0.18s ease;
+    user-select: none;
+}
+
+.timer-digits.has-time {
+    color: #1e293b;
+}
+
+.timer-digits.is-running {
+    color: var(--accent, #4f46e5);
+    font-weight: 700;
+}
+
+.timer-btn-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: var(--radius-sm, 6px);
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.timer-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+}
+
+.timer-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.timer-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent, #4f46e5);
+}
+
+.timer-btn-start:hover {
+    background: #eef2ff;
+    color: var(--accent, #4f46e5);
+    border-color: #c7d2fe;
+}
+
+.timer-btn-pause {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+.timer-btn-pause:hover {
+    background: #fde68a;
+    color: #92400e;
+    border-color: #fcd34d;
+}
+
+.timer-btn-reset {
+    color: #94a3b8;
+}
+
+.timer-btn-reset:hover:not(:disabled) {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+.timer-btn-reset:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* Hover Tooltip Above the Buttons */
+.timer-tooltip {
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%) translateY(3px);
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.69rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.16s ease, transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s ease;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22);
+    z-index: 100;
+}
+
+.timer-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: #0f172a transparent transparent transparent;
+}
+
+.timer-btn-wrap:hover .timer-tooltip,
+.timer-btn:focus-visible + .timer-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* --- Summation Indicators & Badges ---------------------------------------- */
+
+.sum-symbol-small {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: var(--accent, #4f46e5);
+    opacity: 0.9;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Status Sum Badge */
+.status-sum-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    min-width: 82px;
+    height: 30px;
+    box-sizing: border-box;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--line-strong);
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: default;
+    user-select: none;
+    padding: 2px 6px;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+}
+
+.status-sum-badge.ok {
+    background: var(--ok-bg);
+    border-color: var(--ok-line);
+    color: var(--ok-ink);
+}
+.status-sum-badge.ok .sum-symbol-small {
+    color: var(--ok-ink);
+}
+
+.status-sum-badge.bad {
+    background: var(--bad-bg);
+    border-color: var(--bad-line);
+    color: var(--bad-ink);
+}
+.status-sum-badge.bad .sum-symbol-small {
+    color: var(--bad-ink);
+}
+
+.status-sum-badge.half {
+    background: var(--half-bg);
+    border-color: var(--half-line);
+    color: var(--half-ink);
+}
+.status-sum-badge.half .sum-symbol-small {
+    color: var(--half-ink);
+}
+
+/* Timer Sum Badge */
+.timer-sum-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 30px;
+    padding: 2px 8px;
+    box-sizing: border-box;
+    border: 1px dashed var(--line-strong);
+    background: #f8fafc;
+    border-radius: var(--radius-sm);
+    cursor: default;
+    user-select: none;
+    direction: rtl;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+}
+
+.timer-sum-digits {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #475569;
+}
+
+.timer-sum-badge.has-time .timer-sum-digits {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.timer-sum-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #64748b;
+    background: #e2e8f0;
+    padding: 1px 4px;
+    border-radius: 4px;
+    line-height: 1.2;
+}
+
+/* Timer Sum inside Row Highlight States */
+.q-table tbody tr.row-ok .timer-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--ok-line);
+}
+.q-table tbody tr.row-ok .timer-sum-badge .sum-symbol-small,
+.q-table tbody tr.row-ok .timer-sum-badge .timer-sum-digits {
+    color: var(--ok-ink);
+}
+.q-table tbody tr.row-ok .timer-sum-badge .timer-sum-label {
+    background: var(--ok-line);
+    color: var(--ok-ink);
+}
+
+.q-table tbody tr.row-bad .timer-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--bad-line);
+}
+.q-table tbody tr.row-bad .timer-sum-badge .sum-symbol-small,
+.q-table tbody tr.row-bad .timer-sum-badge .timer-sum-digits {
+    color: var(--bad-ink);
+}
+.q-table tbody tr.row-bad .timer-sum-badge .timer-sum-label {
+    background: var(--bad-line);
+    color: var(--bad-ink);
+}
+
+.q-table tbody tr.row-half .timer-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--half-line);
+}
+.q-table tbody tr.row-half .timer-sum-badge .sum-symbol-small,
+.q-table tbody tr.row-half .timer-sum-badge .timer-sum-digits {
+    color: var(--half-ink);
+}
+.q-table tbody tr.row-half .timer-sum-badge .timer-sum-label {
+    background: var(--half-line);
+    color: var(--half-ink);
+}
+
+.q-table tbody tr.row-stale .timer-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--stale-line);
+}
+.q-table tbody tr.row-stale .timer-sum-badge .sum-symbol-small,
+.q-table tbody tr.row-stale .timer-sum-badge .timer-sum-digits {
+    color: var(--stale-ink);
+}
+.q-table tbody tr.row-stale .timer-sum-badge .timer-sum-label {
+    background: var(--stale-line);
+    color: var(--stale-ink);
 }
 
 /* --- Points & Sub-question Actions ----------------------------------------- */
@@ -946,6 +1293,36 @@ td.q-num.q-num-sub {
         max-width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
 }
 
+/* Points Sum Badge */
+.points-cell .cell.points.points-sum-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border-style: dashed;
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #1e293b;
+    font-weight: 700;
+    cursor: default;
+    user-select: none;
+    overflow: hidden;
+    padding-inline: 4px;
+    box-sizing: border-box;
+}
+
+.points-sum-value {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+}
+
+.points-sum-unit {
+    font-size: 0.68rem;
+    font-weight: 600;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
 .points-cell:has(.add-sub-btn:hover),
 .points-cell:has(.add-sub-btn:focus-visible) {
     gap: 5px;
@@ -955,6 +1332,53 @@ td.q-num.q-num-sub {
 .points-cell:has(.add-sub-btn:focus-visible) .cell.points {
     width: 48px;
     max-width: 48px;
+}
+
+.points-cell:has(.add-sub-btn:hover) .points-sum-badge,
+.points-cell:has(.add-sub-btn:focus-visible) .points-sum-badge {
+    gap: 2px;
+}
+
+.points-cell:has(.add-sub-btn:hover) .points-sum-badge .points-sum-unit,
+.points-cell:has(.add-sub-btn:focus-visible) .points-sum-badge .points-sum-unit {
+    display: none;
+}
+
+/* Points Sum inside Row Highlight States */
+.q-table tbody tr.row-ok .points-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--ok-line);
+    color: var(--ok-ink);
+}
+.q-table tbody tr.row-ok .points-sum-badge .sum-symbol-small {
+    color: var(--ok-ink);
+}
+
+.q-table tbody tr.row-bad .points-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--bad-line);
+    color: var(--bad-ink);
+}
+.q-table tbody tr.row-bad .points-sum-badge .sum-symbol-small {
+    color: var(--bad-ink);
+}
+
+.q-table tbody tr.row-half .points-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--half-line);
+    color: var(--half-ink);
+}
+.q-table tbody tr.row-half .points-sum-badge .sum-symbol-small {
+    color: var(--half-ink);
+}
+
+.q-table tbody tr.row-stale .points-sum-badge {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--stale-line);
+    color: var(--stale-ink);
+}
+.q-table tbody tr.row-stale .points-sum-badge .sum-symbol-small {
+    color: var(--stale-ink);
 }
 
 .add-sub-btn {
@@ -1561,11 +1985,11 @@ td.q-num.q-num-sub {
         padding-inline: 3px;
     }
 
-    .q-table th:nth-child(4) {
+    .q-table th:nth-child(5) {
         padding-inline-end: 14px;
     }
 
-    .q-table td:nth-child(4) {
+    .q-table td:nth-child(5) {
         padding-inline-end: 4px;
     }
 
@@ -1601,7 +2025,9 @@ td.q-num.q-num-sub {
     .add-sub-label,
     .add-sub-label>span,
     .points-cell,
-    .points-cell .cell.points {
+    .points-cell .cell.points,
+    .timer-btn,
+    .timer-tooltip {
         transition: none !important;
     }
 }

@@ -1,8 +1,18 @@
 import { useState, useEffect } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
-import { questionRowState } from "../utils/examUtils.js";
+import {
+    questionRowState,
+    todayStr,
+    formatTimer,
+    deriveParentSuccess,
+    computeSubQuestionsPointsSum,
+    computeSubQuestionsTimerSum,
+    getLatestDate,
+    SUCCESS_LABELS,
+} from "../utils/examUtils.js";
+import QuestionTimer from "./QuestionTimer.jsx";
 
-const QUESTION_HEADERS = ["שאלה", "הצלחה", "תאריך אחרון", "נקודות"];
+const QUESTION_HEADERS = ["שאלה", "הצלחה", "תאריך אחרון", "טיימר", "נקודות"];
 
 const HEBREW_SUB_LETTERS = [
     "א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ז'", "ח'", "ט'", "י'",
@@ -82,14 +92,26 @@ function QuestionRow({
     exam,
     q,
     qi,
+    subQuestions = [],
     insertAfterIndex,
     labelInfo,
     isEntering,
     onDelete,
 }) {
     const { updateQuestion } = useExams();
-    const stateClass = questionRowState(q); // "ok" | "stale" | "bad" | null
     const [isExiting, setIsExiting] = useState(false);
+
+    const hasSubQuestions = !q.sub && subQuestions.length > 0;
+    const derivedSuccess = hasSubQuestions ? deriveParentSuccess(subQuestions) : "";
+    const derivedPoints = hasSubQuestions ? computeSubQuestionsPointsSum(subQuestions) : "";
+    const derivedTimerSeconds = hasSubQuestions ? computeSubQuestionsTimerSum(subQuestions) : 0;
+    const effectiveDate = hasSubQuestions ? (q.date || getLatestDate(subQuestions)) : q.date;
+    const effectiveSuccess = hasSubQuestions ? derivedSuccess : q.success;
+
+    const stateClass = questionRowState({
+        success: effectiveSuccess,
+        date: effectiveDate,
+    }); // "ok" | "stale" | "bad" | "half" | null
 
     const handleDelete = () => {
         if (isExiting) return;
@@ -140,16 +162,45 @@ function QuestionRow({
 
             <td>
                 <div className="q-cell-inner">
-                    <select
-                        className={"cell" + (q.success === "yes" ? " ok" : q.success === "no" ? " bad" : "")}
-                        value={q.success}
-                        aria-label={`סטטוס ${labelInfo.aria}`}
-                        onChange={(e) => updateQuestion(exam.id, qi, "success", e.target.value)}
-                    >
-                        <option value="">—</option>
-                        <option value="yes">הצלחה</option>
-                        <option value="no">כישלון</option>
-                    </select>
+                    {hasSubQuestions ? (
+                        <div
+                            className={`status-sum-badge ${
+                                effectiveSuccess === "yes"
+                                    ? "ok"
+                                    : effectiveSuccess === "no"
+                                    ? "bad"
+                                    : effectiveSuccess === "half"
+                                    ? "half"
+                                    : ""
+                            }`}
+                            title={`סטטוס מחושב לפי הסעיפים: ${SUCCESS_LABELS[effectiveSuccess] || "—"}`}
+                            aria-label={`סטטוס מחושב לפי הסעיפים: ${SUCCESS_LABELS[effectiveSuccess] || "—"}`}
+                        >
+                            <span className="sum-symbol-small" aria-hidden="true">Σ</span>
+                            <span>{SUCCESS_LABELS[effectiveSuccess] || "—"}</span>
+                        </div>
+                    ) : (
+                        <select
+                            className={
+                                "cell" +
+                                (q.success === "yes"
+                                    ? " ok"
+                                    : q.success === "no"
+                                    ? " bad"
+                                    : q.success === "half"
+                                    ? " half"
+                                    : "")
+                            }
+                            value={q.success}
+                            aria-label={`סטטוס ${labelInfo.aria}`}
+                            onChange={(e) => updateQuestion(exam.id, qi, "success", e.target.value)}
+                        >
+                            <option value="">—</option>
+                            <option value="yes">הצלחה</option>
+                            <option value="half">הצלחה חלקית</option>
+                            <option value="no">כישלון</option>
+                        </select>
+                    )}
                 </div>
             </td>
 
@@ -158,7 +209,7 @@ function QuestionRow({
                     <input
                         type="date"
                         className="cell date"
-                        value={q.date}
+                        value={q.date || (hasSubQuestions ? effectiveDate : "")}
                         aria-label={`תאריך אחרון ל${labelInfo.aria}`}
                         onChange={(e) => updateQuestion(exam.id, qi, "date", e.target.value)}
                     />
@@ -167,17 +218,57 @@ function QuestionRow({
 
             <td>
                 <div className="q-cell-inner">
-                    <div className="points-cell">
-                        <input
-                            type="number"
-                            min="0"
-                            inputMode="numeric"
-                            className="cell points"
-                            placeholder="נק'"
-                            value={q.points}
-                            aria-label={`נקודות ל${labelInfo.aria}`}
-                            onChange={(e) => updateQuestion(exam.id, qi, "points", e.target.value)}
+                    {hasSubQuestions ? (
+                        <div
+                            className={`timer-sum-badge ${derivedTimerSeconds > 0 ? "has-time" : ""}`}
+                            title={`סכום זמני הסעיפים: ${formatTimer(derivedTimerSeconds)}`}
+                            aria-label={`סכום זמני הסעיפים: ${formatTimer(derivedTimerSeconds)}`}
+                        >
+                            <span className="sum-symbol-small" aria-hidden="true">Σ</span>
+                            <span className="timer-sum-digits">{formatTimer(derivedTimerSeconds)}</span>
+                            <span className="timer-sum-label">סה״כ</span>
+                        </div>
+                    ) : (
+                        <QuestionTimer
+                            initialSeconds={q.timerSeconds || 0}
+                            onSave={(secs) => updateQuestion(exam.id, qi, "timerSeconds", secs)}
+                            onStart={() => {
+                                const today = todayStr();
+                                if (q.date !== today) {
+                                    updateQuestion(exam.id, qi, "date", today);
+                                }
+                            }}
+                            questionLabel={labelInfo.aria}
                         />
+                    )}
+                </div>
+            </td>
+
+            <td>
+                <div className="q-cell-inner">
+                    <div className="points-cell">
+                        {hasSubQuestions ? (
+                            <div
+                                className="cell points points-sum-badge"
+                                title={`סכום נקודות הסעיפים: ${derivedPoints}`}
+                                aria-label={`סכום נקודות הסעיפים: ${derivedPoints}`}
+                            >
+                                <span className="sum-symbol-small" aria-hidden="true">Σ</span>
+                                <span className="points-sum-value">{derivedPoints}</span>
+                                <span className="points-sum-unit">נק'</span>
+                            </div>
+                        ) : (
+                            <input
+                                type="number"
+                                min="0"
+                                inputMode="numeric"
+                                className="cell points"
+                                placeholder="נק'"
+                                value={q.points}
+                                aria-label={`נקודות ל${labelInfo.aria}`}
+                                onChange={(e) => updateQuestion(exam.id, qi, "points", e.target.value)}
+                            />
+                        )}
                         {q.sub ? (
                             <DeleteSubButton label={labelInfo.aria} onDelete={handleDelete} isExiting={isExiting} />
                         ) : (
@@ -244,12 +335,14 @@ export default function QuestionTable({ exam }) {
             <tbody>
                 {exam.questions.map((q, qi) => {
                     let insertAfterIndex = qi;
+                    const subQuestions = [];
                     if (!q.sub) {
                         while (
                             insertAfterIndex + 1 < exam.questions.length &&
                             exam.questions[insertAfterIndex + 1]?.sub
                         ) {
                             insertAfterIndex++;
+                            subQuestions.push(exam.questions[insertAfterIndex]);
                         }
                     }
 
@@ -259,6 +352,7 @@ export default function QuestionTable({ exam }) {
                             exam={exam}
                             q={q}
                             qi={qi}
+                            subQuestions={subQuestions}
                             insertAfterIndex={insertAfterIndex}
                             labelInfo={labels[qi] || { display: String(qi + 1), aria: `שאלה ${qi + 1}` }}
                             isEntering={enteringIds.has(q.id)}
