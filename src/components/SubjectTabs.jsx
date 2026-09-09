@@ -7,22 +7,33 @@ export default function SubjectTabs({ newOpen, onNew }) {
     const { state, setActiveSubject, renameSubject, deleteSubject } = useExams();
     // Which subject's popup menu is open (null = closed).
     const [menuFor, setMenuFor] = useState(null);
+    const [isMenuClosing, setIsMenuClosing] = useState(false);
     // Viewport anchor of the open menu (fixed positioning — the bar scrolls,
     // so an in-flow dropdown would get clipped by its overflow).
     const [anchor, setAnchor] = useState(null);
 
+    function closeMenu() {
+        if (!menuFor || isMenuClosing) return;
+        setIsMenuClosing(true);
+        setTimeout(() => {
+            setMenuFor(null);
+            setIsMenuClosing(false);
+        }, 140);
+    }
+
     function toggleMenu(e, subject) {
         if (menuFor === subject) {
-            setMenuFor(null);
+            closeMenu();
             return;
         }
         // First click on an inactive tab only switches to it — the menu opens
         // on a second click of the already-active tab.
         if (subjectKey(subject) !== subjectKey(state.activeSubject)) {
             setActiveSubject(subject);
-            setMenuFor(null);
+            closeMenu();
             return;
         }
+        setIsMenuClosing(false);
         const rect = e.currentTarget.getBoundingClientRect();
         // Flip above the tab when there isn't room below.
         const top = window.innerHeight - rect.bottom > 170 ? rect.bottom + 6 : Math.max(8, rect.top - 6);
@@ -32,18 +43,18 @@ export default function SubjectTabs({ newOpen, onNew }) {
 
     // Close the menu on outside click / Escape.
     useEffect(() => {
-        if (!menuFor) return;
+        if (!menuFor || isMenuClosing) return;
         function onClick(e) {
             const inOpenMenu = e.target.closest(".subject-menu");
             if (inOpenMenu) return; // interacting with the menu itself
             const otherTab = e.target.closest(".subject-btn:not(.add-tab)");
             if (otherTab && otherTab.dataset.subject !== menuFor) return; // its click switches menus
-            setMenuFor(null);
+            closeMenu();
         }
         function onKey(e) {
             if (e.key === "Escape") {
                 const subject = menuFor;
-                setMenuFor(null);
+                closeMenu();
                 document.querySelector(`.subject-btn[data-subject="${CSS.escape(subject)}"]`)?.focus();
             }
         }
@@ -53,7 +64,7 @@ export default function SubjectTabs({ newOpen, onNew }) {
             document.removeEventListener("mousedown", onClick);
             document.removeEventListener("keydown", onKey);
         };
-    }, [menuFor]);
+    }, [menuFor, isMenuClosing]);
 
     return (
         <div className="subject-bar" aria-label="סינון לפי מקצוע">
@@ -77,7 +88,7 @@ export default function SubjectTabs({ newOpen, onNew }) {
 
             {menuFor && anchor && (
                 <div
-                    className="subject-menu"
+                    className={`subject-menu ${isMenuClosing ? "is-closing" : ""}`}
                     role="menu"
                     style={{ position: "fixed", top: anchor.top, right: anchor.right }}
                     onKeyDown={(e) => {
@@ -91,14 +102,14 @@ export default function SubjectTabs({ newOpen, onNew }) {
                     }}
                 >
                     <span className="menu-label">שם המקצוע</span>
-                    <RenameMenuItem subject={menuFor} onDone={() => setMenuFor(null)} />
+                    <RenameMenuItem subject={menuFor} onDone={closeMenu} />
                     <button
                         type="button"
                         role="menuitem"
                         className="danger"
                         onClick={() => {
                             if (confirm(`למחוק את המקצוע "${menuFor}" וכל הבחינות תחתיו?`)) deleteSubject(menuFor);
-                            setMenuFor(null);
+                            closeMenu();
                         }}
                     >
                         מחיקת מקצוע

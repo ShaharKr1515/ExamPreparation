@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
 import QuestionTable from "./QuestionTable.jsx";
 import { calculateExamTargetDates, daysSince, dueLabel, formatDisplayDate, subjectKey } from "../utils/examUtils.js";
@@ -7,74 +7,6 @@ import { calculateExamTargetDates, daysSince, dueLabel, formatDisplayDate, subje
 export default function ExamCard({ exam, isEntering }) {
     const { state, renameExam, removeExam } = useExams();
     const [isExiting, setIsExiting] = useState(false);
-
-    const cardRef = useRef(null);
-    const prevHeightRef = useRef(null);
-    const prevExamIdRef = useRef(exam.id);
-    const activeAnimRef = useRef(null);
-
-    // Smoothly animate the card shrinking in sync with an exiting sub-question row
-    const handleRowExit = (rowHeight = 40) => {
-        const el = cardRef.current;
-        if (!el) return;
-        const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (prefersReducedMotion) return;
-
-        const currentH = el.offsetHeight;
-        const targetH = Math.max(0, currentH - rowHeight);
-
-        if (activeAnimRef.current) {
-            activeAnimRef.current.cancel();
-        }
-
-        activeAnimRef.current = el.animate(
-            [
-                { height: `${currentH}px` },
-                { height: `${targetH}px` }
-            ],
-            {
-                duration: 300,
-                easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-            }
-        );
-
-        // Pre-record target height so the subsequent post-deletion render does not trigger a duplicate animation
-        prevHeightRef.current = targetH;
-    };
-
-    // Smoothly animate the card expanding when a sub-question row is added
-    useLayoutEffect(() => {
-        const el = cardRef.current;
-        if (!el) return;
-
-        if (prevExamIdRef.current !== exam.id) {
-            prevExamIdRef.current = exam.id;
-            prevHeightRef.current = el.offsetHeight;
-            return;
-        }
-
-        const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const newHeight = el.offsetHeight;
-
-        if (prevHeightRef.current !== null && prevHeightRef.current !== newHeight && !prefersReducedMotion) {
-            const oldHeight = prevHeightRef.current;
-            if (activeAnimRef.current) {
-                activeAnimRef.current.cancel();
-            }
-            activeAnimRef.current = el.animate(
-                [
-                    { height: `${oldHeight}px` },
-                    { height: `${newHeight}px` }
-                ],
-                {
-                    duration: 340,
-                    easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-                }
-            );
-        }
-
-        prevHeightRef.current = newHeight;
-    });
 
     const handleDelete = () => {
         if (isExiting) return;
@@ -115,7 +47,7 @@ export default function ExamCard({ exam, isEntering }) {
         .join(" ");
 
     return (
-        <div ref={cardRef} className={cardClass}>
+        <div className={cardClass}>
             {/* Header: name + recommended due date (stacked) | delete button separated by lines. */}
             <div className="card-head">
                 <div className="exam-name-col">
@@ -147,7 +79,7 @@ export default function ExamCard({ exam, isEntering }) {
                 </button>
             </div>
 
-            <QuestionTable exam={exam} onRowExit={handleRowExit} />
+            <QuestionTable exam={exam} />
         </div>
     );
 }

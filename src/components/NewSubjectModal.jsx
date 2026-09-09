@@ -8,32 +8,48 @@ export default function NewSubjectModal({ onClose }) {
     const [examCount, setExamCount] = useState(1);
     const [studyStartDate, setStudyStartDate] = useState("");
     const [finalExamDate, setFinalExamDate] = useState("");
+    const [isClosing, setIsClosing] = useState(false);
     const nameRef = useRef(null);
 
     useEffect(() => {
         nameRef.current?.focus();
     }, []);
 
+    const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        setTimeout(() => {
+            onClose();
+        }, 180);
+    };
+
     // Close on Escape.
     useEffect(() => {
         function onKey(e) {
-            if (e.key === "Escape") onClose();
+            if (e.key === "Escape") handleClose();
         }
         document.addEventListener("keydown", onKey);
         return () => document.removeEventListener("keydown", onKey);
-    }, [onClose]);
+    }, [isClosing]);
 
     function submit(e) {
         e.preventDefault();
         const trimmed = name.trim();
         if (!trimmed) return;
         addSubject(trimmed, { examCount, studyStartDate, finalExamDate });
-        onClose();
+        handleClose();
     }
 
     return (
-        <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-            <form className="subject-modal" onSubmit={submit} aria-label="יצירת מקצוע חדש">
+        <div
+            className={`modal-backdrop ${isClosing ? "is-closing" : "is-entering"}`}
+            onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
+        >
+            <form
+                className={`subject-modal ${isClosing ? "is-closing" : "is-entering"}`}
+                onSubmit={submit}
+                aria-label="יצירת מקצוע חדש"
+            >
                 <h2>מקצוע חדש</h2>
 
                 <label className="field">
@@ -84,7 +100,7 @@ export default function NewSubjectModal({ onClose }) {
 
                 <div className="modal-actions">
                     <button type="submit" className="btn primary">+ יצירת מקצוע</button>
-                    <button type="button" className="btn ghost" onClick={onClose}>ביטול</button>
+                    <button type="button" className="btn ghost" onClick={handleClose}>ביטול</button>
                 </div>
             </form>
         </div>

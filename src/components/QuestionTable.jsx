@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
 import { questionRowState } from "../utils/examUtils.js";
 
@@ -38,14 +38,14 @@ function getQuestionLabels(questions = []) {
 }
 
 /** Button that adds a sub-question (סעיף) after its row. */
-function AddSubButton({ examId, afterIndex }) {
+function AddSubButton({ examId, afterIndex, mainLabel }) {
     const { addQuestion } = useExams();
     return (
         <button
             type="button"
             className="add-sub-btn"
             title="להוסיף סעיף"
-            aria-label={`הוספת סעיף אחרי שאלה ${afterIndex + 1}`}
+            aria-label={`הוספת סעיף לשאלה ${mainLabel || afterIndex + 1}`}
             onClick={() => addQuestion(examId, afterIndex)}
         >
             {/* Animated label: expands on hover / keyboard focus */}
@@ -78,24 +78,27 @@ function DeleteSubButton({ label, onDelete, isExiting }) {
 }
 
 /** One editable row (success select, date input, points input) for question qi. */
-function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete, onRowExit }) {
+function QuestionRow({
+    exam,
+    q,
+    qi,
+    insertAfterIndex,
+    labelInfo,
+    isEntering,
+    onDelete,
+}) {
     const { updateQuestion } = useExams();
     const stateClass = questionRowState(q); // "ok" | "stale" | "bad" | null
     const [isExiting, setIsExiting] = useState(false);
-    const rowRef = useRef(null);
 
     const handleDelete = () => {
         if (isExiting) return;
         setIsExiting(true);
-        if (onRowExit) {
-            const h = rowRef.current ? rowRef.current.offsetHeight : 40;
-            onRowExit(h);
-        }
         setTimeout(() => {
             if (onDelete) {
                 onDelete(q.id, qi);
             }
-        }, 300);
+        }, 280);
     };
 
     const rowClass = [
@@ -108,7 +111,7 @@ function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete, onRowExit }
         .join(" ");
 
     return (
-        <tr ref={rowRef} className={rowClass}>
+        <tr className={rowClass}>
             <td className={`q-num ${q.sub ? "q-num-sub" : ""}`}>
                 <div className="q-cell-inner">
                     {q.sub ? (
@@ -178,7 +181,7 @@ function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete, onRowExit }
                         {q.sub ? (
                             <DeleteSubButton label={labelInfo.aria} onDelete={handleDelete} isExiting={isExiting} />
                         ) : (
-                            <AddSubButton examId={exam.id} afterIndex={qi} />
+                            <AddSubButton examId={exam.id} afterIndex={insertAfterIndex ?? qi} mainLabel={labelInfo.display} />
                         )}
                     </div>
                 </div>
@@ -188,7 +191,7 @@ function QuestionRow({ exam, q, qi, labelInfo, isEntering, onDelete, onRowExit }
 }
 
 /** The question table shown inside each exam card. */
-export default function QuestionTable({ exam, onRowExit }) {
+export default function QuestionTable({ exam }) {
     const { deleteQuestion } = useExams();
     const labels = getQuestionLabels(exam.questions);
 
@@ -220,7 +223,7 @@ export default function QuestionTable({ exam, onRowExit }) {
         if (enteringIds.size === 0) return;
         const timer = setTimeout(() => {
             setEnteringIds(new Set());
-        }, 450);
+        }, 400);
         return () => clearTimeout(timer);
     }, [enteringIds]);
 
@@ -239,18 +242,30 @@ export default function QuestionTable({ exam, onRowExit }) {
                 </tr>
             </thead>
             <tbody>
-                {exam.questions.map((q, qi) => (
-                    <QuestionRow
-                        key={q.id ?? qi}
-                        exam={exam}
-                        q={q}
-                        qi={qi}
-                        labelInfo={labels[qi] || { display: String(qi + 1), aria: `שאלה ${qi + 1}` }}
-                        isEntering={enteringIds.has(q.id)}
-                        onDelete={handleDeleteQuestion}
-                        onRowExit={onRowExit}
-                    />
-                ))}
+                {exam.questions.map((q, qi) => {
+                    let insertAfterIndex = qi;
+                    if (!q.sub) {
+                        while (
+                            insertAfterIndex + 1 < exam.questions.length &&
+                            exam.questions[insertAfterIndex + 1]?.sub
+                        ) {
+                            insertAfterIndex++;
+                        }
+                    }
+
+                    return (
+                        <QuestionRow
+                            key={q.id ?? qi}
+                            exam={exam}
+                            q={q}
+                            qi={qi}
+                            insertAfterIndex={insertAfterIndex}
+                            labelInfo={labels[qi] || { display: String(qi + 1), aria: `שאלה ${qi + 1}` }}
+                            isEntering={enteringIds.has(q.id)}
+                            onDelete={handleDeleteQuestion}
+                        />
+                    );
+                })}
             </tbody>
         </table>
     );

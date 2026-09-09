@@ -41,7 +41,7 @@ export default function ListPage() {
     return (
         <section>
             <div className="table-card">
-                <div className="exam-grid">
+                <div key={state.activeSubject} className="exam-grid exam-grid-enter">
                     {visible.map((exam) => (
                         <ExamCard
                             key={exam.id}
