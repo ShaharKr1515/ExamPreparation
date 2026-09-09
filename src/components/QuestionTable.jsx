@@ -219,15 +219,14 @@ function QuestionRow({
                 <div className="q-cell-inner">
                     {hasSubQuestions ? (
                         <div
-                            className={`status-sum-badge ${
-                                effectiveSuccess === "yes"
+                            className={`status-sum-badge ${effectiveSuccess === "yes"
                                     ? "ok"
                                     : effectiveSuccess === "no"
-                                    ? "bad"
-                                    : effectiveSuccess === "half"
-                                    ? "half"
-                                    : ""
-                            } ${statusPulse ? "sum-value-updated" : ""}`}
+                                        ? "bad"
+                                        : effectiveSuccess === "half"
+                                            ? "half"
+                                            : ""
+                                } ${statusPulse ? "sum-value-updated" : ""}`}
                             title={`סטטוס מחושב לפי הסעיפים: ${SUCCESS_LABELS[effectiveSuccess] || "—"}`}
                             aria-label={`סטטוס מחושב לפי הסעיפים: ${SUCCESS_LABELS[effectiveSuccess] || "—"}`}
                         >
@@ -240,10 +239,10 @@ function QuestionRow({
                                 (q.success === "yes"
                                     ? " ok"
                                     : q.success === "no"
-                                    ? " bad"
-                                    : q.success === "half"
-                                    ? " half"
-                                    : "") +
+                                        ? " bad"
+                                        : q.success === "half"
+                                            ? " half"
+                                            : "") +
                                 (shouldAnimateRestore ? " cell-restore-enter" : "")
                             }
                             value={q.success}
@@ -382,10 +381,13 @@ export default function QuestionTable({ exam }) {
         if (exitingIds.has(qId)) return;
         setExitingIds((prev) => new Set([...prev, qId]));
 
+        // Wait for exit animation
+        await new Promise((resolve) => setTimeout(resolve, 280));
+
         try {
-            await new Promise((resolve) => setTimeout(resolve, 280));
-            const currentIdx = exam.questions.findIndex((q) => q.id === qId);
-            await deleteQuestion(exam.id, currentIdx !== -1 ? currentIdx : qi);
+            // Find the position in the CURRENT exam state right before calling the API
+            // This ensures we use the latest position after any previous deletes have completed
+            await deleteQuestion(exam.id, qId);
         } finally {
             setExitingIds((prev) => {
                 const next = new Set(prev);

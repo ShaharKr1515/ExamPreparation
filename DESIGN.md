@@ -143,7 +143,7 @@ A balanced palette anchored by slate neutrals and deep indigo, with high-contras
 - **Toolbar:** Unified group of pill inputs with integrated labels, custom calendar pickers, and dynamic cadence hints.
 - **Exam Card:** Rounded container featuring an editable header, derived due date badge (upcoming, today, overdue), delete action, and question table.
 - **Question Table:** Fixed-layout data grid with custom selects, inline date inputs, points controls, and expandable sub-question triggers.
-- **Add Exam Card:** Tactile dashed surface with animated hover elevation and rotating action icon.
+- **Add Exam Card:** Tactile dashed surface with flat hover styling and rotating action icon.
 
 ## Do's and Don'ts
 

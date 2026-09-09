@@ -5,7 +5,7 @@
 .points-cell {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 8px;
     position: relative;
     width: 100%;
@@ -13,12 +13,10 @@
 }
 
 .points-cell .cell.points {
-    width: 76px;
+    flex: 1;
     min-width: 44px;
-    max-width: 76px;
     padding-inline: 4px;
-    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1),
-        max-width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
 }
 
 .cell.points::-webkit-inner-spin-button,
@@ -79,12 +77,6 @@
 .points-cell:has(.add-sub-btn:hover),
 .points-cell:has(.add-sub-btn:focus-visible) {
     gap: 5px;
-}
-
-.points-cell:has(.add-sub-btn:hover) .cell.points,
-.points-cell:has(.add-sub-btn:focus-visible) .cell.points {
-    width: 48px;
-    max-width: 48px;
 }
 
 .points-cell:has(.add-sub-btn:hover) .points-sum-badge,

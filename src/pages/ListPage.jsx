@@ -49,7 +49,11 @@ export default function ListPage() {
                             isEntering={enteringExamIds.has(exam.id)}
                         />
                     ))}
-                    <AddExamCard />
+                    <AddExamCard
+                        key="add-exam-card"
+                        hasCardOnRight={visible.length % 2 === 1}
+                        examsCount={visible.length}
+                    />
                     {visible.length === 0 && (
                         <div className="empty-msg">אין עדיין בחינות תחת המקצוע הזה — לחץ על כרטיס ה"+" להוספה.</div>
                     )}

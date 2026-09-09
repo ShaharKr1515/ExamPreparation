@@ -24,10 +24,12 @@
     }
 
     .q-table th:nth-child(5) {
-        padding-inline-end: 14px;
+        padding-inline-start: 4px;
+        padding-inline-end: 28px;
     }
 
     .q-table td:nth-child(5) {
+        padding-inline-start: 4px;
         padding-inline-end: 4px;
     }
 

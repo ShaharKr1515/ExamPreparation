@@ -13,7 +13,7 @@ export default function ExamCard({ exam, isEntering }) {
         setIsExiting(true);
         setTimeout(() => {
             removeExam(exam.id);
-        }, 280);
+        }, 220);
     };
 
     // Recommended due date for this exam's position under its subject (derived, not stored).

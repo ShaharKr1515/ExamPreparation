@@ -44,12 +44,12 @@
 @keyframes examCardExit {
     0% {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: scale(1);
     }
 
     100% {
         opacity: 0;
-        transform: translateY(12px) scale(0.94);
+        transform: scale(0.93) translateY(8px);
     }
 }
 
@@ -58,7 +58,7 @@
 }
 
 .exam-card.exam-card-exit {
-    animation: examCardExit 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: examCardExit 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     pointer-events: none;
 }
 

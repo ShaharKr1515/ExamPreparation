@@ -144,9 +144,16 @@ export function ExamsProvider({ children }) {
         }
     }
 
-    // Delete a question (e.g. sub-question) at `position`.
-    async function deleteQuestion(examId, position) {
+    // Delete a question (e.g. sub-question) by question ID.
+    async function deleteQuestion(examId, questionId) {
         try {
+            // Find the current position from the latest state right before the API call
+            const exam = state.exams.find((e) => e.id === examId);
+            if (!exam) return;
+
+            const position = exam.questions.findIndex((q) => q.id === questionId);
+            if (position === -1) return; // Already deleted
+
             const updated = await api.deleteQuestion(examId, position);
             setState((s) => ({
                 ...s,

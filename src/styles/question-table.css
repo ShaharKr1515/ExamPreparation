@@ -58,12 +58,14 @@
 
 .q-table th:nth-child(5) {
     padding: 6px 6px;
-    text-align: end;
+    text-align: center;
+    padding-inline-start: 6px;
     padding-inline-end: 38px;
 }
 
 .q-table td:nth-child(5) {
     padding: 6px 6px;
+    padding-inline-start: 6px;
     padding-inline-end: 12px;
 }
 

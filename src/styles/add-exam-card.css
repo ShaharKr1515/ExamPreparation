@@ -17,32 +17,52 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow: none;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
         background-color 0.2s ease,
         border-color 0.2s ease,
         color 0.2s ease;
 }
 
+/* Match the exam card's height whenever positioned alongside an exam card on its right */
+@media (min-width: 681px) {
+    .exam-card.add-exam-card.has-card-on-right,
+    .exam-grid .exam-card.add-exam-card:nth-child(even) {
+        align-self: stretch;
+        height: 100%;
+    }
+}
+
 .exam-card.add-exam-card:hover {
-    background: linear-gradient(180deg, #ffffff 0%, #f5f7ff 100%);
+    background: #f4f6fe;
     border-color: var(--accent);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: none;
 }
 
 .exam-card.add-exam-card:hover .add-icon-circle {
-    transform: scale(1.08) rotate(90deg);
+    transform: scale(1.1) rotate(90deg);
     background: var(--accent);
     color: #ffffff;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);
+    box-shadow: none;
+}
+
+.exam-card.add-exam-card:hover .add-label {
+    color: var(--accent-hover);
 }
 
 .exam-card.add-exam-card:active,
 .exam-card.add-exam-card.is-pressed {
-    transform: scale(0.97) translateY(0);
+    transform: scale(0.98) translateY(0);
     background: #eef2ff;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
+}
+
+.exam-card.add-exam-card:active .add-icon-circle,
+.exam-card.add-exam-card.is-pressed .add-icon-circle {
+    transform: scale(1.18) rotate(180deg);
+    background: var(--accent-hover);
+    color: #ffffff;
 }
 
 .add-icon-circle {
@@ -53,19 +73,20 @@
     border-radius: var(--radius-pill);
     background: #eef2ff;
     color: var(--accent);
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12);
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow: none;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
         background-color 0.2s ease,
-        color 0.2s ease,
-        box-shadow 0.2s ease;
+        color 0.2s ease;
 }
 
 .add-icon-svg {
     display: block;
+    transition: transform 0.3s ease;
 }
 
 .add-label {
     font-size: 0.92rem;
     font-weight: 600;
     letter-spacing: -0.01em;
+    transition: color 0.2s ease;
 }
