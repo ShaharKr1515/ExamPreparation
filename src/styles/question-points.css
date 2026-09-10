@@ -36,6 +36,7 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
+    direction: rtl;
     border-style: dashed;
     border-color: #cbd5e1;
     background: #f1f5f9;
@@ -45,7 +46,7 @@
     -webkit-user-select: none;
     user-select: none;
     overflow: hidden;
-    padding-inline: 4px;
+    padding-inline: 6px;
     box-sizing: border-box;
     animation: sumBadgeFadeIn 0.24s ease-out;
     transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
@@ -56,6 +57,13 @@
     border-color: #94a3b8;
     color: #334155;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.points-sum-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--muted, #64748b);
+    white-space: nowrap;
 }
 
 .points-sum-value {
@@ -321,15 +329,11 @@
 
 @keyframes subRowFirstTdEnter {
     0% {
-        box-shadow: inset -3.5px 0 0 transparent;
-    }
-
-    50% {
-        box-shadow: inset -3.5px 0 0 #cbd5e1;
+        box-shadow: none;
     }
 
     100% {
-        box-shadow: inset -3.5px 0 0 #94a3b8;
+        box-shadow: none;
     }
 }
 
@@ -381,8 +385,7 @@
 }
 
 .q-table tbody tr.row-sub.row-sub-exit td:first-child {
-    box-shadow: inset -3.5px 0 0 transparent !important;
-    transition: box-shadow 0.15s ease;
+    box-shadow: none !important;
 }
 
 .q-table tbody tr.row-sub.row-sub-exit .q-cell-inner {
@@ -392,6 +395,87 @@
 .q-table tbody tr.row-sub.row-sub-exit .cell,
 .q-table tbody tr.row-sub.row-sub-exit .points-cell,
 .q-table tbody tr.row-sub.row-sub-exit .sub-q-indicator {
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+/* --- Main Question Enter & Exit Animations -------------------------------- */
+
+@keyframes mainRowTdEnter {
+    0% {
+        padding-top: 0;
+        padding-bottom: 0;
+        line-height: 0;
+        font-size: 0;
+        border-top-color: transparent;
+        background-color: #f1f5f9;
+    }
+
+    50% {
+        background-color: #f8fafc;
+        border-top-color: #e2e8f0;
+    }
+
+    100% {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        line-height: normal;
+        font-size: 0.78rem;
+        border-top-color: #f1f5f9;
+        background-color: #ffffff;
+    }
+}
+
+@keyframes mainRowTdExit {
+    0% {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        line-height: normal;
+        font-size: 0.78rem;
+        background-color: #fee2e2;
+        border-top-color: #fecaca;
+    }
+
+    35% {
+        background-color: #fef2f2;
+    }
+
+    100% {
+        padding-top: 0;
+        padding-bottom: 0;
+        line-height: 0;
+        font-size: 0;
+        border-top-color: transparent;
+        background-color: transparent;
+    }
+}
+
+.q-table tbody tr.row-main-enter td {
+    animation: mainRowTdEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-main-enter .q-cell-inner {
+    animation: subCellInnerEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-table tbody tr.row-main-exit {
+    pointer-events: none;
+}
+
+.q-table tbody tr.row-main-exit td {
+    animation: mainRowTdExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.q-table tbody tr.row-main-exit td:first-child {
+    box-shadow: none !important;
+}
+
+.q-table tbody tr.row-main-exit .q-cell-inner {
+    animation: subCellInnerExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.q-table tbody tr.row-main-exit .cell,
+.q-table tbody tr.row-main-exit .points-cell {
     opacity: 0;
     transition: opacity 0.18s ease;
 }

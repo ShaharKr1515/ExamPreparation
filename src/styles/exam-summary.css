@@ -1,0 +1,234 @@
+/* ==========================================================================
+   Exam Summary Row Component
+   ========================================================================== */
+
+.exam-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 14px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--line, #e2e8f0);
+    font-size: 0.78rem;
+    line-height: 1.25;
+    color: var(--ink-secondary, #334155);
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+/* Sections */
+.summary-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.summary-score-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ink-muted, #64748b);
+}
+
+/* Overall Score Badge */
+.summary-score-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm, 6px);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.summary-score-badge .score-val {
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.summary-score-badge .score-max {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.72;
+}
+
+/* Score Tones */
+.summary-score-badge.tone-high {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+
+.summary-score-badge.tone-medium {
+    background: #eef2ff;
+    color: #4338ca;
+    border-color: #c7d2fe;
+}
+
+.summary-score-badge.tone-low {
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+.summary-score-badge.tone-neutral {
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+/* Choice Indicator Badge */
+.choice-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-pill, 9999px);
+    line-height: 1.2;
+    white-space: nowrap;
+    animation: choicePillFadeIn 0.3s ease-out;
+}
+
+.choice-pill .choice-icon {
+    flex-shrink: 0;
+    color: #b45309;
+}
+
+@keyframes choicePillFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Meta Section (Progress & Timer) */
+.summary-meta-section {
+    flex-shrink: 0;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.summary-stat-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.summary-stat-item .stat-label {
+    color: var(--ink-muted, #64748b);
+    font-weight: 500;
+}
+
+.summary-stat-item .stat-value {
+    font-weight: 600;
+    color: var(--ink-secondary, #334155);
+}
+
+.summary-stat-item .stat-timer {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.summary-stat-item.has-time {
+    color: #0369a1;
+}
+
+.summary-stat-item.has-time .stat-value {
+    color: #0369a1;
+}
+
+.stat-timer-icon {
+    flex-shrink: 0;
+    color: #64748b;
+}
+
+.summary-stat-item.has-time .stat-timer-icon {
+    color: #0284c7;
+}
+
+.summary-divider {
+    color: #cbd5e1;
+    font-weight: 700;
+}
+
+/* Question Table row styling when dropped by choice rule */
+.q-table tbody tr.row-choice-dropped {
+    opacity: 0.55;
+    background-color: #f8fafc;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.q-table tbody tr.row-choice-dropped:hover {
+    opacity: 0.95;
+}
+
+.q-table tbody tr.row-choice-dropped td {
+    background-color: #f8fafc !important;
+}
+
+/* Strikethrough & subtle mute on dropped question number */
+.q-num-val.q-num-dropped {
+    color: #94a3b8;
+    text-decoration: line-through;
+    text-decoration-color: #94a3b8;
+    text-decoration-thickness: 1.5px;
+    cursor: help;
+}
+
+/* Strikethrough and dashed border on points input for dropped question */
+.q-table tbody tr.row-choice-dropped .cell.points {
+    text-decoration: line-through;
+    text-decoration-color: #94a3b8;
+    text-decoration-thickness: 1.5px;
+    color: #94a3b8;
+    background-color: rgba(241, 245, 249, 0.9) !important;
+    border-style: dashed;
+    border-color: #cbd5e1;
+    cursor: help;
+}
+
+/* Dropped status badge in points cell: "לא שוקלל" */
+.dropped-status-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 6px;
+    background: #ffffff;
+    color: #64748b;
+    border: 1px dashed #94a3b8;
+    border-radius: var(--radius-sm, 6px);
+    white-space: nowrap;
+    user-select: none;
+    cursor: help;
+    flex-shrink: 0;
+    letter-spacing: -0.01em;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.dropped-status-tag:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}

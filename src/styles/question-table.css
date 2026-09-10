@@ -1,6 +1,145 @@
 /* ==========================================================================
-   Question Table Component
+   Question Table & Question Boxes Component
    ========================================================================== */
+
+.q-table-wrap {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg, #f8fafc);
+}
+
+.q-table-header-wrap {
+    padding: 8px 12px 4px 12px;
+}
+
+.q-table-header {
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
+    box-sizing: border-box;
+}
+
+.q-table-header th {
+    background: transparent;
+    border-bottom: none;
+    color: var(--muted, #64748b);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.q-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 12px 10px 12px;
+}
+
+/* Question Box: Each question (and its sub-questions) is rendered in a square with round edges */
+.q-group-box {
+    background: #ffffff;
+    border: 1px solid #94a3b8;
+    border-radius: var(--radius-md, 10px);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    position: relative;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.q-group-box:hover {
+    border-color: #64748b;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06);
+}
+
+/* Ensure tooltips inside the box aren't hidden */
+.q-group-box:has(.timer-cell:hover),
+.q-group-box:has(.timer-btn:focus-visible) {
+    z-index: 30;
+}
+
+/* Box status indicator borders (richer tone, less pale/white) */
+.q-group-box.group-ok {
+    border-color: #34d399;
+}
+
+.q-group-box.group-bad {
+    border-color: #f87171;
+}
+
+.q-group-box.group-half {
+    border-color: #fbbf24;
+}
+
+.q-group-box.group-stale {
+    border-color: #a78bfa;
+}
+
+.q-group-box.group-dropped {
+    opacity: 0.55;
+    border: 1px dashed #94a3b8;
+}
+
+.q-group-box.group-dropped:hover {
+    opacity: 0.95;
+    border-color: #64748b;
+}
+
+/* Ensure inner table cells conform to the rounded corners of the question square */
+.q-group-box tr:first-child td:first-child {
+    border-start-start-radius: var(--radius-md, 10px);
+}
+
+.q-group-box tr:first-child td:last-child {
+    border-start-end-radius: var(--radius-md, 10px);
+}
+
+.q-group-box tr:last-child td:first-child {
+    border-end-start-radius: var(--radius-md, 10px);
+}
+
+.q-group-box tr:last-child td:last-child {
+    border-end-end-radius: var(--radius-md, 10px);
+}
+
+/* Box entrance and exit animations */
+.q-group-box.q-group-enter {
+    animation: questionGroupEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.q-group-box.q-group-exit {
+    animation: questionGroupExit 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+@keyframes questionGroupEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes questionGroupExit {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        max-height: 250px;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.96);
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-width: 0;
+    }
+}
 
 .q-table {
     width: 100%;
@@ -19,81 +158,126 @@
 
 .q-table tbody td {
     background-color: #ffffff;
-    transition: background-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-        color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-        border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.q-table tbody td:first-child {
-    box-shadow: inset -3.5px 0 0 transparent;
-    transition: background-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-        color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-        border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .q-table th:nth-child(1),
 .q-table td:nth-child(1) {
-    width: 44px;
-    padding: 6px 4px;
+    width: 64px;
+    padding: 8px 4px;
+}
+
+.q-table thead th:nth-child(1) {
+    text-align: center;
 }
 
 .q-table th:nth-child(2),
 .q-table td:nth-child(2) {
     width: 98px;
-    padding: 6px 4px;
+    padding: 8px 4px;
 }
 
 .q-table th:nth-child(3),
 .q-table td:nth-child(3) {
     width: 120px;
-    padding: 6px 4px;
+    padding: 8px 4px;
 }
 
 .q-table th:nth-child(4),
 .q-table td:nth-child(4) {
     width: 114px;
-    padding: 6px 4px;
+    padding: 8px 4px;
 }
 
 .q-table th:nth-child(5) {
-    padding: 6px 6px;
+    padding: 8px 6px;
     text-align: center;
     padding-inline-start: 6px;
     padding-inline-end: 38px;
 }
 
 .q-table td:nth-child(5) {
-    padding: 6px 6px;
+    padding: 8px 6px;
     padding-inline-start: 6px;
     padding-inline-end: 12px;
 }
 
 .q-table thead th {
-    background: #f8fafc;
-    border-bottom: 1px solid var(--line);
-    color: #475569;
+    background: transparent;
+    color: var(--muted, #64748b);
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.01em;
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
 .q-table tbody tr {
     transition: background-color 0.18s ease;
 }
 
-.q-table tbody tr:not(.row-sub):hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
-    background-color: #f8fafc;
+.q-table tbody tr.row-main td {
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
-.q-table tbody tr+tr td {
-    border-top: 1px solid #f1f5f9;
+.q-table tbody tr:not(.row-sub):hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
+    background-color: #f8fafc;
 }
 
 td.q-num {
     color: #334155;
     font-weight: 700;
     font-size: 0.82rem;
+    position: relative;
+}
+
+td.q-num:not(.q-num-sub) .q-cell-inner {
+    justify-content: center;
+}
+
+.q-num-val {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #334155;
+    border-radius: var(--radius-sm, 6px);
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    line-height: 1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.q-table tbody tr.row-ok .q-num-val {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.q-table tbody tr.row-bad .q-num-val {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.q-table tbody tr.row-half .q-num-val {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.q-table tbody tr.row-stale .q-num-val {
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+    color: #5b21b6;
 }
 
 /* Custom Table Inputs */
@@ -105,8 +289,8 @@ td.q-num {
     text-align: center;
     padding: 3px 6px;
     font-size: 0.78rem;
-    border: 1px solid #cbd5e1;
-    border-radius: var(--radius-sm);
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: var(--radius-sm, 6px);
     background: #ffffff;
     color: var(--ink);
     font-variant-numeric: tabular-nums;
@@ -170,10 +354,6 @@ td.q-num {
     color: var(--ok-ink);
 }
 
-.q-table tbody tr.row-ok td:first-child {
-    box-shadow: inset -3.5px 0 0 var(--ok-border-indicator);
-}
-
 .q-table tbody tr.row-ok input.cell.date,
 .q-table tbody tr.row-ok input.cell.points {
     border-color: var(--ok-line);
@@ -183,10 +363,6 @@ td.q-num {
 .q-table tbody tr.row-bad td {
     background-color: var(--bad-bg);
     color: var(--bad-ink);
-}
-
-.q-table tbody tr.row-bad td:first-child {
-    box-shadow: inset -3.5px 0 0 var(--bad-border-indicator);
 }
 
 .q-table tbody tr.row-bad input.cell.date,
@@ -200,10 +376,6 @@ td.q-num {
     color: var(--half-ink);
 }
 
-.q-table tbody tr.row-half td:first-child {
-    box-shadow: inset -3.5px 0 0 var(--half-border-indicator);
-}
-
 .q-table tbody tr.row-half input.cell.date,
 .q-table tbody tr.row-half input.cell.points {
     border-color: var(--half-line);
@@ -213,10 +385,6 @@ td.q-num {
 .q-table tbody tr.row-stale td {
     background-color: var(--stale-bg);
     color: var(--stale-ink);
-}
-
-.q-table tbody tr.row-stale td:first-child {
-    box-shadow: inset -3.5px 0 0 var(--stale-border-indicator);
 }
 
 .q-table tbody tr.row-stale input.cell.date,
@@ -232,58 +400,235 @@ td.q-num {
     border-color: var(--stale-line);
 }
 
-/* Sub-question Row Styling */
-td.q-num.q-num-sub {
-    padding-inline-start: 12px;
-    text-align: start;
-}
-
-.sub-q-indicator {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.sub-tree-icon {
-    color: #94a3b8;
-    flex-shrink: 0;
-}
-
-.sub-q-letter {
-    font-size: 0.76rem;
-    font-weight: 700;
-    color: #475569;
-    line-height: 1;
-}
-
+/* Sub-question Row Styling: Grid-aligned, subtly recessed, nested inside the question box */
 .q-table tbody tr.row-sub td {
-    border-top: 1px dashed #cbd5e1;
-    border-bottom: 1px dashed #cbd5e1;
-}
-
-.q-table tbody tr.row-sub + tr:not(.row-sub) td {
-    border-top: 1px dashed #cbd5e1;
-}
-
-.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
     background-color: #f8fafc;
+    padding: 3.5px 4px;
+    transition: background-color 0.18s ease;
 }
 
+/* First subquestion under a main question: clean dashed internal divider */
+.q-table tbody tr.row-main + tr.row-sub td {
+    border-top: 1px dashed #cbd5e1;
+}
+
+/* Sibling subquestions inside the same question box: subtle dashed divider */
+.q-table tbody tr.row-sub + tr.row-sub td {
+    border-top: 1px dashed #e2e8f0;
+}
+
+/* Sub-question Row Hover */
 .q-table tbody tr.row-sub:hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td {
     background-color: #f1f5f9;
 }
 
-.q-table tbody tr.row-sub:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td:first-child {
-    box-shadow: inset -3.5px 0 0 #94a3b8;
+/* Inward breathing room on leading and trailing edges of the subquestion row */
+.q-table tbody tr.row-sub td:first-child {
+    padding-inline-start: 18px;
+    box-shadow: none;
+}
+
+.q-table tbody tr.row-sub td:last-child {
+    padding-inline-end: 22px;
+}
+
+/* Sub-question inputs: deeply indented to the left with prominent margin */
+.q-table tbody tr.row-sub select.cell {
+    height: 27px;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    width: calc(100% - 16px);
+    margin-inline-start: 14px;
+}
+
+.q-table tbody tr.row-sub input.cell.date {
+    height: 27px;
+    font-size: 0.74rem;
+    padding: 2px 4px;
+    width: calc(100% - 16px);
+    margin-inline-start: 14px;
+}
+
+.q-table tbody tr.row-sub .points-cell input.cell.points {
+    height: 27px;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    width: calc(100% - 16px);
+    margin-inline-start: 14px;
+}
+
+.q-table tbody tr.row-sub .timer-cell {
+    gap: 4px;
+    padding: 0;
+    margin-inline-start: 14px;
+}
+
+.q-table tbody tr.row-sub .timer-digits {
+    font-size: 0.76rem;
+    min-width: 36px;
+}
+
+.q-table tbody tr.row-sub .timer-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-sm, 6px);
+}
+
+.q-table tbody tr.row-sub .timer-btn svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* Column 1 Sub-question Number Wrap & Tree Guide Rail */
+td.q-num.q-num-sub {
+    position: relative;
+    text-align: center;
+}
+
+.sub-q-num-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+}
+
+/* Continuous tree guide rail connecting from parent question above */
+td.q-num.q-num-sub::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 24px;
+    top: 0;
+    bottom: 0;
+    width: 26px;
+    border-inline-start: 1px solid #cbd5e1;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Elbow branch pointing directly to the subquestion chip */
+td.q-num.q-num-sub::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 24px;
+    top: 50%;
+    width: 26px;
+    height: 1px;
+    border-top: 1px solid #cbd5e1;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* For the last subquestion, vertical rail terminates cleanly at the elbow */
+td.q-num.q-num-sub.q-num-sub-last::before,
+.q-table tbody tr.row-sub-last td.q-num.q-num-sub::before {
+    bottom: 50%;
+    width: 26px;
+    border-bottom: 1px solid #cbd5e1;
+    border-bottom-inline-start-radius: 4px;
+}
+
+td.q-num.q-num-sub.q-num-sub-last::after,
+.q-table tbody tr.row-sub-last td.q-num.q-num-sub::after {
+    display: none;
+}
+
+/* Sub-question chip badge - compact, prominently and deeply indented to the left */
+.sub-q-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border-radius: var(--radius-sm, 6px);
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    position: relative;
+    z-index: 2;
+    transform: translateX(-24px);
+}
+
+.sub-q-letter {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #334155;
+    line-height: 1;
+}
+
+/* Status-specific nested row tints & chip styling (calm, focused, elegant) */
+.q-table tbody tr.row-sub.row-ok td {
+    background-color: #f2fbf6;
+}
+
+.q-table tbody tr.row-sub.row-ok:hover td {
+    background-color: #e5f7ed;
+}
+
+.q-table tbody tr.row-sub.row-ok td:first-child {
+    box-shadow: none;
+}
+
+.q-table tbody tr.row-sub.row-ok .sub-q-indicator {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.q-table tbody tr.row-sub.row-bad td {
+    background-color: #fef6f6;
+}
+
+.q-table tbody tr.row-sub.row-bad:hover td {
+    background-color: #fdeeee;
+}
+
+.q-table tbody tr.row-sub.row-bad td:first-child {
+    box-shadow: none;
+}
+
+.q-table tbody tr.row-sub.row-bad .sub-q-indicator {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.q-table tbody tr.row-sub.row-half td {
+    background-color: #fffdf5;
+}
+
+.q-table tbody tr.row-sub.row-half:hover td {
+    background-color: #fef8e7;
+}
+
+.q-table tbody tr.row-sub.row-half td:first-child {
+    box-shadow: none;
+}
+
+.q-table tbody tr.row-sub.row-half .sub-q-indicator {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.q-table tbody tr.row-sub.row-stale td {
+    background-color: #faf8ff;
+}
+
+.q-table tbody tr.row-sub.row-stale:hover td {
+    background-color: #f3effe;
+}
+
+.q-table tbody tr.row-sub.row-stale td:first-child {
+    box-shadow: none;
+}
+
+.q-table tbody tr.row-sub.row-stale .sub-q-indicator {
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+    color: #5b21b6;
 }
 
 /* Ensure row with hovered timer tooltip has stacking priority over rows above it */
@@ -500,4 +845,82 @@ td.q-num.q-num-sub {
 }
 .q-table tbody tr.row-half .timer-sum-badge.sum-value-updated {
     box-shadow: 0 0 0 3px var(--half-line);
+}
+
+/* --- Card Question Actions (Add/Remove Question Buttons) ------------------- */
+
+.card-question-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--card-subtle, #f8fafc);
+    border-top: 1px solid var(--line, #e2e8f0);
+}
+
+.question-count-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-md, 10px);
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    user-select: none;
+}
+
+.question-count-btn svg {
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.question-count-btn.add-question-btn:hover:not(:disabled) {
+    background: #eef2ff;
+    color: var(--accent, #4f46e5);
+    border-color: #c7d2fe;
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.12);
+}
+
+.question-count-btn.add-question-btn:hover:not(:disabled) svg {
+    transform: scale(1.15);
+}
+
+.question-count-btn.remove-question-btn:hover:not(:disabled) {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.12);
+}
+
+.question-count-btn.remove-question-btn:hover:not(:disabled) svg {
+    transform: scale(1.15);
+}
+
+.question-count-btn:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+.question-count-btn:focus-visible {
+    outline: none;
+    border-color: var(--accent, #4f46e5);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
+}
+
+.question-count-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    box-shadow: none;
 }

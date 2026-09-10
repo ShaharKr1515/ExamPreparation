@@ -221,6 +221,20 @@ export function getLatestDate(subQuestions = []) {
 }
 
 /**
+ * Find the earliest (smallest) date string (YYYY-MM-DD) among sub-questions.
+ */
+export function getEarliestDate(subQuestions = []) {
+    if (!subQuestions || subQuestions.length === 0) return "";
+    let earliest = "";
+    for (const sq of subQuestions) {
+        if (sq.date && (!earliest || sq.date < earliest)) {
+            earliest = sq.date;
+        }
+    }
+    return earliest;
+}
+
+/**
  * Row state, in priority order:
  *  - "ok" when success is achieved (always wins)
  *  - "stale" when the last attempt is at least 3 days old (regardless of outcome)
@@ -237,3 +251,310 @@ export function questionRowState(q) {
     if (q.success === "half") return "half";
     return null;
 }
+
+/**
+ * Calculate the overall exam score and summary metrics.
+ *
+ * Rules:
+ *  - Each main question and its sub-questions form a logical problem.
+ *  - If a main question has sub-questions:
+ *      maxPoints = sum of numeric points of its sub-questions (or main question points if sub-questions have none)
+ *      earnedPoints = sum of earned points of sub-questions
+ *  - If no sub-questions:
+ *      maxPoints = Number(q.points) || 0
+ *      earnedPoints = 'yes' -> maxPoints, 'half' -> 0.5 * maxPoints, 'no' -> 0, '' -> 0
+ *  - Fallback if no questions in the exam have points entered:
+ *      Each main question has maxPoints = 100 / mainQuestionsCount.
+ *  - Choice Rule:
+ *      If totalMaxPoints > 100:
+ *        The overall exam score picks the highest-scoring questions answered up to 100 points.
+ *        Questions are ranked by performance (score ratio earned/max desc, then earned desc).
+ *        The highest scoring questions are accumulated until maxPoints reaches 100.
+ *      If totalMaxPoints <= 100:
+ *        All questions are counted up to totalMaxPoints.
+ */
+export function calculateExamScore(exam) {
+    if (!exam || !exam.questions || exam.questions.length === 0) {
+        return {
+            score: 0,
+            maxScore: 100,
+            displayScore: "—",
+            hasAnsweredAny: false,
+            isChoiceActive: false,
+            totalExamPoints: 0,
+            answeredCount: 0,
+            totalMainQuestions: 0,
+            totalTimerSeconds: 0,
+            counts: { yes: 0, half: 0, no: 0, unattempted: 0 },
+            questionStatusMap: {},
+        };
+    }
+
+    // 1. Group main questions and their sub-questions
+    const mainList = [];
+    for (let i = 0; i < exam.questions.length; i++) {
+        const q = exam.questions[i];
+        if (!q.sub) {
+            const subs = [];
+            let j = i + 1;
+            while (j < exam.questions.length && exam.questions[j]?.sub) {
+                subs.push(exam.questions[j]);
+                j++;
+            }
+            mainList.push({ main: q, subs, mainIndex: mainList.length + 1 });
+        }
+    }
+
+    if (mainList.length === 0) {
+        return {
+            score: 0,
+            maxScore: 100,
+            displayScore: "—",
+            hasAnsweredAny: false,
+            isChoiceActive: false,
+            totalExamPoints: 0,
+            answeredCount: 0,
+            totalMainQuestions: 0,
+            totalTimerSeconds: 0,
+            counts: { yes: 0, half: 0, no: 0, unattempted: 0 },
+            questionStatusMap: {},
+        };
+    }
+
+    // 2. Check if any question has explicit points entered
+    let hasAnyExplicitPoints = false;
+    for (const item of mainList) {
+        if (item.subs.length > 0) {
+            if (item.subs.some((s) => s.points !== "" && s.points != null && !isNaN(Number(s.points)))) {
+                hasAnyExplicitPoints = true;
+                break;
+            }
+        }
+        if (item.main.points !== "" && item.main.points != null && !isNaN(Number(item.main.points))) {
+            hasAnyExplicitPoints = true;
+            break;
+        }
+    }
+
+    const defaultPointsPerMain = 100 / mainList.length;
+
+    // 3. Process each main question
+    let totalTimerSeconds = 0;
+    const counts = { yes: 0, half: 0, no: 0, unattempted: 0 };
+    let answeredCount = 0;
+    let hasAnsweredAny = false;
+
+    const mainQuestionsData = mainList.map((item) => {
+        const { main, subs, mainIndex } = item;
+
+        // Timer calculation: sum of subs if exist, else main timer
+        if (subs.length > 0) {
+            const subTimerSum = subs.reduce((acc, s) => acc + (Number(s.timerSeconds) || 0), 0);
+            totalTimerSeconds += subTimerSum;
+        } else {
+            totalTimerSeconds += Number(main.timerSeconds) || 0;
+        }
+
+        // Mastery status
+        let effectiveSuccess = "";
+        if (subs.length > 0) {
+            effectiveSuccess = deriveParentSuccess(subs);
+        } else {
+            effectiveSuccess = main.success || "";
+        }
+
+        if (effectiveSuccess === "yes") {
+            counts.yes++;
+            answeredCount++;
+            hasAnsweredAny = true;
+        } else if (effectiveSuccess === "half") {
+            counts.half++;
+            answeredCount++;
+            hasAnsweredAny = true;
+        } else if (effectiveSuccess === "no") {
+            counts.no++;
+            answeredCount++;
+            hasAnsweredAny = true;
+        } else {
+            counts.unattempted++;
+        }
+
+        // Points & Earned calculation
+        let maxPoints = 0;
+        let earnedPoints = 0;
+
+        if (subs.length > 0) {
+            const explicitSubsPoints = subs.reduce((sum, s) => {
+                const p = Number(s.points);
+                return !isNaN(p) && s.points !== "" && s.points != null ? sum + p : sum;
+            }, 0);
+
+            if (explicitSubsPoints > 0) {
+                maxPoints = explicitSubsPoints;
+                for (const s of subs) {
+                    const sp = Number(s.points) || 0;
+                    if (s.success === "yes") earnedPoints += sp;
+                    else if (s.success === "half") earnedPoints += sp * 0.5;
+                }
+            } else if (!hasAnyExplicitPoints) {
+                maxPoints = defaultPointsPerMain;
+                const perSub = maxPoints / subs.length;
+                for (const s of subs) {
+                    if (s.success === "yes") earnedPoints += perSub;
+                    else if (s.success === "half") earnedPoints += perSub * 0.5;
+                }
+            } else {
+                const parentPts = Number(main.points) || 0;
+                maxPoints = parentPts;
+                if (subs.length > 0 && parentPts > 0) {
+                    const perSub = parentPts / subs.length;
+                    for (const s of subs) {
+                        if (s.success === "yes") earnedPoints += perSub;
+                        else if (s.success === "half") earnedPoints += perSub * 0.5;
+                    }
+                }
+            }
+        } else {
+            if (hasAnyExplicitPoints) {
+                maxPoints = Number(main.points) || 0;
+            } else {
+                maxPoints = defaultPointsPerMain;
+            }
+
+            if (main.success === "yes") earnedPoints = maxPoints;
+            else if (main.success === "half") earnedPoints = maxPoints * 0.5;
+            else earnedPoints = 0;
+        }
+
+        const ratio = maxPoints > 0 ? earnedPoints / maxPoints : 0;
+
+        return {
+            id: main.id,
+            mainIndex,
+            maxPoints,
+            earnedPoints,
+            ratio,
+            hasAnswered: effectiveSuccess !== "",
+            effectiveSuccess,
+            subIds: subs.map((s) => s.id),
+        };
+    });
+
+    const totalExamPoints = Math.round(mainQuestionsData.reduce((acc, q) => acc + q.maxPoints, 0) * 100) / 100;
+    const isChoiceActive = totalExamPoints > 100;
+    const questionStatusMap = {};
+
+    let finalScore = 0;
+
+    if (!isChoiceActive) {
+        // Normal exam: sum all earned points
+        finalScore = mainQuestionsData.reduce((acc, q) => acc + q.earnedPoints, 0);
+        for (const q of mainQuestionsData) {
+            questionStatusMap[q.id] = {
+                included: true,
+                partial: false,
+                countedPoints: q.earnedPoints,
+                earnedPoints: q.earnedPoints,
+                maxPoints: q.maxPoints,
+                isDropped: false,
+            };
+            for (const subId of q.subIds) {
+                questionStatusMap[subId] = {
+                    included: true,
+                    isDropped: false,
+                };
+            }
+        }
+    } else {
+        // Choice exam: student answers K questions out of N
+        const avgPoints = totalExamPoints / mainQuestionsData.length;
+        const K = Math.min(
+            mainQuestionsData.length - 1,
+            Math.max(1, Math.round(100 / avgPoints)),
+        );
+
+        // Sort by best performance:
+        // 1. Success ratio (1.0 for yes, 0.5 for half, 0.0 for no/unset)
+        // 2. Earned points
+        // 3. Max points
+        const sorted = [...mainQuestionsData].sort((a, b) => {
+            if (Math.abs(b.ratio - a.ratio) > 0.0001) {
+                return b.ratio - a.ratio;
+            }
+            if (Math.abs(b.earnedPoints - a.earnedPoints) > 0.0001) {
+                return b.earnedPoints - a.earnedPoints;
+            }
+            return b.maxPoints - a.maxPoints;
+        });
+
+        const chosen = sorted.slice(0, K);
+        const dropped = sorted.slice(K);
+
+        finalScore = Math.min(100, chosen.reduce((acc, q) => acc + q.earnedPoints, 0));
+
+        for (const item of chosen) {
+            questionStatusMap[item.id] = {
+                included: true,
+                partial: false,
+                countedPoints: item.earnedPoints,
+                earnedPoints: item.earnedPoints,
+                maxPoints: item.maxPoints,
+                isDropped: false,
+            };
+            for (const subId of item.subIds) {
+                questionStatusMap[subId] = {
+                    included: true,
+                    isDropped: false,
+                };
+            }
+        }
+
+        for (const item of dropped) {
+            questionStatusMap[item.id] = {
+                included: false,
+                partial: false,
+                countedPoints: 0,
+                earnedPoints: item.earnedPoints,
+                maxPoints: item.maxPoints,
+                isDropped: true,
+            };
+            for (const subId of item.subIds) {
+                questionStatusMap[subId] = {
+                    included: false,
+                    isDropped: true,
+                };
+            }
+        }
+    }
+
+    // Clean rounding: at most 1 decimal place or whole number (e.g. 87.5, 100, 70)
+    const roundedScore = Math.round(finalScore * 10) / 10;
+    const maxScore = isChoiceActive ? 100 : Math.min(100, Math.round(totalExamPoints * 10) / 10) || 100;
+
+    const avgPoints = totalExamPoints / (mainQuestionsData.length || 1);
+    const chosenCount = isChoiceActive
+        ? Math.min(mainQuestionsData.length - 1, Math.max(1, Math.round(100 / avgPoints)))
+        : mainQuestionsData.length;
+
+    const droppedItems = isChoiceActive
+        ? mainQuestionsData.filter((q) => questionStatusMap[q.id]?.isDropped)
+        : [];
+
+    return {
+        score: roundedScore,
+        maxScore,
+        displayScore: hasAnsweredAny ? String(roundedScore) : "—",
+        hasAnsweredAny,
+        isChoiceActive,
+        totalExamPoints,
+        answeredCount,
+        totalMainQuestions: mainList.length,
+        chosenCount,
+        droppedCount: droppedItems.length,
+        droppedLabels: droppedItems.map((d) => `שאלה ${d.mainIndex}`),
+        totalTimerSeconds,
+        counts,
+        questionStatusMap,
+    };
+}
+

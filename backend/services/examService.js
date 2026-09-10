@@ -188,6 +188,53 @@ export function addQuestion(examId, afterPosition = null) {
 }
 
 /**
+ * Add a new empty main question at the end of the exam (is_sub = 0).
+ */
+export function addMainQuestion(examId) {
+    db.exec("BEGIN");
+    try {
+        const last = db.prepare("SELECT MAX(position) AS m FROM questions WHERE exam_id = ?").get(examId);
+        const newPos = (last?.m ?? -1) + 1;
+        db.prepare(
+            "INSERT INTO questions (exam_id, position, success, last_date, points, is_sub, timer_seconds) VALUES (?, ?, '', '', '', 0, 0)",
+        ).run(examId, newPos);
+        db.exec("COMMIT");
+    } catch (e) {
+        db.exec("ROLLBACK");
+        throw e;
+    }
+    return getExamById(examId);
+}
+
+/**
+ * Remove the last main question from an exam, along with any sub-questions attached to it.
+ * Enforces minimum 1 main question.
+ */
+export function removeLastMainQuestion(examId) {
+    db.exec("BEGIN");
+    try {
+        const questions = db.prepare(
+            "SELECT id, position, is_sub FROM questions WHERE exam_id = ? ORDER BY position ASC",
+        ).all(examId);
+
+        const mainQuestions = questions.filter((q) => !q.is_sub);
+        if (mainQuestions.length <= 1) {
+            throw Object.assign(new Error("Cannot remove the last question (minimum 1 question)"), { status: 400 });
+        }
+
+        const lastMain = mainQuestions[mainQuestions.length - 1];
+        // Delete the last main question and any sub-questions after it
+        db.prepare("DELETE FROM questions WHERE exam_id = ? AND position >= ?").run(examId, lastMain.position);
+
+        db.exec("COMMIT");
+    } catch (e) {
+        db.exec("ROLLBACK");
+        throw e;
+    }
+    return getExamById(examId);
+}
+
+/**
  * Delete a question (e.g. sub-question) at `position`, shifting later
  * positions down by one.
  */

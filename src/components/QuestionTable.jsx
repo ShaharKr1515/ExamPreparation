@@ -7,7 +7,7 @@ import {
     deriveParentSuccess,
     computeSubQuestionsPointsSum,
     computeSubQuestionsTimerSum,
-    getLatestDate,
+    getEarliestDate,
     SUCCESS_LABELS,
 } from "../utils/examUtils.js";
 import QuestionTimer from "./QuestionTimer.jsx";
@@ -98,6 +98,9 @@ function QuestionRow({
     labelInfo,
     isEntering,
     isExiting,
+    isLastSub = false,
+    isLastInGroup = false,
+    isDropped = false,
     onDelete,
 }) {
     const { updateQuestion } = useExams();
@@ -109,7 +112,8 @@ function QuestionRow({
     const derivedSuccess = hasSubQuestions ? deriveParentSuccess(activeSubQuestions) : "";
     const derivedPoints = hasSubQuestions ? computeSubQuestionsPointsSum(activeSubQuestions) : "";
     const derivedTimerSeconds = hasSubQuestions ? computeSubQuestionsTimerSum(activeSubQuestions) : 0;
-    const effectiveDate = hasSubQuestions ? (q.date || getLatestDate(activeSubQuestions)) : q.date;
+    const derivedDate = hasSubQuestions ? getEarliestDate(activeSubQuestions) : "";
+    const effectiveDate = hasSubQuestions ? (derivedDate || q.date) : q.date;
     const effectiveSuccess = hasSubQuestions ? derivedSuccess : q.success;
 
     const stateClass = questionRowState({
@@ -179,38 +183,35 @@ function QuestionRow({
 
     const rowClass = [
         stateClass ? `row-${stateClass}` : "",
-        q.sub ? "row-sub" : "",
-        isEntering ? "row-sub-enter" : "",
-        isExiting ? "row-sub-exit" : "",
+        q.sub ? "row-sub" : "row-main",
+        !q.sub ? "q-group-start" : "",
+        isLastInGroup ? "q-group-end" : "",
+        q.sub && isLastSub ? "row-sub-last" : "",
+        isEntering ? (q.sub ? "row-sub-enter" : "row-main-enter") : "",
+        isExiting ? (q.sub ? "row-sub-exit" : "row-main-exit") : "",
         shouldAnimateRestore ? "row-restoring" : "",
+        isDropped ? "row-choice-dropped" : "",
     ]
         .filter(Boolean)
         .join(" ");
 
     return (
         <tr className={rowClass}>
-            <td className={`q-num ${q.sub ? "q-num-sub" : ""}`}>
+            <td className={`q-num ${q.sub ? "q-num-sub" : ""} ${q.sub && isLastSub ? "q-num-sub-last" : ""}`}>
                 <div className="q-cell-inner">
                     {q.sub ? (
-                        <span className="sub-q-indicator" title={labelInfo.aria}>
-                            <svg
-                                className="sub-tree-icon"
-                                width="10"
-                                height="10"
-                                viewBox="0 0 12 12"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                            >
-                                <path d="M10 2v5H3m0 0l2.5-2.5M3 7l2.5 2.5" />
-                            </svg>
-                            <span className="sub-q-letter">{labelInfo.subLabel}</span>
-                        </span>
+                        <div className="sub-q-num-wrap">
+                            <span className="sub-q-indicator" title={labelInfo.aria}>
+                                <span className="sub-q-letter">{labelInfo.subLabel}</span>
+                            </span>
+                        </div>
                     ) : (
-                        labelInfo.display
+                        <span
+                            className={`q-num-val ${isDropped ? "q-num-dropped" : ""}`}
+                            title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : undefined}
+                        >
+                            {labelInfo.display}
+                        </span>
                     )}
                 </div>
             </td>
@@ -263,7 +264,7 @@ function QuestionRow({
                     <input
                         type="date"
                         className="cell date"
-                        value={q.date || (hasSubQuestions ? effectiveDate : "")}
+                        value={hasSubQuestions ? (effectiveDate || "") : (q.date || "")}
                         aria-label={`תאריך אחרון ל${labelInfo.aria}`}
                         onChange={(e) => updateQuestion(exam.id, qi, "date", e.target.value)}
                     />
@@ -307,6 +308,7 @@ function QuestionRow({
                                 title={`סכום נקודות הסעיפים: ${derivedPoints}`}
                                 aria-label={`סכום נקודות הסעיפים: ${derivedPoints}`}
                             >
+                                <span className="points-sum-label">סה״כ</span>
                                 <span className="points-sum-value">{derivedPoints}</span>
                                 <span className="points-sum-unit">נק'</span>
                             </div>
@@ -318,9 +320,19 @@ function QuestionRow({
                                 className={`cell points ${shouldAnimateRestore ? "cell-restore-enter" : ""}`}
                                 placeholder="נק'"
                                 value={q.points}
+                                title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : undefined}
                                 aria-label={`נקודות ל${labelInfo.aria}`}
                                 onChange={(e) => updateQuestion(exam.id, qi, "points", e.target.value)}
                             />
+                        )}
+                        {isDropped && !q.sub && (
+                            <span
+                                className="dropped-status-tag"
+                                title="שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)"
+                                aria-label="שאלה זו לא נכללת בציון"
+                            >
+                                לא שוקלל
+                            </span>
                         )}
                         {q.sub ? (
                             <DeleteSubButton
@@ -339,9 +351,13 @@ function QuestionRow({
 }
 
 /** The question table shown inside each exam card. */
-export default function QuestionTable({ exam }) {
-    const { deleteQuestion } = useExams();
+export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceActive = false }) {
+    const { deleteQuestion, addMainQuestion, removeLastMainQuestion } = useExams();
     const labels = getQuestionLabels(exam.questions);
+
+    const mainQuestions = exam.questions.filter((q) => !q.sub);
+    const canRemove = mainQuestions.length > 1;
+    const [isModifyingCount, setIsModifyingCount] = useState(false);
 
     const [prevExamId, setPrevExamId] = useState(exam.id);
     const [prevQuestions, setPrevQuestions] = useState(exam.questions);
@@ -349,8 +365,8 @@ export default function QuestionTable({ exam }) {
     const [exitingIds, setExitingIds] = useState(() => new Set());
 
     // Synchronous state adjustment during render (React standard pattern):
-    // Ensures newly added sub-question rows render with `isEntering = true` on frame 0,
-    // guaranteeing the accordion expansion animation begins smoothly without any 1-frame pop-in.
+    // Ensures newly added question rows render with `isEntering = true` on frame 0,
+    // guaranteeing the expansion animation begins smoothly without any 1-frame pop-in.
     if (prevExamId !== exam.id) {
         setPrevExamId(exam.id);
         setPrevQuestions(exam.questions);
@@ -358,13 +374,13 @@ export default function QuestionTable({ exam }) {
         setExitingIds(new Set());
     } else if (prevQuestions !== exam.questions) {
         const prevIds = new Set(prevQuestions.map((q) => q.id));
-        const newSubIds = exam.questions
-            .filter((q) => q.sub && q.id && !prevIds.has(q.id))
+        const newIds = exam.questions
+            .filter((q) => q.id && !prevIds.has(q.id))
             .map((q) => q.id);
 
         setPrevQuestions(exam.questions);
-        if (newSubIds.length > 0) {
-            setEnteringIds((prev) => new Set([...prev, ...newSubIds]));
+        if (newIds.length > 0) {
+            setEnteringIds((prev) => new Set([...prev, ...newIds]));
         }
     }
 
@@ -397,48 +413,204 @@ export default function QuestionTable({ exam }) {
         }
     };
 
-    return (
-        <table className="q-table">
-            <thead>
-                <tr>
-                    {QUESTION_HEADERS.map((label) => (
-                        <th key={label}>{label}</th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {exam.questions.map((q, qi) => {
-                    let insertAfterIndex = qi;
-                    const subQuestions = [];
-                    if (!q.sub) {
-                        while (
-                            insertAfterIndex + 1 < exam.questions.length &&
-                            exam.questions[insertAfterIndex + 1]?.sub
-                        ) {
-                            insertAfterIndex++;
-                            subQuestions.push(exam.questions[insertAfterIndex]);
-                        }
-                    }
+    const handleAddQuestion = async () => {
+        if (isModifyingCount) return;
+        setIsModifyingCount(true);
+        try {
+            await addMainQuestion(exam.id);
+        } catch (err) {
+            console.error("Failed to add question:", err);
+            alert("שגיאה בהוספת שאלה. אם השרת פועל בטרמינל נפרד, יש להפעיל אותו מחדש כדי שיטען את הנתיבים החדשים.\n\n" + (err?.message || ""));
+        } finally {
+            setIsModifyingCount(false);
+        }
+    };
 
+    const handleRemoveLastQuestion = async () => {
+        if (isModifyingCount || !canRemove) return;
+
+        const lastMain = mainQuestions[mainQuestions.length - 1];
+        if (!lastMain) return;
+
+        const lastMainIndex = exam.questions.findIndex((q) => q.id === lastMain.id);
+        if (lastMainIndex === -1) return;
+        const affectedQuestions = exam.questions.slice(lastMainIndex);
+
+        const hasSubQuestions = affectedQuestions.length > 1;
+        const hasData = affectedQuestions.some((q) => {
+            const hasSuccess = q.success !== "" && q.success != null;
+            const hasDate = q.date !== "" && q.date != null;
+            const hasPoints = q.points !== "" && q.points != null;
+            const hasTimer = Number(q.timerSeconds) > 0;
+            return hasSuccess || hasDate || hasPoints || hasTimer;
+        });
+
+        if (hasSubQuestions || hasData) {
+            const questionNumber = mainQuestions.length;
+            const confirmMsg = `למחוק את שאלה ${questionNumber}? כל הנתונים והסעיפים שלה יימחקו.`;
+            if (!window.confirm(confirmMsg)) {
+                return;
+            }
+        }
+
+        setIsModifyingCount(true);
+        const affectedIds = affectedQuestions.map((q) => q.id);
+
+        setExitingIds((prev) => new Set([...prev, ...affectedIds]));
+        await new Promise((resolve) => setTimeout(resolve, 260));
+
+        try {
+            await removeLastMainQuestion(exam.id);
+        } catch (err) {
+            console.error("Failed to remove question:", err);
+            alert("שגיאה בהסרת שאלה. אם השרת פועל בטרמינל נפרד, יש להפעיל אותו מחדש כדי שיטען את הנתיבים החדשים.\n\n" + (err?.message || ""));
+        } finally {
+            setExitingIds((prev) => {
+                const next = new Set(prev);
+                affectedIds.forEach((id) => next.delete(id));
+                return next;
+            });
+            setIsModifyingCount(false);
+        }
+    };
+
+    // Group questions by parent main question so each question (and all its subquestions)
+    // is rendered inside its own square with rounded edges.
+    const questionGroups = [];
+    let currentGroup = null;
+
+    exam.questions.forEach((q, qi) => {
+        if (!q.sub || !currentGroup) {
+            currentGroup = {
+                mainQ: q,
+                mainQi: qi,
+                subQuestions: [],
+                insertAfterIndex: qi,
+            };
+            questionGroups.push(currentGroup);
+        } else {
+            currentGroup.subQuestions.push({ q, qi });
+            currentGroup.insertAfterIndex = qi;
+        }
+    });
+
+    return (
+        <div className="q-table-wrap">
+            <div className="q-table-header-wrap">
+                <table className="q-table q-table-header">
+                    <thead>
+                        <tr>
+                            {QUESTION_HEADERS.map((label) => (
+                                <th key={label}>{label}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+
+            <div className="q-group-list">
+                {questionGroups.map((group) => {
+                    const subQuestions = group.subQuestions.map((item) => item.q);
                     const activeSubQuestions = subQuestions.filter((sq) => !exitingIds.has(sq.id));
+                    const hasSubQuestions = activeSubQuestions.length > 0;
+                    const effectiveSuccess = hasSubQuestions ? deriveParentSuccess(activeSubQuestions) : group.mainQ.success;
+                    const effectiveDate = hasSubQuestions
+                        ? (getEarliestDate(activeSubQuestions) || group.mainQ.date)
+                        : group.mainQ.date;
+                    const groupStateClass = questionRowState({
+                        success: effectiveSuccess,
+                        date: effectiveDate,
+                    });
+                    const isDropped = isChoiceActive && Boolean(questionStatusMap?.[group.mainQ.id]?.isDropped);
+                    const isEntering = enteringIds.has(group.mainQ.id);
+                    const isExiting = exitingIds.has(group.mainQ.id);
+
+                    const groupBoxClass = [
+                        "q-group-box",
+                        groupStateClass ? `group-${groupStateClass}` : "",
+                        isDropped ? "group-dropped" : "",
+                        isEntering ? "q-group-enter" : "",
+                        isExiting ? "q-group-exit" : "",
+                    ]
+                        .filter(Boolean)
+                        .join(" ");
 
                     return (
-                        <QuestionRow
-                            key={q.id ?? qi}
-                            exam={exam}
-                            q={q}
-                            qi={qi}
-                            subQuestions={subQuestions}
-                            activeSubQuestions={activeSubQuestions}
-                            insertAfterIndex={insertAfterIndex}
-                            labelInfo={labels[qi] || { display: String(qi + 1), aria: `שאלה ${qi + 1}` }}
-                            isEntering={enteringIds.has(q.id)}
-                            isExiting={exitingIds.has(q.id)}
-                            onDelete={handleDeleteQuestion}
-                        />
+                        <div key={group.mainQ.id ?? group.mainQi} className={groupBoxClass}>
+                            <table className="q-table">
+                                <tbody>
+                                    <QuestionRow
+                                        key={group.mainQ.id ?? group.mainQi}
+                                        exam={exam}
+                                        q={group.mainQ}
+                                        qi={group.mainQi}
+                                        subQuestions={subQuestions}
+                                        activeSubQuestions={activeSubQuestions}
+                                        insertAfterIndex={group.insertAfterIndex}
+                                        labelInfo={labels[group.mainQi] || { display: String(group.mainQi + 1), aria: `שאלה ${group.mainQi + 1}` }}
+                                        isEntering={false}
+                                        isExiting={isExiting}
+                                        isLastSub={false}
+                                        isLastInGroup={group.subQuestions.length === 0}
+                                        isDropped={isDropped}
+                                        onDelete={handleDeleteQuestion}
+                                    />
+                                    {group.subQuestions.map(({ q: subQ, qi: subQi }, subIdx) => {
+                                        const isLastSub = subIdx === group.subQuestions.length - 1;
+                                        return (
+                                            <QuestionRow
+                                                key={subQ.id ?? subQi}
+                                                exam={exam}
+                                                q={subQ}
+                                                qi={subQi}
+                                                subQuestions={[]}
+                                                activeSubQuestions={[]}
+                                                insertAfterIndex={group.insertAfterIndex}
+                                                labelInfo={labels[subQi] || { display: String(subQi + 1), aria: `סעיף` }}
+                                                isEntering={enteringIds.has(subQ.id)}
+                                                isExiting={exitingIds.has(subQ.id)}
+                                                isLastSub={isLastSub}
+                                                isLastInGroup={isLastSub}
+                                                isDropped={false}
+                                                onDelete={handleDeleteQuestion}
+                                            />
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     );
                 })}
-            </tbody>
-        </table>
+            </div>
+
+            <div className="card-question-actions">
+                <button
+                    type="button"
+                    className="question-count-btn add-question-btn"
+                    onClick={handleAddQuestion}
+                    disabled={isModifyingCount}
+                    title="הוספת שאלה לסוף הבחינה"
+                    aria-label="הוספת שאלה"
+                >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    <span>הוסף שאלה</span>
+                </button>
+                <button
+                    type="button"
+                    className="question-count-btn remove-question-btn"
+                    onClick={handleRemoveLastQuestion}
+                    disabled={!canRemove || isModifyingCount}
+                    title={!canRemove ? "לא ניתן להסיר (מינימום שאלה אחת)" : "הסרת השאלה האחרונה"}
+                    aria-label={!canRemove ? "לא ניתן להסיר (מינימום שאלה אחת)" : "הסרת שאלה אחרונה"}
+                >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                        <path d="M5 12h14" />
+                    </svg>
+                    <span>הסר שאלה</span>
+                </button>
+            </div>
+        </div>
     );
 }

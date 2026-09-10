@@ -65,117 +65,116 @@
 /* Card Header Compartment */
 .card-head {
     display: flex;
-    align-items: stretch;
+    flex-direction: column;
     padding: 0;
-    background: var(--card-subtle);
-    border-bottom: 1px solid var(--line);
+    background: var(--card-subtle, #fafbfd);
+    border-bottom: 1px solid var(--line, #e2e8f0);
+}
+
+/* Top bar: start badge + centered name input + end delete button */
+.card-head-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 12px;
+    min-height: 44px;
+}
+
+.card-head-start,
+.card-head-end {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 68px;
+}
+
+.card-head-start {
+    justify-content: flex-start;
+}
+
+.card-head-end {
+    justify-content: flex-end;
+}
+
+/* Sequential Exam Index Badge */
+.exam-index-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent, #4f46e5);
+    background: var(--accent-light, #eef2ff);
+    border: 1px solid rgba(79, 70, 229, 0.18);
+    border-radius: var(--radius-sm, 6px);
+    padding: 3px 8px;
+    white-space: nowrap;
+    user-select: none;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .exam-name-col {
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    gap: 0;
+    justify-content: center;
 }
 
 .cell.exam-name {
     width: 100%;
-    font-size: 1rem;
+    max-width: 320px;
+    font-family: inherit;
+    font-size: 1.05rem;
     font-weight: 600;
     letter-spacing: -0.01em;
-    color: var(--ink);
-    caret-color: var(--accent);
+    color: var(--ink, #0f172a);
+    caret-color: var(--accent, #4f46e5);
     text-align: center;
-    border: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md, 10px);
     background: transparent;
-    padding: 11px 14px 9px;
+    padding: 5px 10px;
     line-height: 1.35;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.cell.exam-name:only-child {
-    padding: 13px 14px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .cell.exam-name:hover {
-    background: rgba(241, 245, 249, 0.65);
+    background: rgba(241, 245, 249, 0.75);
+    border-color: var(--line, #e2e8f0);
 }
 
 .cell.exam-name::placeholder {
-    color: var(--muted);
+    color: var(--muted, #64748b);
     font-weight: 400;
-    opacity: 0.75;
+    opacity: 0.7;
 }
 
 .cell.exam-name:focus {
     outline: none;
     background: #ffffff;
-    border-start-start-radius: var(--radius-lg);
-    border-top-right-radius: var(--radius-lg);
-    box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.45);
-}
-
-/* Recommended Due Date Strip */
-.recommended-due {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1.3;
-    color: #475569;
-    background: #f8fafc;
-    border-top: 1px solid #f1f5f9;
-    padding: 7px 12px;
-    font-variant-numeric: tabular-nums;
-    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
-}
-
-.recommended-due .due-main {
-    white-space: nowrap;
-}
-
-.recommended-due .due-rel {
-    font-weight: 500;
-    font-size: 0.72rem;
-    opacity: 0.88;
-    white-space: nowrap;
-}
-
-.recommended-due.overdue {
-    color: #b91c1c;
-    background: #fff5f5;
-    border-top-color: #fecaca;
-}
-
-.recommended-due.today {
-    color: #b45309;
-    background: #fffbeb;
-    border-top-color: #fde68a;
-}
-
-.recommended-due.upcoming {
-    color: #475569;
-    background: #f8fafc;
+    border-color: var(--accent, #4f46e5);
+    box-shadow: 0 0 0 3px var(--accent-ring, rgba(79, 70, 229, 0.22));
 }
 
 /* Card Delete Button */
 .delete-btn {
-    flex: 0 0 auto;
-    align-self: stretch;
-    width: 44px;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
     display: grid;
     place-items: center;
-    border: none;
-    border-inline-start: 1px solid var(--line);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md, 10px);
     background: transparent;
     color: #94a3b8;
     cursor: pointer;
     line-height: 1;
     padding: 0;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 
 .delete-btn svg {
@@ -184,7 +183,8 @@
 
 .delete-btn:hover {
     background: #fef2f2;
-    color: #ef4444;
+    color: #dc2626;
+    border-color: #fecaca;
 }
 
 .delete-btn:hover svg {
@@ -202,8 +202,75 @@
 
 .delete-btn:focus-visible {
     outline: none;
-    border-start-end-radius: var(--radius-lg);
-    border-top-left-radius: var(--radius-lg);
-    box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.45);
-    color: #ef4444;
+    border-color: #fca5a5;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+}
+
+/* Recommended Due Date Strip (full width under top bar) */
+.recommended-due {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    padding: 6px 14px;
+    border-top: 1px solid var(--line, #e2e8f0);
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.recommended-due .due-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.recommended-due .due-main {
+    white-space: nowrap;
+}
+
+.recommended-due .due-main strong {
+    font-weight: 700;
+}
+
+.recommended-due .due-rel {
+    font-weight: 500;
+    font-size: 0.72rem;
+    opacity: 0.9;
+    white-space: nowrap;
+}
+
+/* Due Tones */
+.recommended-due.overdue {
+    color: #991b1b;
+    background: #fef2f2;
+    border-top-color: #fecaca;
+}
+
+.recommended-due.overdue .due-icon {
+    color: #dc2626;
+}
+
+.recommended-due.today {
+    color: #92400e;
+    background: #fffbeb;
+    border-top-color: #fde68a;
+}
+
+.recommended-due.today .due-icon {
+    color: #b45309;
+}
+
+.recommended-due.upcoming {
+    color: #334155;
+    background: #f8fafc;
+    border-top-color: #e2e8f0;
+}
+
+.recommended-due.upcoming .due-icon {
+    color: #64748b;
 }

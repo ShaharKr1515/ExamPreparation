@@ -89,6 +89,16 @@ export function addQuestion(examId, afterPosition) {
     return request(`/api/exams/${examId}/questions`, json({ afterPosition }));
 }
 
+// Add an empty main question at the end of the exam.
+export function addMainQuestion(examId) {
+    return request(`/api/exams/${examId}/questions/main`, { method: "POST" });
+}
+
+// Remove the last main question (and any sub-questions attached to it).
+export function removeLastMainQuestion(examId) {
+    return request(`/api/exams/${examId}/questions/main`, { method: "DELETE" });
+}
+
 // Delete a question (e.g. sub-question) at `position`.
 export function deleteQuestion(examId, position) {
     return request(`/api/exams/${examId}/questions/${position}`, {

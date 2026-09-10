@@ -56,10 +56,37 @@ router.patch("/:id/questions/:position", (req, res) => {
     res.json({ ok: true });
 });
 
+// Add a new main question at the end of the exam.
+router.post("/:id/questions/main", (req, res) => {
+    const examId = Number(req.params.id);
+    if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
+
+    const exam = svc.addMainQuestion(examId);
+    res.status(201).json(exam);
+});
+
+// Remove the last main question (and any sub-questions attached to it).
+router.delete("/:id/questions/main", (req, res) => {
+    const examId = Number(req.params.id);
+    if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
+
+    try {
+        const exam = svc.removeLastMainQuestion(examId);
+        res.json(exam);
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
 // Add an empty sub-question after a given position (or at the end when omitted).
 router.post("/:id/questions", (req, res) => {
     const examId = Number(req.params.id);
     if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
+
+    if (req.body?.isSub === false) {
+        const exam = svc.addMainQuestion(examId);
+        return res.status(201).json(exam);
+    }
 
     const rawAfter = req.body?.afterPosition;
     const afterPosition = rawAfter == null ? null : Math.max(0, Number(rawAfter));
@@ -70,8 +97,18 @@ router.post("/:id/questions", (req, res) => {
 // Delete a question (e.g. sub-question) at a given position.
 router.delete("/:id/questions/:pos", (req, res) => {
     const examId = Number(req.params.id);
-    const position = Number(req.params.pos);
     if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
+
+    if (req.params.pos === "main" || req.params.pos === "last") {
+        try {
+            const exam = svc.removeLastMainQuestion(examId);
+            return res.json(exam);
+        } catch (err) {
+            return res.status(err.status || 500).json({ error: err.message });
+        }
+    }
+
+    const position = Number(req.params.pos);
     if (!Number.isInteger(position) || position < 0) return res.status(400).json({ error: "Invalid position" });
 
     const exam = svc.deleteQuestion(examId, position);

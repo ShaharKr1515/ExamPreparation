@@ -18,6 +18,16 @@
         text-align: center;
     }
 
+    .card-head-start,
+    .card-head-end {
+        min-width: auto;
+    }
+
+    .cell.exam-name {
+        font-size: 0.95rem;
+        padding-inline: 6px;
+    }
+
     .q-table th,
     .q-table td {
         padding-inline: 3px;
@@ -36,6 +46,56 @@
     .q-table select.cell {
         min-width: 76px;
     }
+
+    .q-table th:nth-child(1),
+    .q-table td:nth-child(1) {
+        width: 50px;
+    }
+
+    td.q-num:not(.q-num-sub) .q-cell-inner {
+        padding-inline-start: 6px;
+    }
+
+    .q-table tbody tr.row-sub td {
+        padding-inline: 2px;
+    }
+
+    .q-table tbody tr.row-sub td:first-child {
+        padding-inline-start: 6px;
+    }
+
+    .q-table tbody tr.row-sub td:last-child {
+        padding-inline-end: 8px;
+    }
+
+    .q-table-header-wrap {
+        padding: 6px 6px 3px 6px;
+    }
+
+    .q-group-list {
+        padding: 0 6px 8px 6px;
+        gap: 6px;
+    }
+
+    .q-group-box {
+        border-radius: var(--radius-sm, 6px);
+    }
+
+    .q-group-box tr:first-child td:first-child {
+        border-start-start-radius: var(--radius-sm, 6px);
+    }
+
+    .q-group-box tr:first-child td:last-child {
+        border-start-end-radius: var(--radius-sm, 6px);
+    }
+
+    .q-group-box tr:last-child td:first-child {
+        border-end-start-radius: var(--radius-sm, 6px);
+    }
+
+    .q-group-box tr:last-child td:last-child {
+        border-end-end-radius: var(--radius-sm, 6px);
+    }
 }
 
 /* Reduced Motion (Accessibility) */
@@ -44,10 +104,16 @@
     .exam-card.exam-card-exit,
     .exam-card.add-exam-card,
     .exam-card.add-exam-card .add-icon-circle,
+    .q-group-box.q-group-enter,
+    .q-group-box.q-group-exit,
     .q-table tbody tr.row-sub.row-sub-enter td,
     .q-table tbody tr.row-sub.row-sub-enter .q-cell-inner,
     .q-table tbody tr.row-sub.row-sub-exit td,
     .q-table tbody tr.row-sub.row-sub-exit .q-cell-inner,
+    .q-table tbody tr.row-main-enter td,
+    .q-table tbody tr.row-main-enter .q-cell-inner,
+    .q-table tbody tr.row-main-exit td,
+    .q-table tbody tr.row-main-exit .q-cell-inner,
     .exam-grid.exam-grid-enter,
     .interval-hint,
     .empty-state,

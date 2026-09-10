@@ -144,6 +144,38 @@ export function ExamsProvider({ children }) {
         }
     }
 
+    // Add a new main question to an exam (at the end).
+    async function addMainQuestion(examId) {
+        try {
+            const updated = await api.addMainQuestion(examId);
+            setState((s) => ({
+                ...s,
+                exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
+            }));
+            return updated;
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+            throw e;
+        }
+    }
+
+    // Remove the last main question (and its sub-questions) from an exam.
+    async function removeLastMainQuestion(examId) {
+        try {
+            const updated = await api.removeLastMainQuestion(examId);
+            setState((s) => ({
+                ...s,
+                exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
+            }));
+            return updated;
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+            throw e;
+        }
+    }
+
     // Delete a question (e.g. sub-question) by question ID.
     async function deleteQuestion(examId, questionId) {
         try {
@@ -291,6 +323,8 @@ export function ExamsProvider({ children }) {
             renameExam,
             updateQuestion,
             addQuestion,
+            addMainQuestion,
+            removeLastMainQuestion,
             deleteQuestion,
             addSubject,
             updateSubjectDates,

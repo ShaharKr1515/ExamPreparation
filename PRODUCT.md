@@ -33,7 +33,7 @@ The distinguishing mechanism is coupling **per-question mastery state** with **a
 ## Capabilities and Constraints
 
 Confirmed functionality:
-- Subjects contain exams; an exam holds a fixed set of questions (currently **5** per exam — see open decision below).
+- Subjects contain exams; newly created exams start with 5 questions by default, and students can add or remove questions per exam (minimum 1 question) using the action buttons below each question table.
 - Each question tracks three fields: success (`yes` / `no` / unset), last-attempt date, and points.
 - Each subject stores a study-start date, a final-exam date, and a planned exam count.
 - Recommended exam due-dates are **derived, never stored**: computed from (study-start, final-exam, exam-count) on the frontend; any computed date that falls on/after the final-exam date is skipped.
@@ -42,9 +42,6 @@ Confirmed constraints:
 - **Hebrew-only UI.** All copy is Hebrew; no i18n / multi-language support is required.
 - **Single-user, local data only.** No authentication, accounts, or remote sync. Data persists in a local SQLite file.
 - **Recommended dates must stay derived.** They are always recomputed from the three subject-level inputs and never persisted as independent state.
-
-Open decision (recorded, not invented):
-- Whether "5 questions per exam" is a durable product rule or merely the current implementation shape was **not** confirmed. Treat it as the present structure until decided; do not hard-code assumptions beyond that in future work without checking.
 
 ## Brand Commitments
 

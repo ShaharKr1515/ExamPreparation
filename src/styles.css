@@ -16,6 +16,7 @@
 /* Exam Cards & Grid */
 @import "./styles/exam-grid.css";
 @import "./styles/exam-card.css";
+@import "./styles/exam-summary.css";
 @import "./styles/add-exam-card.css";
 
 /* Question Table & Interactive Cells */
