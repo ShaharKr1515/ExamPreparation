@@ -249,17 +249,15 @@
         min-height: 0;
         max-height: 0;
         opacity: 0;
-        transform: scaleY(0.4);
-        transform-origin: top center;
         overflow: hidden;
     }
 
     30% {
-        opacity: 0.2;
+        opacity: 0.3;
     }
 
-    60% {
-        opacity: 0.7;
+    70% {
+        opacity: 0.8;
     }
 
     100% {
@@ -267,8 +265,6 @@
         min-height: 30px;
         max-height: 30px;
         opacity: 1;
-        transform: scaleY(1);
-        transform-origin: top center;
         overflow: visible;
     }
 }
@@ -279,8 +275,6 @@
         min-height: 30px;
         max-height: 30px;
         opacity: 1;
-        transform: scaleY(1);
-        transform-origin: top center;
         overflow: hidden;
     }
 
@@ -293,8 +287,6 @@
         min-height: 0;
         max-height: 0;
         opacity: 0;
-        transform: scaleY(0.4);
-        transform-origin: top center;
         overflow: hidden;
     }
 }
@@ -303,26 +295,17 @@
     0% {
         padding-top: 0;
         padding-bottom: 0;
-        line-height: 0;
-        font-size: 0;
         border-top-color: transparent;
-        border-bottom-color: transparent;
         background-color: #e2e8f0;
     }
 
     50% {
         background-color: #f1f5f9;
-        border-top-color: #cbd5e1;
-        border-bottom-color: #cbd5e1;
     }
 
     100% {
-        padding-top: 6px;
-        padding-bottom: 6px;
-        line-height: normal;
-        font-size: 0.78rem;
-        border-top-color: #cbd5e1;
-        border-bottom-color: #cbd5e1;
+        padding-top: 3.5px;
+        padding-bottom: 3.5px;
         background-color: #f8fafc;
     }
 }
@@ -339,13 +322,9 @@
 
 @keyframes subRowTdExit {
     0% {
-        padding-top: 6px;
-        padding-bottom: 6px;
-        line-height: normal;
-        font-size: 0.78rem;
+        padding-top: 3.5px;
+        padding-bottom: 3.5px;
         background-color: #fee2e2;
-        border-top-color: #cbd5e1;
-        border-bottom-color: #cbd5e1;
     }
 
     35% {
@@ -355,10 +334,7 @@
     100% {
         padding-top: 0;
         padding-bottom: 0;
-        line-height: 0;
-        font-size: 0;
         border-top-color: transparent;
-        border-bottom-color: transparent;
         background-color: transparent;
     }
 }

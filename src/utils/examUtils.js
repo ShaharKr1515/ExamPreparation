@@ -207,6 +207,63 @@ export function computeSubQuestionsTimerSum(subQuestions = []) {
 }
 
 /**
+ * Distribute total points across `count` subquestions such that:
+ * - Every subquestion receives a whole integer string (e.g. "13", "12").
+ * - The sum of points across all subquestions strictly equals Math.round(Number(totalPoints)).
+ * - The remainder is distributed (+1) to the first remainder subquestions.
+ */
+export function distributePoints(totalPoints, count) {
+    if (
+        totalPoints == null ||
+        totalPoints === "" ||
+        (typeof totalPoints === "string" && totalPoints.trim() === "") ||
+        isNaN(Number(totalPoints)) ||
+        count <= 0
+    ) {
+        return Array(Math.max(0, count)).fill("");
+    }
+    const total = Math.max(0, Math.round(Number(totalPoints)));
+    const base = Math.floor(total / count);
+    const remainder = total % count;
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        const pts = i < remainder ? base + 1 : base;
+        result.push(String(pts));
+    }
+    return result;
+}
+
+/**
+ * Distribute total timer seconds across `count` subquestions such that:
+ * - Every subquestion receives an integer number of seconds.
+ * - The sum of seconds across all subquestions strictly equals totalSeconds.
+ * - The remainder is distributed (+1s) to the first remainder subquestions.
+ */
+export function distributeTimer(totalSeconds, count) {
+    if (
+        totalSeconds == null ||
+        totalSeconds === "" ||
+        (typeof totalSeconds === "string" && totalSeconds.trim() === "") ||
+        isNaN(Number(totalSeconds)) ||
+        count <= 0
+    ) {
+        return Array(Math.max(0, count)).fill(0);
+    }
+    const total = Math.max(0, Math.round(Number(totalSeconds)));
+    if (total === 0) {
+        return Array(count).fill(0);
+    }
+    const base = Math.floor(total / count);
+    const remainder = total % count;
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        const secs = i < remainder ? base + 1 : base;
+        result.push(secs);
+    }
+    return result;
+}
+
+/**
  * Find the most recent date string (YYYY-MM-DD) among sub-questions.
  */
 export function getLatestDate(subQuestions = []) {

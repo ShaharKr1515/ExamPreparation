@@ -7,6 +7,8 @@ import {
     deriveParentSuccess,
     computeSubQuestionsPointsSum,
     computeSubQuestionsTimerSum,
+    distributePoints,
+    distributeTimer,
     getEarliestDate,
     SUCCESS_LABELS,
 } from "../utils/examUtils.js";
@@ -108,18 +110,15 @@ function QuestionRow({
     const hadSubQuestions = !q.sub && subQuestions.length > 0;
     const hasSubQuestions = !q.sub && activeSubQuestions.length > 0;
     const isLastSubExiting = hadSubQuestions && !hasSubQuestions;
+    const hasExitingSub = hadSubQuestions && subQuestions.length > activeSubQuestions.length;
 
+    const baseSubQuestions = hasExitingSub ? subQuestions : activeSubQuestions;
     const derivedSuccess = hasSubQuestions ? deriveParentSuccess(activeSubQuestions) : "";
-    const derivedPoints = hasSubQuestions ? computeSubQuestionsPointsSum(activeSubQuestions) : "";
-    const derivedTimerSeconds = hasSubQuestions ? computeSubQuestionsTimerSum(activeSubQuestions) : 0;
+    const derivedPoints = hasSubQuestions ? computeSubQuestionsPointsSum(baseSubQuestions) : "";
+    const derivedTimerSeconds = hasSubQuestions ? computeSubQuestionsTimerSum(baseSubQuestions) : 0;
     const derivedDate = hasSubQuestions ? getEarliestDate(activeSubQuestions) : "";
     const effectiveDate = hasSubQuestions ? (derivedDate || q.date) : q.date;
     const effectiveSuccess = hasSubQuestions ? derivedSuccess : q.success;
-
-    const stateClass = questionRowState({
-        success: effectiveSuccess,
-        date: effectiveDate,
-    }); // "ok" | "stale" | "bad" | "half" | null
 
     const prevHadSubRef = useRef(hasSubQuestions);
     const [isRestoringInputs, setIsRestoringInputs] = useState(false);
@@ -134,6 +133,20 @@ function QuestionRow({
     }, [hasSubQuestions]);
 
     const shouldAnimateRestore = isLastSubExiting || isRestoringInputs;
+
+    const restoredPoints = hadSubQuestions ? computeSubQuestionsPointsSum(subQuestions) : "";
+    const restoredTimer = hadSubQuestions ? computeSubQuestionsTimerSum(subQuestions) : 0;
+    const effectivePointsValue = (shouldAnimateRestore && (q.points === "" || q.points == null) && restoredPoints)
+        ? restoredPoints
+        : (q.points ?? "");
+    const effectiveTimerValue = (shouldAnimateRestore && !q.timerSeconds && restoredTimer)
+        ? restoredTimer
+        : (q.timerSeconds || 0);
+
+    const stateClass = questionRowState({
+        success: effectiveSuccess,
+        date: effectiveDate,
+    }); // "ok" | "stale" | "bad" | "half" | null
 
     const [pointsPulse, setPointsPulse] = useState(false);
     const [timerPulse, setTimerPulse] = useState(false);
@@ -285,7 +298,7 @@ function QuestionRow({
                     ) : (
                         <QuestionTimer
                             className={shouldAnimateRestore ? "cell-restore-enter" : ""}
-                            initialSeconds={q.timerSeconds || 0}
+                            initialSeconds={effectiveTimerValue}
                             onSave={(secs) => updateQuestion(exam.id, qi, "timerSeconds", secs)}
                             onStart={() => {
                                 const today = todayStr();
@@ -319,7 +332,7 @@ function QuestionRow({
                                 inputMode="numeric"
                                 className={`cell points ${shouldAnimateRestore ? "cell-restore-enter" : ""}`}
                                 placeholder="נק'"
-                                value={q.points}
+                                value={effectivePointsValue}
                                 title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : undefined}
                                 aria-label={`נקודות ל${labelInfo.aria}`}
                                 onChange={(e) => updateQuestion(exam.id, qi, "points", e.target.value)}
@@ -389,7 +402,7 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
         if (enteringIds.size === 0) return;
         const timer = setTimeout(() => {
             setEnteringIds(new Set());
-        }, 400);
+        }, 320);
         return () => clearTimeout(timer);
     }, [enteringIds]);
 
@@ -513,6 +526,22 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
                     const subQuestions = group.subQuestions.map((item) => item.q);
                     const activeSubQuestions = subQuestions.filter((sq) => !exitingIds.has(sq.id));
                     const hasSubQuestions = activeSubQuestions.length > 0;
+                    const hasExitingSub = subQuestions.some((sq) => exitingIds.has(sq.id));
+
+                    const totalGroupPoints = computeSubQuestionsPointsSum(subQuestions) !== "0"
+                        ? computeSubQuestionsPointsSum(subQuestions)
+                        : (group.mainQ.points || "");
+                    const totalGroupTimer = computeSubQuestionsTimerSum(subQuestions) > 0
+                        ? computeSubQuestionsTimerSum(subQuestions)
+                        : (group.mainQ.timerSeconds || 0);
+
+                    const optPointsDist = (hasExitingSub && activeSubQuestions.length > 0 && totalGroupPoints)
+                        ? distributePoints(totalGroupPoints, activeSubQuestions.length)
+                        : null;
+                    const optTimerDist = (hasExitingSub && activeSubQuestions.length > 0 && totalGroupTimer > 0)
+                        ? distributeTimer(totalGroupTimer, activeSubQuestions.length)
+                        : null;
+
                     const effectiveSuccess = hasSubQuestions ? deriveParentSuccess(activeSubQuestions) : group.mainQ.success;
                     const effectiveDate = hasSubQuestions
                         ? (getEarliestDate(activeSubQuestions) || group.mainQ.date)
@@ -557,18 +586,31 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
                                     />
                                     {group.subQuestions.map(({ q: subQ, qi: subQi }, subIdx) => {
                                         const isLastSub = subIdx === group.subQuestions.length - 1;
+                                        const isSubExiting = exitingIds.has(subQ.id);
+                                        let effectiveSubQ = subQ;
+                                        if (hasExitingSub && !isSubExiting) {
+                                            const activeIdx = activeSubQuestions.findIndex((sq) => sq.id === subQ.id);
+                                            if (activeIdx !== -1) {
+                                                effectiveSubQ = {
+                                                    ...subQ,
+                                                    points: optPointsDist ? optPointsDist[activeIdx] : subQ.points,
+                                                    timerSeconds: optTimerDist ? optTimerDist[activeIdx] : subQ.timerSeconds,
+                                                };
+                                            }
+                                        }
+
                                         return (
                                             <QuestionRow
                                                 key={subQ.id ?? subQi}
                                                 exam={exam}
-                                                q={subQ}
+                                                q={effectiveSubQ}
                                                 qi={subQi}
                                                 subQuestions={[]}
                                                 activeSubQuestions={[]}
                                                 insertAfterIndex={group.insertAfterIndex}
                                                 labelInfo={labels[subQi] || { display: String(subQi + 1), aria: `סעיף` }}
                                                 isEntering={enteringIds.has(subQ.id)}
-                                                isExiting={exitingIds.has(subQ.id)}
+                                                isExiting={isSubExiting}
                                                 isLastSub={isLastSub}
                                                 isLastInGroup={isLastSub}
                                                 isDropped={false}

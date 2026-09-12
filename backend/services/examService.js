@@ -154,12 +154,147 @@ export function updateQuestion(examId, position, field, value) {
 }
 
 /**
- * Insert a new empty sub-question (סעיף) after `afterPosition`, shifting later
+ * Distribute total points across `count` subquestions such that:
+ * - Every subquestion receives a whole integer string (e.g. "13", "12").
+ * - The sum of points across all subquestions strictly equals Math.round(Number(totalPoints)).
+ * - The remainder is distributed (+1) to the first remainder subquestions.
+ */
+export function distributePoints(totalPoints, count) {
+    if (
+        totalPoints == null ||
+        totalPoints === "" ||
+        (typeof totalPoints === "string" && totalPoints.trim() === "") ||
+        isNaN(Number(totalPoints)) ||
+        count <= 0
+    ) {
+        return Array(Math.max(0, count)).fill("");
+    }
+    const total = Math.max(0, Math.round(Number(totalPoints)));
+    const base = Math.floor(total / count);
+    const remainder = total % count;
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        const pts = i < remainder ? base + 1 : base;
+        result.push(String(pts));
+    }
+    return result;
+}
+
+/**
+ * Distribute total timer seconds across `count` subquestions such that:
+ * - Every subquestion receives an integer number of seconds.
+ * - The sum of seconds across all subquestions strictly equals totalSeconds.
+ * - The remainder is distributed (+1s) to the first remainder subquestions.
+ */
+export function distributeTimer(totalSeconds, count) {
+    if (
+        totalSeconds == null ||
+        totalSeconds === "" ||
+        (typeof totalSeconds === "string" && totalSeconds.trim() === "") ||
+        isNaN(Number(totalSeconds)) ||
+        count <= 0
+    ) {
+        return Array(Math.max(0, count)).fill(0);
+    }
+    const total = Math.max(0, Math.round(Number(totalSeconds)));
+    if (total === 0) {
+        return Array(count).fill(0);
+    }
+    const base = Math.floor(total / count);
+    const remainder = total % count;
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        const secs = i < remainder ? base + 1 : base;
+        result.push(secs);
+    }
+    return result;
+}
+
+/**
+ * Insert a new sub-question (סעיף) after `afterPosition`, shifting later
  * positions up by one — or at the end when `afterPosition` is null.
+ *
+ * If the parent main question has points and/or timer filled (or existing
+ * subquestions carry points/timer), the total points and timer are distributed
+ * equally across all subquestions of that parent, with points strictly remaining
+ * whole numbers.
  */
 export function addQuestion(examId, afterPosition = null) {
     db.exec("BEGIN");
     try {
+        const questions = db.prepare(
+            "SELECT id, position, points, timer_seconds, is_sub FROM questions WHERE exam_id = ? ORDER BY position ASC",
+        ).all(examId);
+
+        // Find the parent main question (is_sub = 0)
+        let parentQuestion = null;
+        if (Number.isInteger(afterPosition)) {
+            const targetIdx = questions.findIndex((q) => q.position === afterPosition);
+            if (targetIdx !== -1) {
+                if (questions[targetIdx].is_sub === 0) {
+                    parentQuestion = questions[targetIdx];
+                } else {
+                    for (let i = targetIdx; i >= 0; i--) {
+                        if (questions[i].is_sub === 0) {
+                            parentQuestion = questions[i];
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            // Inserting at the end: locate the last main question
+            for (let i = questions.length - 1; i >= 0; i--) {
+                if (questions[i].is_sub === 0) {
+                    parentQuestion = questions[i];
+                    break;
+                }
+            }
+        }
+
+        // Collect existing subquestions belonging to this parent
+        let existingSubs = [];
+        if (parentQuestion) {
+            const parentIdx = questions.findIndex((q) => q.id === parentQuestion.id);
+            for (let i = parentIdx + 1; i < questions.length; i++) {
+                if (questions[i].is_sub === 1) {
+                    existingSubs.push(questions[i]);
+                } else {
+                    break;
+                }
+            }
+        }
+
+        // Determine total points to distribute
+        let existingPointsSum = 0;
+        let hasAnySubPoints = false;
+        for (const sq of existingSubs) {
+            if (sq.points !== "" && sq.points != null && !isNaN(Number(sq.points))) {
+                existingPointsSum += Number(sq.points);
+                hasAnySubPoints = true;
+            }
+        }
+
+        let totalPoints = null;
+        if (hasAnySubPoints) {
+            totalPoints = existingPointsSum;
+        } else if (parentQuestion && parentQuestion.points !== "" && parentQuestion.points != null && !isNaN(Number(parentQuestion.points))) {
+            totalPoints = Number(parentQuestion.points);
+        }
+
+        // Determine total timer to distribute
+        let existingTimerSum = 0;
+        for (const sq of existingSubs) {
+            existingTimerSum += Number(sq.timer_seconds) || 0;
+        }
+
+        let totalSeconds = 0;
+        if (existingTimerSum > 0) {
+            totalSeconds = existingTimerSum;
+        } else if (parentQuestion && Number(parentQuestion.timer_seconds) > 0) {
+            totalSeconds = Number(parentQuestion.timer_seconds);
+        }
+
         let newPos;
         if (Number.isInteger(afterPosition)) {
             // Shift later positions up by one — highest first, so each row moves into a slot
@@ -176,9 +311,49 @@ export function addQuestion(examId, afterPosition = null) {
             const last = db.prepare("SELECT MAX(position) AS m FROM questions WHERE exam_id = ?").get(examId);
             newPos = (last?.m ?? -1) + 1;
         }
+
         db.prepare(
             "INSERT INTO questions (exam_id, position, success, last_date, points, is_sub, timer_seconds) VALUES (?, ?, '', '', '', 1, 0)",
         ).run(examId, newPos);
+
+        // Distribute points and timer if parentQuestion exists
+        if (parentQuestion) {
+            const updatedQuestions = db.prepare(
+                "SELECT id, position, is_sub FROM questions WHERE exam_id = ? ORDER BY position ASC",
+            ).all(examId);
+            const pIdx = updatedQuestions.findIndex((q) => q.id === parentQuestion.id);
+            const currentSubs = [];
+            for (let i = pIdx + 1; i < updatedQuestions.length; i++) {
+                if (updatedQuestions[i].is_sub === 1) {
+                    currentSubs.push(updatedQuestions[i]);
+                } else {
+                    break;
+                }
+            }
+
+            if (totalPoints !== null && currentSubs.length > 0) {
+                const pointsDist = distributePoints(totalPoints, currentSubs.length);
+                for (let i = 0; i < currentSubs.length; i++) {
+                    db.prepare("UPDATE questions SET points = ? WHERE id = ?").run(pointsDist[i], currentSubs[i].id);
+                }
+                // Retain parent points record
+                if (parentQuestion.points === "" || parentQuestion.points == null) {
+                    db.prepare("UPDATE questions SET points = ? WHERE id = ?").run(String(Math.round(totalPoints)), parentQuestion.id);
+                }
+            }
+
+            if (totalSeconds > 0 && currentSubs.length > 0) {
+                const timerDist = distributeTimer(totalSeconds, currentSubs.length);
+                for (let i = 0; i < currentSubs.length; i++) {
+                    db.prepare("UPDATE questions SET timer_seconds = ? WHERE id = ?").run(timerDist[i], currentSubs[i].id);
+                }
+                // Retain parent timer record
+                if (!parentQuestion.timer_seconds) {
+                    db.prepare("UPDATE questions SET timer_seconds = ? WHERE id = ?").run(totalSeconds, parentQuestion.id);
+                }
+            }
+        }
+
         db.exec("COMMIT");
     } catch (e) {
         db.exec("ROLLBACK");
@@ -237,10 +412,75 @@ export function removeLastMainQuestion(examId) {
 /**
  * Delete a question (e.g. sub-question) at `position`, shifting later
  * positions down by one.
+ *
+ * If deleting a sub-question under a parent question that has points/timer,
+ * the points and timer are redistributed equally among the remaining sub-questions
+ * (points remaining whole numbers). If the last sub-question is deleted, the
+ * parent question itself receives the total points and timer.
  */
 export function deleteQuestion(examId, position) {
     db.exec("BEGIN");
     try {
+        const questions = db.prepare(
+            "SELECT id, position, points, timer_seconds, is_sub FROM questions WHERE exam_id = ? ORDER BY position ASC",
+        ).all(examId);
+
+        const targetQuestion = questions.find((q) => q.position === position);
+
+        let parentQuestion = null;
+        let existingSubs = [];
+        let totalPoints = null;
+        let totalSeconds = 0;
+
+        if (targetQuestion && targetQuestion.is_sub === 1) {
+            const targetIdx = questions.indexOf(targetQuestion);
+            for (let i = targetIdx; i >= 0; i--) {
+                if (questions[i].is_sub === 0) {
+                    parentQuestion = questions[i];
+                    break;
+                }
+            }
+
+            if (parentQuestion) {
+                const parentIdx = questions.findIndex((q) => q.id === parentQuestion.id);
+                for (let i = parentIdx + 1; i < questions.length; i++) {
+                    if (questions[i].is_sub === 1) {
+                        existingSubs.push(questions[i]);
+                    } else {
+                        break;
+                    }
+                }
+
+                // Determine total points to distribute
+                let existingPointsSum = 0;
+                let hasAnySubPoints = false;
+                for (const sq of existingSubs) {
+                    if (sq.points !== "" && sq.points != null && !isNaN(Number(sq.points))) {
+                        existingPointsSum += Number(sq.points);
+                        hasAnySubPoints = true;
+                    }
+                }
+
+                if (hasAnySubPoints) {
+                    totalPoints = existingPointsSum;
+                } else if (parentQuestion.points !== "" && parentQuestion.points != null && !isNaN(Number(parentQuestion.points))) {
+                    totalPoints = Number(parentQuestion.points);
+                }
+
+                // Determine total timer to distribute
+                let existingTimerSum = 0;
+                for (const sq of existingSubs) {
+                    existingTimerSum += Number(sq.timer_seconds) || 0;
+                }
+
+                if (existingTimerSum > 0) {
+                    totalSeconds = existingTimerSum;
+                } else if (Number(parentQuestion.timer_seconds) > 0) {
+                    totalSeconds = Number(parentQuestion.timer_seconds);
+                }
+            }
+        }
+
         db.prepare("DELETE FROM questions WHERE exam_id = ? AND position = ?").run(examId, position);
         const shifted = db.prepare(
             "SELECT id, position FROM questions WHERE exam_id = ? AND position > ? ORDER BY position ASC",
@@ -248,6 +488,46 @@ export function deleteQuestion(examId, position) {
         for (const row of shifted) {
             db.prepare("UPDATE questions SET position = ? WHERE id = ?").run(row.position - 1, row.id);
         }
+
+        // If a subquestion was deleted, redistribute among remaining subquestions or restore parent
+        if (parentQuestion) {
+            const updatedQuestions = db.prepare(
+                "SELECT id, position, is_sub FROM questions WHERE exam_id = ? ORDER BY position ASC",
+            ).all(examId);
+            const pIdx = updatedQuestions.findIndex((q) => q.id === parentQuestion.id);
+            const remainingSubs = [];
+            for (let i = pIdx + 1; i < updatedQuestions.length; i++) {
+                if (updatedQuestions[i].is_sub === 1) {
+                    remainingSubs.push(updatedQuestions[i]);
+                } else {
+                    break;
+                }
+            }
+
+            if (remainingSubs.length > 0) {
+                if (totalPoints !== null) {
+                    const pointsDist = distributePoints(totalPoints, remainingSubs.length);
+                    for (let i = 0; i < remainingSubs.length; i++) {
+                        db.prepare("UPDATE questions SET points = ? WHERE id = ?").run(pointsDist[i], remainingSubs[i].id);
+                    }
+                }
+                if (totalSeconds > 0) {
+                    const timerDist = distributeTimer(totalSeconds, remainingSubs.length);
+                    for (let i = 0; i < remainingSubs.length; i++) {
+                        db.prepare("UPDATE questions SET timer_seconds = ? WHERE id = ?").run(timerDist[i], remainingSubs[i].id);
+                    }
+                }
+            } else {
+                // All subquestions removed: assign total points and time back to the parent question
+                if (totalPoints !== null) {
+                    db.prepare("UPDATE questions SET points = ? WHERE id = ?").run(String(Math.round(totalPoints)), parentQuestion.id);
+                }
+                if (totalSeconds > 0) {
+                    db.prepare("UPDATE questions SET timer_seconds = ? WHERE id = ?").run(totalSeconds, parentQuestion.id);
+                }
+            }
+        }
+
         db.exec("COMMIT");
     } catch (e) {
         db.exec("ROLLBACK");
