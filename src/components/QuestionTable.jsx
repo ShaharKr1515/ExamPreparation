@@ -112,7 +112,6 @@ function RetryQuestionButton({ onRetry, label = "שאלה" }) {
                 type="button"
                 className="retry-btn"
                 aria-label={`איפוס תאריך וספירת ניסיון חוזר שלא צלח עבור ${label}`}
-                title="לא הצלחת שוב? עדכון תאריך להיום וספירת ניסיון נוסף"
                 onClick={(e) => {
                     e.stopPropagation();
                     onRetry();
@@ -149,6 +148,40 @@ function RetryQuestionButton({ onRetry, label = "שאלה" }) {
                 <div className="retry-tooltip-desc">
                     לחיצה כאן תעדכן את התאריך להיום כדי לאפס את הצבע הסגול, ותספור ניסיון נוסף שלא צלח.
                 </div>
+            </div>
+        </div>
+    );
+}
+
+/** Badge showing number of unsuccessful attempts with animated explanation tooltip on hover. */
+function FailCountBadge({ count, isSub = false }) {
+    const [isHovered, setIsHovered] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+
+    const tooltipText = formatFailCountTooltip(count, isSub);
+
+    return (
+        <div
+            className={`q-fail-badge-wrap ${isSub ? "q-fail-badge-wrap-sub" : ""}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <span
+                className="q-fail-count-badge"
+                tabIndex={0}
+                role="status"
+                aria-label={tooltipText}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+            >
+                {count}
+            </span>
+            <div
+                className={`q-fail-tooltip ${isHovered || isFocused ? "is-visible" : ""}`}
+                role="tooltip"
+                aria-hidden={!isHovered && !isFocused}
+            >
+                {tooltipText}
             </div>
         </div>
     );
@@ -288,13 +321,10 @@ function QuestionRow({
                                 <span className="sub-q-indicator" title={labelInfo.aria}>
                                     <span className="sub-q-letter">{labelInfo.subLabel}</span>
                                     {failCount > 0 && (
-                                        <span
-                                            className="q-fail-count-badge"
-                                            title={formatFailCountTooltip(failCount, true)}
-                                            aria-label={`מספר ניסיונות שלא צלחו: ${failCount}`}
-                                        >
-                                            {failCount}
-                                        </span>
+                                        <FailCountBadge
+                                            count={failCount}
+                                            isSub={true}
+                                        />
                                     )}
                                 </span>
                                 {isPurple && (
@@ -313,13 +343,10 @@ function QuestionRow({
                             >
                                 {labelInfo.display}
                                 {failCount > 0 && (
-                                    <span
-                                        className="q-fail-count-badge"
-                                        title={formatFailCountTooltip(failCount, false)}
-                                        aria-label={`מספר ניסיונות שלא צלחו: ${failCount}`}
-                                    >
-                                        {failCount}
-                                    </span>
+                                    <FailCountBadge
+                                        count={failCount}
+                                        isSub={false}
+                                    />
                                 )}
                             </span>
                             {isPurple && (
