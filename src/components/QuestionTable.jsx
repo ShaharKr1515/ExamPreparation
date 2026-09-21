@@ -23,58 +23,54 @@ const HEBREW_SUB_LETTERS = [
 
 /** Precompute display labels and ARIA descriptions for main questions and sub-questions. */
 function getQuestionLabels(questions = []) {
-    const labels = [];
-    let mainCounter = 0;
-    let subCounter = 0;
-
-    for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
+    let mainCount = 0;
+    let subCount = 0;
+    return questions.map((q) => {
         if (q.sub) {
-            subCounter++;
-            const letter = HEBREW_SUB_LETTERS[subCounter - 1] || `${subCounter}`;
-            labels.push({
-                display: letter,
+            subCount++;
+            const letter = HEBREW_SUB_LETTERS[subCount - 1] || `${subCount}`;
+            return {
+                isSub: true,
+                mainIndex: mainCount,
                 subLabel: letter,
-                aria: `שאלה ${mainCounter} סעיף ${letter}`,
-                mainNumber: mainCounter,
-            });
-        } else {
-            mainCounter++;
-            subCounter = 0;
-            labels.push({
-                display: `${mainCounter}`,
-                subLabel: "",
-                aria: `שאלה ${mainCounter}`,
-                mainNumber: mainCounter,
-            });
+                display: letter,
+                aria: `שאלה ${mainCount} סעיף ${letter}`,
+            };
         }
-    }
-
-    return labels;
+        mainCount++;
+        subCount = 0;
+        return {
+            isSub: false,
+            mainIndex: mainCount,
+            subLabel: null,
+            display: String(mainCount),
+            aria: `שאלה ${mainCount}`,
+        };
+    });
 }
 
-/** Animated button for adding a sub-question under a main question. */
-function AddSubQuestionButton({ onClick, label, disabled = false }) {
+/** Button that adds a sub-question (סעיף) after its row. */
+function AddSubButton({ examId, afterIndex, mainLabel }) {
+    const { addQuestion } = useExams();
     return (
         <button
             type="button"
             className="add-sub-btn"
-            title={`להוסיף סעיף עבור ${label || "שאלה"}`}
-            aria-label={`להוסיף סעיף עבור ${label || "שאלה"}`}
-            disabled={disabled}
-            onClick={onClick}
+            title="להוסיף סעיף"
+            aria-label={`הוספת סעיף לשאלה ${mainLabel || afterIndex + 1}`}
+            onClick={() => addQuestion(examId, afterIndex)}
         >
             {/* Animated label: expands on hover / keyboard focus */}
             <span className="add-sub-label" aria-hidden="true"><span>להוסיף סעיף</span></span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
             </svg>
         </button>
     );
 }
 
-/** Animated button for deleting a sub-question. */
-function DeleteSubQuestionButton({ onDelete, label, isExiting = false }) {
+/** Button that deletes a sub-question (סעיף). */
+function DeleteSubButton({ label, onDelete, isExiting }) {
     return (
         <button
             type="button"
