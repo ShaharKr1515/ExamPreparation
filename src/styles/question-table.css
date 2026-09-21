@@ -460,76 +460,28 @@ td.q-num:not(.q-num-sub) .q-cell-inner {
     box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--stale-border-indicator, #8b5cf6);
 }
 
-/* Animation when user clicks reset button */
-.retry-btn.is-animating {
-    position: relative;
-    background: #7c3aed;
-    border-color: #6d28d9;
-    color: #ffffff;
-    pointer-events: none;
-    animation: retryBtnClickPop 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* Question number smooth slide animation on reset/retry (prevents jumping left) */
+.q-num-val.q-num-sliding,
+.sub-q-indicator.q-num-sliding {
+    animation: qNumSlideLeft 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+    will-change: transform;
 }
 
-.retry-btn.is-animating::after {
-    content: "";
-    position: absolute;
-    inset: -3px;
-    border-radius: inherit;
-    border: 2px solid #8b5cf6;
-    pointer-events: none;
-    animation: retryShockwave 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.retry-btn.is-animating svg {
-    animation: retryIconSpin 0.38s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-@keyframes retryShockwave {
+@keyframes qNumSlideLeft {
     0% {
-        transform: scale(0.85);
-        opacity: 0.95;
-    }
-    100% {
-        transform: scale(1.75);
-        opacity: 0;
-    }
-}
-
-@keyframes retryBtnClickPop {
-    0% {
-        transform: scale(0.9);
-        box-shadow: 0 0 0 rgba(124, 58, 237, 0);
-    }
-    35% {
-        transform: scale(1.25);
-        box-shadow: 0 0 12px rgba(124, 58, 237, 0.45);
-    }
-    70% {
-        transform: scale(1.1);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(0.05);
-        opacity: 0;
-    }
-}
-
-@keyframes retryIconSpin {
-    0% {
-        transform: rotate(0deg) scale(1);
+        transform: translateX(var(--slide-x, 13px)) scale(1);
     }
     40% {
-        transform: rotate(200deg) scale(1.2);
+        transform: translateX(calc(var(--slide-x, 13px) * 0.45)) scale(1.14);
     }
     100% {
-        transform: rotate(360deg) scale(0.85);
+        transform: translateX(0) scale(1);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .retry-btn.is-animating,
-    .retry-btn.is-animating::after,
-    .retry-btn.is-animating svg {
+    .q-num-val.q-num-sliding,
+    .sub-q-indicator.q-num-sliding {
         animation: none;
     }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
 import {
     questionRowState,
@@ -23,54 +23,58 @@ const HEBREW_SUB_LETTERS = [
 
 /** Precompute display labels and ARIA descriptions for main questions and sub-questions. */
 function getQuestionLabels(questions = []) {
-    let mainCount = 0;
-    let subCount = 0;
-    return questions.map((q) => {
+    const labels = [];
+    let mainCounter = 0;
+    let subCounter = 0;
+
+    for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
         if (q.sub) {
-            subCount++;
-            const letter = HEBREW_SUB_LETTERS[subCount - 1] || `${subCount}`;
-            return {
-                isSub: true,
-                mainIndex: mainCount,
-                subLabel: letter,
+            subCounter++;
+            const letter = HEBREW_SUB_LETTERS[subCounter - 1] || `${subCounter}`;
+            labels.push({
                 display: letter,
-                aria: `שאלה ${mainCount} סעיף ${letter}`,
-            };
+                subLabel: letter,
+                aria: `שאלה ${mainCounter} סעיף ${letter}`,
+                mainNumber: mainCounter,
+            });
+        } else {
+            mainCounter++;
+            subCounter = 0;
+            labels.push({
+                display: `${mainCounter}`,
+                subLabel: "",
+                aria: `שאלה ${mainCounter}`,
+                mainNumber: mainCounter,
+            });
         }
-        mainCount++;
-        subCount = 0;
-        return {
-            isSub: false,
-            mainIndex: mainCount,
-            subLabel: null,
-            display: String(mainCount),
-            aria: `שאלה ${mainCount}`,
-        };
-    });
+    }
+
+    return labels;
 }
 
-/** Button that adds a sub-question (סעיף) after its row. */
-function AddSubButton({ examId, afterIndex, mainLabel }) {
-    const { addQuestion } = useExams();
+/** Animated button for adding a sub-question under a main question. */
+function AddSubQuestionButton({ onClick, label, disabled = false }) {
     return (
         <button
             type="button"
             className="add-sub-btn"
-            title="להוסיף סעיף"
-            aria-label={`הוספת סעיף לשאלה ${mainLabel || afterIndex + 1}`}
-            onClick={() => addQuestion(examId, afterIndex)}
+            title={`להוסיף סעיף עבור ${label || "שאלה"}`}
+            aria-label={`להוסיף סעיף עבור ${label || "שאלה"}`}
+            disabled={disabled}
+            onClick={onClick}
         >
             {/* Animated label: expands on hover / keyboard focus */}
             <span className="add-sub-label" aria-hidden="true"><span>להוסיף סעיף</span></span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
             </svg>
         </button>
     );
 }
 
-/** Button that deletes a sub-question (סעיף). */
-function DeleteSubButton({ label, onDelete, isExiting }) {
+/** Animated button for deleting a sub-question. */
+function DeleteSubQuestionButton({ onDelete, label, isExiting = false }) {
     return (
         <button
             type="button"
@@ -95,95 +99,6 @@ function formatFailCountTooltip(count, isSub = false) {
     if (count === 1) return `לא הצלחת את ${item} פעם אחת (נרשם ניסיון חוזר)`;
     if (count === 2) return `לא הצלחת את ${item} פעמיים (נרשמו 2 ניסיונות חוזרים)`;
     return `לא הצלחת את ${item} ${count} פעמים (נרשמו ${count} ניסיונות חוזרים)`;
-}
-
-/** Button shown near the question number when purple (stale attempt). */
-function RetryQuestionButton({ onRetry, label = "שאלה" }) {
-    const [isHovered, setIsHovered] = useState(false);
-    const [isFocused, setIsFocused] = useState(false);
-    const [isDismissed, setIsDismissed] = useState(false);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const animTimeoutRef = useRef(null);
-
-    useEffect(() => {
-        return () => {
-            if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
-        };
-    }, []);
-
-    const isVisible = !isDismissed && !isAnimating && (isHovered || isFocused);
-
-    const handleClick = (e) => {
-        e.stopPropagation();
-        e.currentTarget.blur();
-        if (isAnimating) return;
-
-        setIsDismissed(true);
-        setIsFocused(false);
-        setIsAnimating(true);
-
-        animTimeoutRef.current = setTimeout(() => {
-            onRetry();
-        }, 360);
-    };
-
-    return (
-        <div
-            className={`retry-btn-wrap ${isAnimating ? "is-animating" : ""}`}
-            onMouseEnter={() => {
-                if (!isAnimating) {
-                    setIsDismissed(false);
-                    setIsHovered(true);
-                }
-            }}
-            onMouseLeave={() => {
-                setIsHovered(false);
-                setIsDismissed(false);
-            }}
-        >
-            <button
-                type="button"
-                className={`retry-btn ${isAnimating ? "is-animating" : ""}`}
-                aria-label={`איפוס תאריך וספירת ניסיון חוזר שלא צלח עבור ${label}`}
-                aria-busy={isAnimating}
-                disabled={isAnimating}
-                onClick={handleClick}
-                onFocus={() => {
-                    if (!isDismissed && !isAnimating) setIsFocused(true);
-                }}
-                onBlur={() => setIsFocused(false)}
-            >
-                {/* Rotating arrow retry icon */}
-                <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                >
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                    <path d="M3 3v5h5" />
-                </svg>
-            </button>
-
-            <div
-                className={`retry-tooltip ${isVisible ? "is-visible" : ""}`}
-                role="tooltip"
-                aria-hidden={!isVisible}
-            >
-                <div className="retry-tooltip-title">
-                    <strong>לא הצלחת במבחן החוזר?</strong>
-                </div>
-                <div className="retry-tooltip-desc">
-                    לחיצה כאן תעדכן את תאריך הבחינה להיום ותספור ניסיון נוסף שלא צלח במבחן.
-                </div>
-            </div>
-        </div>
-    );
 }
 
 /** Badge showing number of unsuccessful attempts with animated explanation tooltip on hover. */
@@ -233,6 +148,75 @@ function FailCountBadge({ count, isSub = false }) {
                 aria-hidden={!isVisible}
             >
                 {tooltipText}
+            </div>
+        </div>
+    );
+}
+
+/** Button shown near the question number when purple (stale attempt). */
+function RetryQuestionButton({ onRetry, label = "שאלה" }) {
+    const [isHovered, setIsHovered] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+    const [isDismissed, setIsDismissed] = useState(false);
+
+    const isVisible = !isDismissed && (isHovered || isFocused);
+
+    return (
+        <div
+            className="retry-btn-wrap"
+            onMouseEnter={() => {
+                setIsDismissed(false);
+                setIsHovered(true);
+            }}
+            onMouseLeave={() => {
+                setIsHovered(false);
+                setIsDismissed(false);
+            }}
+        >
+            <button
+                type="button"
+                className="retry-btn"
+                aria-label={`איפוס תאריך וספירת ניסיון חוזר שלא צלח עבור ${label}`}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.currentTarget.blur();
+                    setIsDismissed(true);
+                    setIsFocused(false);
+                    onRetry();
+                }}
+                onFocus={() => {
+                    if (!isDismissed) setIsFocused(true);
+                }}
+                onBlur={() => setIsFocused(false)}
+            >
+                {/* Rotating arrow retry icon */}
+                <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                </svg>
+            </button>
+
+            <div
+                className={`retry-tooltip ${isVisible ? "is-visible" : ""}`}
+                role="tooltip"
+                aria-hidden={!isVisible}
+            >
+                <div className="retry-tooltip-title">
+                    <strong>לא הצלחת במבחן החוזר?</strong>
+                </div>
+                <div className="retry-tooltip-desc">
+                    לחיצה כאן תעדכן את תאריך הבחינה להיום ותספור ניסיון נוסף שלא צלח במבחן.
+                </div>
             </div>
         </div>
     );
@@ -344,6 +328,37 @@ function QuestionRow({
     }, [effectiveSuccess, hasSubQuestions]);
 
     const isPurple = stateClass === "stale";
+    const prevIsPurpleRef = useRef(isPurple);
+    const numValRef = useRef(null);
+    const prevRectRef = useRef(null);
+
+    useLayoutEffect(() => {
+        if (!numValRef.current) return;
+        const currentRect = numValRef.current.getBoundingClientRect();
+
+        if (prevIsPurpleRef.current && !isPurple && prevRectRef.current) {
+            const deltaX = prevRectRef.current.left - currentRect.left;
+            if (Math.abs(deltaX) > 1) {
+                const el = numValRef.current;
+                el.style.setProperty("--slide-x", `${deltaX}px`);
+                el.classList.remove("q-num-sliding");
+                void el.offsetWidth; // Force reflow
+                el.classList.add("q-num-sliding");
+                el.addEventListener(
+                    "animationend",
+                    () => {
+                        el.classList.remove("q-num-sliding");
+                        el.style.removeProperty("--slide-x");
+                    },
+                    { once: true }
+                );
+            }
+        }
+
+        prevRectRef.current = currentRect;
+        prevIsPurpleRef.current = isPurple;
+    });
+
     const failCount = hasSubQuestions
         ? (subQuestions.reduce((acc, sq) => acc + (sq.failCount || 0), 0) || q.failCount || 0)
         : (q.failCount || 0);
@@ -369,7 +384,11 @@ function QuestionRow({
                     {q.sub ? (
                         <div className="sub-q-num-wrap">
                             <div className="sub-q-indicator-wrap">
-                                <span className="sub-q-indicator" title={labelInfo.aria}>
+                                <span
+                                    ref={numValRef}
+                                    className="sub-q-indicator"
+                                    title={labelInfo.aria}
+                                >
                                     <span className="sub-q-letter">{labelInfo.subLabel}</span>
                                     {failCount > 0 && (
                                         <FailCountBadge
@@ -389,6 +408,7 @@ function QuestionRow({
                     ) : (
                         <div className="q-num-wrap">
                             <span
+                                ref={numValRef}
                                 className={`q-num-val ${isDropped ? "q-num-dropped" : ""}`}
                                 title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : undefined}
                             >
