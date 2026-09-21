@@ -102,15 +102,39 @@ function RetryQuestionButton({ onRetry, label = "שאלה" }) {
     const [isHovered, setIsHovered] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [isDismissed, setIsDismissed] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const animTimeoutRef = useRef(null);
 
-    const isVisible = !isDismissed && (isHovered || isFocused);
+    useEffect(() => {
+        return () => {
+            if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
+        };
+    }, []);
+
+    const isVisible = !isDismissed && !isAnimating && (isHovered || isFocused);
+
+    const handleClick = (e) => {
+        e.stopPropagation();
+        e.currentTarget.blur();
+        if (isAnimating) return;
+
+        setIsDismissed(true);
+        setIsFocused(false);
+        setIsAnimating(true);
+
+        animTimeoutRef.current = setTimeout(() => {
+            onRetry();
+        }, 360);
+    };
 
     return (
         <div
-            className="retry-btn-wrap"
+            className={`retry-btn-wrap ${isAnimating ? "is-animating" : ""}`}
             onMouseEnter={() => {
-                setIsDismissed(false);
-                setIsHovered(true);
+                if (!isAnimating) {
+                    setIsDismissed(false);
+                    setIsHovered(true);
+                }
             }}
             onMouseLeave={() => {
                 setIsHovered(false);
@@ -119,17 +143,13 @@ function RetryQuestionButton({ onRetry, label = "שאלה" }) {
         >
             <button
                 type="button"
-                className="retry-btn"
+                className={`retry-btn ${isAnimating ? "is-animating" : ""}`}
                 aria-label={`איפוס תאריך וספירת ניסיון חוזר שלא צלח עבור ${label}`}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    e.currentTarget.blur();
-                    setIsDismissed(true);
-                    setIsFocused(false);
-                    onRetry();
-                }}
+                aria-busy={isAnimating}
+                disabled={isAnimating}
+                onClick={handleClick}
                 onFocus={() => {
-                    if (!isDismissed) setIsFocused(true);
+                    if (!isDismissed && !isAnimating) setIsFocused(true);
                 }}
                 onBlur={() => setIsFocused(false)}
             >
