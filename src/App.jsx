@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ExamsProvider, useExams } from "./context/ExamsContext.jsx";
-import { examIntervalDays, formatExamIntervalLabel } from "./utils/examUtils.js";
+import { examIntervalDays, formatExamIntervalLabel, formatExamCountdown } from "./utils/examUtils.js";
 import { useVisibleExams } from "./hooks/useVisibleExams.js";
 import AppHeader from "./components/AppHeader.jsx";
 import ExamCountControl from "./components/ExamCountControl.jsx";
@@ -90,6 +90,15 @@ function Toolbar() {
                 const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
                 const label = formatExamIntervalLabel(intervalDays);
                 return label ? <span className="interval-hint">{label}</span> : null;
+            })()}
+            {/* Days remaining until the final exam */}
+            {(() => {
+                const countdown = formatExamCountdown(meta.finalExamDate);
+                return countdown ? (
+                    <span className={`exam-countdown-chip ${countdown.status}`}>
+                        {countdown.label}
+                    </span>
+                ) : null;
             })()}
             <span className="count">
                 {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
