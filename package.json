@@ -7,7 +7,8 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview --port 3000",
-        "start": "node --watch backend/server.js"
+        "start": "node --watch backend/server.js",
+        "test": "node --test --test-concurrency=1 test/*.test.js"
     },
     "dependencies": {
         "express": "^5.1.0",

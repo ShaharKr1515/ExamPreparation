@@ -61,17 +61,31 @@ router.post("/:id/copy-layout", (req, res) => {
     }
 });
 
-// Update a single question field. Body: { success?, date?, points? } (exactly one expected).
+// Update a single question field. Body: { success?, date?, points?, timerSeconds?, failCount? }.
 router.patch("/:id/questions/:position", (req, res) => {
     const examId = Number(req.params.id);
     const position = Number(req.params.position);
     if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
 
     const body = req.body ?? {};
-    for (const field of ["success", "date", "points", "timerSeconds", "timer_seconds"]) {
+    for (const field of ["success", "date", "points", "timerSeconds", "timer_seconds", "failCount", "fail_count"]) {
         if (field in body) svc.updateQuestion(examId, position, field, body[field]);
     }
     res.json({ ok: true });
+});
+
+// Record an unsuccessful retry (stamps date to today and increments failCount).
+router.post("/:id/questions/:position/retry", (req, res) => {
+    const examId = Number(req.params.id);
+    const position = Number(req.params.position);
+    if (!svc.getExamById(examId)) return res.status(404).json({ error: "Exam not found" });
+
+    try {
+        const updatedExam = svc.retryQuestion(examId, position);
+        res.json(updatedExam);
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
 });
 
 // Add a new main question at the end of the exam.

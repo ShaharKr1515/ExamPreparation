@@ -114,6 +114,51 @@ export function formatExamIntervalLabel(days) {
 }
 
 /**
+ * Whole days remaining until a YYYY-MM-DD date (negative if in the past, 0 if today),
+ * or null when the value is not a valid date string.
+ */
+export function daysUntil(dateStr, refDate = new Date()) {
+    const [y, m, d] = String(dateStr || "").split("-").map(Number);
+    if (!y || !m || !d) return null;
+    const target = new Date(y, m - 1, d);
+    const ref = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
+    return Math.round((target.getTime() - ref.getTime()) / 86400000);
+}
+
+/**
+ * Countdown status and Hebrew label for the final exam date:
+ * - 1 day: "עוד יום למבחן!"
+ * - 2 days: "עוד יומיים למבחן!"
+ * - 3+ days: "עוד X ימים למבחן!"
+ * - 0 days: "היום המבחן!"
+ * - < 0 days: "המבחן עבר!"
+ * Returns null when finalExamDate is empty or not a valid date.
+ */
+export function formatExamCountdown(finalExamDate, refDate = new Date()) {
+    const remaining = daysUntil(finalExamDate, refDate);
+    if (remaining === null) return null;
+
+    if (remaining > 2) {
+        return { label: `עוד ${remaining} ימים למבחן!`, status: "future", days: remaining };
+    }
+    if (remaining === 2) {
+        return { label: "עוד יומיים למבחן!", status: "future", days: 2 };
+    }
+    if (remaining === 1) {
+        return { label: "עוד יום למבחן!", status: "future", days: 1 };
+    }
+    if (remaining === 0) {
+        return { label: "היום המבחן!", status: "today", days: 0 };
+    }
+    return { label: "המבחן עבר!", status: "past", days: remaining };
+}
+
+export function formatExamCountdownLabel(finalExamDate, refDate = new Date()) {
+    const info = formatExamCountdown(finalExamDate, refDate);
+    return info ? info.label : null;
+}
+
+/**
  * Relative label for a due date: "היום", "מחר", "עוד X ימים" — or the overdue
  * form "איחור של X ימים". Returns null when the value is not a valid date.
  */
