@@ -61,6 +61,26 @@ export function ExamsProvider({ children }) {
         }
     }
 
+    async function copyExamLayout(sourceExamId, targetExamIds) {
+        try {
+            const updated = await api.copyExamLayout(sourceExamId, targetExamIds);
+            const updatedMap = new Map((updated || []).map((e) => [e.id, e]));
+            setState((s) => ({
+                ...s,
+                exams: s.exams.map((e) =>
+                    updatedMap.has(e.id)
+                        ? { ...updatedMap.get(e.id), subject: e.subject }
+                        : e
+                ),
+            }));
+            return updated;
+        } catch (e) {
+            console.error("Failed to copy exam layout:", e);
+            setError(e.message);
+            throw e;
+        }
+    }
+
     // Bring the subject's exam total to `target` (server creates/deletes as needed).
     // Resolves true on success, false on failure.
     async function adjustExamCount(subjectName, target) {
@@ -318,6 +338,7 @@ export function ExamsProvider({ children }) {
             error,
             addExam,
             removeExam,
+            copyExamLayout,
             adjustExamCount,
             clearAll,
             renameExam,

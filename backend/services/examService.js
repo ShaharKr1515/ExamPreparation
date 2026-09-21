@@ -113,6 +113,70 @@ export function adjustExamCount(subjectId, target) {
         .map((row) => getExamById(Number(row.id)));
 }
 
+/**
+ * Copy the questions layout (main questions, sub-questions, and their respective points)
+ * from a source exam to one or more target exams under the same subject.
+ *
+ * For each target exam:
+ * - Its existing questions are replaced with the source exam's question structure.
+ * - `is_sub` and `points` values are preserved for every question and sub-question.
+ * - Attempt states are reset: `success = ''`, `last_date = ''`, `timer_seconds = 0`.
+ *
+ * If `targetExamIds` is null or empty, it copies to all other exams belonging to the same subject.
+ */
+export function copyExamLayout(sourceExamId, targetExamIds = null) {
+    db.exec("BEGIN");
+    try {
+        const sourceExam = db.prepare("SELECT * FROM exams WHERE id = ?").get(sourceExamId);
+        if (!sourceExam) {
+            throw Object.assign(new Error("Exam not found"), { status: 404 });
+        }
+
+        const sourceQuestions = db.prepare(
+            "SELECT position, points, is_sub FROM questions WHERE exam_id = ? ORDER BY position ASC",
+        ).all(sourceExamId);
+
+        if (sourceQuestions.length === 0) {
+            throw Object.assign(new Error("Source exam has no questions to copy"), { status: 400 });
+        }
+
+        let targets = targetExamIds;
+        if (!Array.isArray(targets) || targets.length === 0) {
+            targets = db.prepare(
+                "SELECT id FROM exams WHERE subject_id = ? AND id != ? ORDER BY id ASC",
+            ).all(sourceExam.subject_id, sourceExamId).map((r) => Number(r.id));
+        } else {
+            const subjectExamIds = new Set(
+                db.prepare("SELECT id FROM exams WHERE subject_id = ? AND id != ?")
+                    .all(sourceExam.subject_id, sourceExamId)
+                    .map((r) => Number(r.id)),
+            );
+            targets = targets
+                .map(Number)
+                .filter((id) => subjectExamIds.has(id));
+        }
+
+        const deleteQs = db.prepare("DELETE FROM questions WHERE exam_id = ?");
+        const insertQ = db.prepare(
+            "INSERT INTO questions (exam_id, position, success, last_date, points, is_sub, timer_seconds) VALUES (?, ?, '', '', ?, ?, 0)",
+        );
+
+        for (const targetId of targets) {
+            deleteQs.run(targetId);
+            for (let i = 0; i < sourceQuestions.length; i++) {
+                const sq = sourceQuestions[i];
+                insertQ.run(targetId, i, sq.points || "", sq.is_sub || 0);
+            }
+        }
+
+        db.exec("COMMIT");
+        return targets.map((id) => getExamById(id)).filter(Boolean);
+    } catch (e) {
+        db.exec("ROLLBACK");
+        throw e;
+    }
+}
+
 /** Wipe everything (the "ניקוי הכול" action): all questions, exams and subjects. */
 export function clearEverything() {
     db.exec("DELETE FROM questions");

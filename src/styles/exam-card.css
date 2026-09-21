@@ -95,6 +95,7 @@
 
 .card-head-end {
     justify-content: flex-end;
+    gap: 4px;
 }
 
 /* Sequential Exam Index Badge */
@@ -159,6 +160,53 @@
     background: #ffffff;
     border-color: var(--accent, #4f46e5);
     box-shadow: 0 0 0 3px var(--accent-ring, rgba(79, 70, 229, 0.22));
+}
+
+/* Card Copy Layout Button */
+.copy-layout-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md, 10px);
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.copy-layout-btn svg {
+    transition: transform 0.15s ease;
+}
+
+.copy-layout-btn:hover {
+    background: var(--accent-light, #eef2ff);
+    color: var(--accent, #4f46e5);
+    border-color: rgba(79, 70, 229, 0.18);
+}
+
+.copy-layout-btn:hover svg {
+    transform: scale(1.12);
+}
+
+.copy-layout-btn:active {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.copy-layout-btn:active svg {
+    transform: scale(0.92);
+}
+
+.copy-layout-btn:focus-visible {
+    outline: none;
+    border-color: rgba(79, 70, 229, 0.4);
+    box-shadow: 0 0 0 3px var(--accent-ring, rgba(79, 70, 229, 0.22));
+    color: var(--accent, #4f46e5);
 }
 
 /* Card Delete Button */

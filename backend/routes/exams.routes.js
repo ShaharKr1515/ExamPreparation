@@ -43,6 +43,24 @@ router.delete("/:id", (req, res) => {
     res.json({ ok: true });
 });
 
+// Copy questions layout (and points) from this exam to other exams.
+// Body: { targetExamIds?: number[] }
+router.post("/:id/copy-layout", (req, res) => {
+    const id = Number(req.params.id);
+    if (!svc.getExamById(id)) return res.status(404).json({ error: "Exam not found" });
+
+    const targetExamIds = Array.isArray(req.body?.targetExamIds)
+        ? req.body.targetExamIds
+        : null;
+
+    try {
+        const updated = svc.copyExamLayout(id, targetExamIds);
+        res.json(updated);
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
 // Update a single question field. Body: { success?, date?, points? } (exactly one expected).
 router.patch("/:id/questions/:position", (req, res) => {
     const examId = Number(req.params.id);
