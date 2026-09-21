@@ -89,6 +89,13 @@ export function updateQuestion(examId, position, field, value) {
     });
 }
 
+// Record an unsuccessful retry for a question (stamps date to today and increments failCount).
+export function retryQuestion(examId, position) {
+    return request(`/api/exams/${examId}/questions/${position}/retry`, {
+        method: "POST",
+    });
+}
+
 // Add an empty sub-question to an exam (after `afterPosition`, or at the end when null).
 export function addQuestion(examId, afterPosition) {
     return request(`/api/exams/${examId}/questions`, json({ afterPosition }));

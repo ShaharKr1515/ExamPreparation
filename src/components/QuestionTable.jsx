@@ -89,6 +89,71 @@ function DeleteSubButton({ label, onDelete, isExiting }) {
     );
 }
 
+/** Helper for fail count tooltip description in Hebrew */
+function formatFailCountTooltip(count, isSub = false) {
+    const item = isSub ? "סעיף זה" : "שאלה זו";
+    if (count === 1) return `לא הצלחת את ${item} פעם אחת (נרשם ניסיון חוזר)`;
+    if (count === 2) return `לא הצלחת את ${item} פעמיים (נרשמו 2 ניסיונות חוזרים)`;
+    return `לא הצלחת את ${item} ${count} פעמים (נרשמו ${count} ניסיונות חוזרים)`;
+}
+
+/** Button shown near the question number when purple (stale attempt). */
+function RetryQuestionButton({ onRetry, label = "שאלה" }) {
+    const [isHovered, setIsHovered] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+
+    return (
+        <div
+            className="retry-btn-wrap"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <button
+                type="button"
+                className="retry-btn"
+                aria-label={`איפוס תאריך וספירת ניסיון חוזר שלא צלח עבור ${label}`}
+                title="לא הצלחת שוב? עדכון תאריך להיום וספירת ניסיון נוסף"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onRetry();
+                }}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+            >
+                {/* Rotating arrow retry icon */}
+                <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                </svg>
+            </button>
+
+            <div
+                className={`retry-tooltip ${isHovered || isFocused ? "is-visible" : ""}`}
+                role="tooltip"
+                aria-hidden={!isHovered && !isFocused}
+            >
+                <div className="retry-tooltip-title">
+                    <span className="retry-tooltip-icon">🔄</span>
+                    <strong>לא הצלחת שוב?</strong>
+                </div>
+                <div className="retry-tooltip-desc">
+                    לחיצה כאן תעדכן את התאריך להיום כדי לאפס את הצבע הסגול, ותספור ניסיון נוסף שלא צלח.
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /** One editable row (success select, date input, points input) for question qi. */
 function QuestionRow({
     exam,
@@ -105,7 +170,7 @@ function QuestionRow({
     isDropped = false,
     onDelete,
 }) {
-    const { updateQuestion } = useExams();
+    const { updateQuestion, retryQuestion } = useExams();
 
     const hadSubQuestions = !q.sub && subQuestions.length > 0;
     const hasSubQuestions = !q.sub && activeSubQuestions.length > 0;
@@ -194,6 +259,11 @@ function QuestionRow({
         prevSuccessRef.current = effectiveSuccess;
     }, [effectiveSuccess, hasSubQuestions]);
 
+    const isPurple = stateClass === "stale";
+    const failCount = hasSubQuestions
+        ? (subQuestions.reduce((acc, sq) => acc + (sq.failCount || 0), 0) || q.failCount || 0)
+        : (q.failCount || 0);
+
     const rowClass = [
         stateClass ? `row-${stateClass}` : "",
         q.sub ? "row-sub" : "row-main",
@@ -214,17 +284,51 @@ function QuestionRow({
                 <div className="q-cell-inner">
                     {q.sub ? (
                         <div className="sub-q-num-wrap">
-                            <span className="sub-q-indicator" title={labelInfo.aria}>
-                                <span className="sub-q-letter">{labelInfo.subLabel}</span>
-                            </span>
+                            <div className="sub-q-indicator-wrap">
+                                <span className="sub-q-indicator" title={labelInfo.aria}>
+                                    <span className="sub-q-letter">{labelInfo.subLabel}</span>
+                                    {failCount > 0 && (
+                                        <span
+                                            className="q-fail-count-badge"
+                                            title={formatFailCountTooltip(failCount, true)}
+                                            aria-label={`מספר ניסיונות שלא צלחו: ${failCount}`}
+                                        >
+                                            {failCount}
+                                        </span>
+                                    )}
+                                </span>
+                                {isPurple && (
+                                    <RetryQuestionButton
+                                        onRetry={() => retryQuestion(exam.id, qi)}
+                                        label={labelInfo.aria}
+                                    />
+                                )}
+                            </div>
                         </div>
                     ) : (
-                        <span
-                            className={`q-num-val ${isDropped ? "q-num-dropped" : ""}`}
-                            title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : undefined}
-                        >
-                            {labelInfo.display}
-                        </span>
+                        <div className="q-num-wrap">
+                            <span
+                                className={`q-num-val ${isDropped ? "q-num-dropped" : ""}`}
+                                title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : undefined}
+                            >
+                                {labelInfo.display}
+                                {failCount > 0 && (
+                                    <span
+                                        className="q-fail-count-badge"
+                                        title={formatFailCountTooltip(failCount, false)}
+                                        aria-label={`מספר ניסיונות שלא צלחו: ${failCount}`}
+                                    >
+                                        {failCount}
+                                    </span>
+                                )}
+                            </span>
+                            {isPurple && (
+                                <RetryQuestionButton
+                                    onRetry={() => retryQuestion(exam.id, qi)}
+                                    label={labelInfo.aria}
+                                />
+                            )}
+                        </div>
                     )}
                 </div>
             </td>

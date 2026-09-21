@@ -54,8 +54,10 @@
 
 /* Ensure tooltips inside the box aren't hidden */
 .q-group-box:has(.timer-cell:hover),
-.q-group-box:has(.timer-btn:focus-visible) {
-    z-index: 30;
+.q-group-box:has(.timer-btn:focus-visible),
+.q-group-box:has(.retry-btn-wrap:hover),
+.q-group-box:has(.retry-btn:focus-visible) {
+    z-index: 35;
 }
 
 /* Box status indicator borders (richer tone, less pale/white when filled) */
@@ -165,7 +167,7 @@
 
 .q-table th:nth-child(1),
 .q-table td:nth-child(1) {
-    width: 64px;
+    width: 68px;
     padding: 8px 4px;
 }
 
@@ -232,13 +234,28 @@ td.q-num {
     font-weight: 700;
     font-size: 0.82rem;
     position: relative;
+    overflow: visible;
+}
+
+td.q-num .q-cell-inner {
+    position: relative;
+    overflow: visible;
 }
 
 td.q-num:not(.q-num-sub) .q-cell-inner {
     justify-content: center;
 }
 
+.q-num-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+}
+
 .q-num-val {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -278,6 +295,165 @@ td.q-num:not(.q-num-sub) .q-cell-inner {
     background: #f5f3ff;
     border-color: #ddd6fe;
     color: #5b21b6;
+}
+
+/* Badge for number of unsuccessful retries (shows only when failCount > 0) */
+.q-fail-count-badge {
+    position: absolute;
+    top: -6px;
+    inset-inline-start: -6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: var(--radius-pill, 9999px);
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
+    z-index: 4;
+    cursor: default;
+    animation: failBadgePop 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+    pointer-events: auto;
+}
+
+@keyframes failBadgePop {
+    0% {
+        opacity: 0;
+        transform: scale(0.4);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Retry Button Wrap (shown near question number when purple) */
+.retry-btn-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    animation: retryBtnPopIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes retryBtnPopIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.6) rotate(-25deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.retry-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: var(--radius-sm, 6px);
+    border: 1px solid var(--stale-line, #ddd6fe);
+    background: #ffffff;
+    color: var(--stale-ink, #5b21b6);
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(91, 33, 182, 0.08);
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.18s ease,
+                border-color 0.18s ease,
+                color 0.18s ease,
+                box-shadow 0.18s ease;
+}
+
+.retry-btn:hover {
+    background: #ede9fe;
+    border-color: #8b5cf6;
+    color: #4c1d95;
+    transform: scale(1.1) rotate(-15deg);
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25);
+}
+
+.retry-btn:active {
+    transform: scale(0.92);
+    box-shadow: none;
+}
+
+.retry-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--stale-border-indicator, #8b5cf6);
+}
+
+/* Explanation Popup on Hover (animated tooltip) */
+.retry-tooltip {
+    position: absolute;
+    bottom: calc(100% + 9px);
+    inset-inline-start: 50%;
+    transform: translateX(50%) translateY(6px) scale(0.94);
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md, 10px);
+    padding: 8px 11px;
+    width: 200px;
+    box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.32), 0 4px 10px -2px rgba(15, 23, 42, 0.2);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    direction: rtl;
+    text-align: right;
+    z-index: 100;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.22s ease;
+}
+
+.retry-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 50%;
+    transform: translateX(50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #0f172a transparent transparent transparent;
+}
+
+.retry-btn-wrap:hover .retry-tooltip,
+.retry-tooltip.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(50%) translateY(0) scale(1);
+}
+
+.retry-tooltip-title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 3px;
+    line-height: 1.3;
+}
+
+.retry-tooltip-icon {
+    font-size: 0.78rem;
+}
+
+.retry-tooltip-desc {
+    font-size: 0.69rem;
+    font-weight: 400;
+    color: #cbd5e1;
+    line-height: 1.35;
 }
 
 /* Custom Table Inputs */
@@ -534,6 +710,15 @@ td.q-num.q-num-sub.q-num-sub-last::after,
 }
 
 /* Sub-question chip badge - compact, prominently and deeply indented to the left */
+.sub-q-indicator-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    transform: translateX(-24px);
+}
+
 .sub-q-indicator {
     display: inline-flex;
     align-items: center;
@@ -548,7 +733,25 @@ td.q-num.q-num-sub.q-num-sub-last::after,
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     position: relative;
     z-index: 2;
-    transform: translateX(-24px);
+}
+
+.sub-q-indicator .q-fail-count-badge {
+    min-width: 14px;
+    height: 14px;
+    font-size: 0.6rem;
+    padding: 0 3px;
+    top: -5px;
+    inset-inline-start: -5px;
+}
+
+.sub-q-indicator-wrap .retry-btn {
+    width: 20px;
+    height: 20px;
+}
+
+.sub-q-indicator-wrap .retry-btn svg {
+    width: 10px;
+    height: 10px;
 }
 
 .sub-q-letter {

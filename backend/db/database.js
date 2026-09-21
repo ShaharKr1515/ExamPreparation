@@ -46,6 +46,7 @@ db.exec(`
         points TEXT NOT NULL DEFAULT '',
         is_sub INTEGER NOT NULL DEFAULT 0,
         timer_seconds INTEGER NOT NULL DEFAULT 0,
+        fail_count INTEGER NOT NULL DEFAULT 0,
         UNIQUE (exam_id, position)
     );
 
@@ -69,6 +70,9 @@ if (!questionCols.includes("is_sub")) {
 }
 if (!questionCols.includes("timer_seconds")) {
     db.exec("ALTER TABLE questions ADD COLUMN timer_seconds INTEGER NOT NULL DEFAULT 0");
+}
+if (!questionCols.includes("fail_count")) {
+    db.exec("ALTER TABLE questions ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
 }
 
 console.log(`[db] SQLite database at ${dbPath}`);

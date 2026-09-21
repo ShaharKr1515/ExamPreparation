@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import * as api from "../services/api.js";
-import { subjectKey, todayStr } from "../utils/examUtils.js";
+import { subjectKey, todayStr, daysSince } from "../utils/examUtils.js";
 
 const ExamsContext = createContext(null);
 
 // State shape:
-//   exams: [{ id, name, subject (display string), questions: [{ success, date, points }] }]
+//   exams: [{ id, name, subject (display string), questions: [{ success, date, points, failCount }] }]
 //   subjects: [name strings]          activeSubject: string | null  (pure UI state)
 //   subjectMeta: { [subjectName]: { studyStartDate, finalExamDate, plannedExamCount } }
 //     (subject-level data; due dates are derived from these, never stored)
@@ -144,6 +144,83 @@ export function ExamsProvider({ children }) {
         }));
         try {
             await api.updateQuestion(examId, qi, field, value);
+        } catch (e) {
+            console.error(e);
+            setError(e.message);
+        }
+    }
+
+    // Record an unsuccessful retry (stamps date to today and increments failCount).
+    async function retryQuestion(examId, qi) {
+        const today = todayStr();
+        setState((s) => ({
+            ...s,
+            exams: s.exams.map((exam) => {
+                if (exam.id !== examId || !exam.questions[qi]) return exam;
+                const questions = exam.questions.slice();
+                const targetQ = questions[qi];
+
+                // If target is a parent question with sub-questions
+                const subQuestions = [];
+                if (!targetQ.sub) {
+                    for (let i = qi + 1; i < questions.length; i++) {
+                        if (questions[i].sub) {
+                            subQuestions.push({ q: questions[i], idx: i });
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                if (subQuestions.length > 0) {
+                    let updatedAny = false;
+                    for (const { q: sq, idx } of subQuestions) {
+                        const days = daysSince(sq.date);
+                        if (days !== null && days >= 3 && sq.success !== "yes") {
+                            questions[idx] = {
+                                ...sq,
+                                date: today,
+                                failCount: (sq.failCount || 0) + 1,
+                            };
+                            updatedAny = true;
+                        }
+                    }
+                    if (!updatedAny) {
+                        for (const { q: sq, idx } of subQuestions) {
+                            if (sq.success !== "yes") {
+                                questions[idx] = {
+                                    ...sq,
+                                    date: today,
+                                    failCount: (sq.failCount || 0) + 1,
+                                };
+                            }
+                        }
+                    }
+                    questions[qi] = {
+                        ...targetQ,
+                        date: today,
+                        failCount: (targetQ.failCount || 0) + 1,
+                    };
+                } else {
+                    questions[qi] = {
+                        ...targetQ,
+                        date: today,
+                        failCount: (targetQ.failCount || 0) + 1,
+                    };
+                }
+
+                return { ...exam, questions };
+            }),
+        }));
+
+        try {
+            const updated = await api.retryQuestion(examId, qi);
+            if (updated) {
+                setState((s) => ({
+                    ...s,
+                    exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
+                }));
+            }
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -343,6 +420,7 @@ export function ExamsProvider({ children }) {
             clearAll,
             renameExam,
             updateQuestion,
+            retryQuestion,
             addQuestion,
             addMainQuestion,
             removeLastMainQuestion,

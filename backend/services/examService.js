@@ -199,6 +199,8 @@ const FIELD_TO_COLUMN = {
     points: "points",
     timerSeconds: "timer_seconds",
     timer_seconds: "timer_seconds",
+    failCount: "fail_count",
+    fail_count: "fail_count",
 };
 
 /** Update one field of a single question (by 0-based position). */
@@ -213,8 +215,93 @@ export function updateQuestion(examId, position, field, value) {
         ).run(todayStr(), examId, position);
     }
 
-    const val = column === "timer_seconds" ? Math.max(0, Math.round(Number(value) || 0)) : value;
+    const val = (column === "timer_seconds" || column === "fail_count")
+        ? Math.max(0, Math.round(Number(value) || 0))
+        : value;
     db.prepare(`UPDATE questions SET ${column} = ? WHERE exam_id = ? AND position = ?`).run(val, examId, position);
+}
+
+/**
+ * Record an unsuccessful retry for a question that was attempted again without success:
+ * - Updates question's last_date to todayStr() (resetting the stale/purple status).
+ * - Increments fail_count by 1.
+ * - If called on a parent question with sub-questions, updates all stale sub-questions.
+ */
+export function retryQuestion(examId, position) {
+    db.exec("BEGIN");
+    try {
+        const questions = db.prepare(
+            "SELECT * FROM questions WHERE exam_id = ? ORDER BY position ASC"
+        ).all(examId);
+
+        const targetQ = questions.find((q) => q.position === position);
+        if (!targetQ) {
+            throw Object.assign(new Error("Question not found"), { status: 404 });
+        }
+
+        const today = todayStr();
+
+        // Check if target is a parent question with subquestions
+        const targetIdx = questions.indexOf(targetQ);
+        const subQuestions = [];
+        if (targetQ.is_sub === 0) {
+            for (let i = targetIdx + 1; i < questions.length; i++) {
+                if (questions[i].is_sub === 1) {
+                    subQuestions.push(questions[i]);
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if (subQuestions.length > 0) {
+            let updatedAny = false;
+            for (const sq of subQuestions) {
+                const [y, m, d] = String(sq.last_date || "").split("-").map(Number);
+                let isStale = false;
+                if (y && m && d) {
+                    const then = new Date(y, m - 1, d);
+                    const now = new Date();
+                    const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const diffDays = Math.round((today0.getTime() - then.getTime()) / 86400000);
+                    if (diffDays >= 3 && sq.success !== "yes") {
+                        isStale = true;
+                    }
+                }
+                if (isStale) {
+                    db.prepare(
+                        "UPDATE questions SET last_date = ?, fail_count = fail_count + 1 WHERE id = ?"
+                    ).run(today, sq.id);
+                    updatedAny = true;
+                }
+            }
+
+            if (!updatedAny) {
+                for (const sq of subQuestions) {
+                    if (sq.success !== "yes") {
+                        db.prepare(
+                            "UPDATE questions SET last_date = ?, fail_count = fail_count + 1 WHERE id = ?"
+                        ).run(today, sq.id);
+                    }
+                }
+            }
+
+            db.prepare(
+                "UPDATE questions SET last_date = ?, fail_count = fail_count + 1 WHERE id = ?"
+            ).run(today, targetQ.id);
+        } else {
+            db.prepare(
+                "UPDATE questions SET last_date = ?, fail_count = fail_count + 1 WHERE id = ?"
+            ).run(today, targetQ.id);
+        }
+
+        db.exec("COMMIT");
+    } catch (e) {
+        db.exec("ROLLBACK");
+        throw e;
+    }
+
+    return getExamById(examId);
 }
 
 /**
@@ -609,7 +696,7 @@ function rowToExam(row) {
         name: row.name,
         subjectId: Number(row.subject_id),
         // Frontend shape: `subject` is the display string;
-        // `questions[i] = { id, success, date, points, sub, timerSeconds }`.
+        // `questions[i] = { id, success, date, points, sub, timerSeconds, failCount }`.
         questions: qs.map((q) => ({
             id: Number(q.id),
             success: q.success,
@@ -617,6 +704,7 @@ function rowToExam(row) {
             points: q.points,
             sub: !!q.is_sub,
             timerSeconds: Number(q.timer_seconds) || 0,
+            failCount: Number(q.fail_count) || 0,
         })),
     };
 }
