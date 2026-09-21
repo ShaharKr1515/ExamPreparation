@@ -101,12 +101,21 @@ function formatFailCountTooltip(count, isSub = false) {
 function RetryQuestionButton({ onRetry, label = "שאלה" }) {
     const [isHovered, setIsHovered] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    const [isDismissed, setIsDismissed] = useState(false);
+
+    const isVisible = !isDismissed && (isHovered || isFocused);
 
     return (
         <div
             className="retry-btn-wrap"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={() => {
+                setIsDismissed(false);
+                setIsHovered(true);
+            }}
+            onMouseLeave={() => {
+                setIsHovered(false);
+                setIsDismissed(false);
+            }}
         >
             <button
                 type="button"
@@ -114,9 +123,14 @@ function RetryQuestionButton({ onRetry, label = "שאלה" }) {
                 aria-label={`איפוס תאריך וספירת ניסיון חוזר שלא צלח עבור ${label}`}
                 onClick={(e) => {
                     e.stopPropagation();
+                    e.currentTarget.blur();
+                    setIsDismissed(true);
+                    setIsFocused(false);
                     onRetry();
                 }}
-                onFocus={() => setIsFocused(true)}
+                onFocus={() => {
+                    if (!isDismissed) setIsFocused(true);
+                }}
                 onBlur={() => setIsFocused(false)}
             >
                 {/* Rotating arrow retry icon */}
@@ -137,16 +151,15 @@ function RetryQuestionButton({ onRetry, label = "שאלה" }) {
             </button>
 
             <div
-                className={`retry-tooltip ${isHovered || isFocused ? "is-visible" : ""}`}
+                className={`retry-tooltip ${isVisible ? "is-visible" : ""}`}
                 role="tooltip"
-                aria-hidden={!isHovered && !isFocused}
+                aria-hidden={!isVisible}
             >
                 <div className="retry-tooltip-title">
-                    <span className="retry-tooltip-icon">🔄</span>
-                    <strong>לא הצלחת שוב?</strong>
+                    <strong>לא הצלחת במבחן החוזר?</strong>
                 </div>
                 <div className="retry-tooltip-desc">
-                    לחיצה כאן תעדכן את התאריך להיום כדי לאפס את הצבע הסגול, ותספור ניסיון נוסף שלא צלח.
+                    לחיצה כאן תעדכן את תאריך הבחינה להיום ותספור ניסיון נוסף שלא צלח במבחן.
                 </div>
             </div>
         </div>
@@ -157,29 +170,47 @@ function RetryQuestionButton({ onRetry, label = "שאלה" }) {
 function FailCountBadge({ count, isSub = false }) {
     const [isHovered, setIsHovered] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    const [isDismissed, setIsDismissed] = useState(false);
 
     const tooltipText = formatFailCountTooltip(count, isSub);
+    const isVisible = !isDismissed && (isHovered || isFocused);
+
+    const handleDismiss = (e) => {
+        e.currentTarget.blur();
+        setIsDismissed(true);
+        setIsFocused(false);
+    };
 
     return (
         <div
             className={`q-fail-badge-wrap ${isSub ? "q-fail-badge-wrap-sub" : ""}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={() => {
+                setIsDismissed(false);
+                setIsHovered(true);
+            }}
+            onMouseLeave={() => {
+                setIsHovered(false);
+                setIsDismissed(false);
+            }}
         >
             <span
                 className="q-fail-count-badge"
                 tabIndex={0}
                 role="status"
                 aria-label={tooltipText}
-                onFocus={() => setIsFocused(true)}
+                onClick={handleDismiss}
+                onPointerDown={handleDismiss}
+                onFocus={() => {
+                    if (!isDismissed) setIsFocused(true);
+                }}
                 onBlur={() => setIsFocused(false)}
             >
                 {count}
             </span>
             <div
-                className={`q-fail-tooltip ${isHovered || isFocused ? "is-visible" : ""}`}
+                className={`q-fail-tooltip ${isVisible ? "is-visible" : ""}`}
                 role="tooltip"
-                aria-hidden={!isHovered && !isFocused}
+                aria-hidden={!isVisible}
             >
                 {tooltipText}
             </div>
