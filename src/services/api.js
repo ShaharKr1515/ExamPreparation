@@ -76,6 +76,11 @@ export function removeExam(id) {
     return request(`/api/exams/${id}`, { method: "DELETE" });
 }
 
+// Copy questions layout (main questions, sub-questions, points) from sourceExamId to targetExamIds.
+export function copyExamLayout(sourceExamId, targetExamIds) {
+    return request(`/api/exams/${sourceExamId}/copy-layout`, json({ targetExamIds }));
+}
+
 // field is one of: success | date | points (mapped to the DB column server-side).
 export function updateQuestion(examId, position, field, value) {
     return request(`/api/exams/${examId}/questions/${position}`, {

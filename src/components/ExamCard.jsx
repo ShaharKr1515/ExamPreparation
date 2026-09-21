@@ -2,12 +2,14 @@ import { useState, useMemo } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
 import QuestionTable from "./QuestionTable.jsx";
 import ExamSummaryRow from "./ExamSummaryRow.jsx";
+import CopyLayoutModal from "./CopyLayoutModal.jsx";
 import { calculateExamScore, calculateExamTargetDates, daysSince, dueLabel, formatDisplayDate, subjectKey } from "../utils/examUtils.js";
 
 /** A list-view card: editable name header + recommended due date + question table. */
 export default function ExamCard({ exam, isEntering }) {
     const { state, renameExam, removeExam } = useExams();
     const [isExiting, setIsExiting] = useState(false);
+    const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
 
     const handleDelete = () => {
         if (isExiting) return;
@@ -19,6 +21,14 @@ export default function ExamCard({ exam, isEntering }) {
         setTimeout(() => {
             removeExam(exam.id);
         }, 220);
+    };
+
+    const handleCopyLayout = () => {
+        if (siblings.length <= 1) {
+            alert("אין בחינות נוספות במקצוע זה להעתקת המבנה.\nכדי להעתיק את המבנה, יש להוסיף תחילה בחינות נוספות למקצוע.");
+            return;
+        }
+        setIsCopyModalOpen(true);
     };
 
     // Recommended due date for this exam's position under its subject (derived, not stored).
@@ -86,6 +96,28 @@ export default function ExamCard({ exam, isEntering }) {
                     <div className="card-head-end">
                         <button
                             type="button"
+                            className="copy-layout-btn"
+                            title="העתקת מבנה שאלות"
+                            aria-label={`העתקת מבנה שאלות מבחינה ${exam.name || (examNumber ? `מספר ${examNumber}` : "")}`}
+                            onClick={handleCopyLayout}
+                        >
+                            <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
                             className="delete-btn"
                             title="מחיקת בחינה"
                             aria-label={`מחיקת בחינה ${exam.name || (examNumber ? `מספר ${examNumber}` : "")}`}
@@ -149,6 +181,15 @@ export default function ExamCard({ exam, isEntering }) {
                 questionStatusMap={summary.questionStatusMap}
                 isChoiceActive={summary.isChoiceActive}
             />
+
+            {isCopyModalOpen && (
+                <CopyLayoutModal
+                    exam={exam}
+                    examNumber={examNumber}
+                    siblings={siblings}
+                    onClose={() => setIsCopyModalOpen(false)}
+                />
+            )}
         </div>
     );
 }
