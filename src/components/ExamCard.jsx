@@ -38,9 +38,8 @@ export default function ExamCard({ exam, isEntering }) {
     const meta = metaKey ? state.subjectMeta[metaKey] : {};
     // Exam order under the subject = creation order (exams are stored/returned by id).
     const siblings = state.exams.filter((e) => subjectKey(e.subject) === subjectKey(exam.subject));
-    // Subjects created before planned_exam_count existed have no stored count — fall back
-    // to how many exams actually exist under the subject.
-    const examCount = Number(meta.plannedExamCount) || siblings.length;
+    // Use the actual number of exams under this subject so every exam gets a recommended date.
+    const examCount = siblings.length || Number(meta.plannedExamCount) || 1;
     const targetDates = calculateExamTargetDates(
         meta.studyStartDate,
         meta.finalExamDate,

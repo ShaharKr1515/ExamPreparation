@@ -66,6 +66,15 @@ export function deleteSubject(id) {
 
 // ---------- Exams ----------
 
+/** Keep the subject's planned_exam_count in sync with the actual number of exams. */
+export function syncSubjectExamCount(subjectId) {
+    db.prepare(`
+        UPDATE subjects 
+        SET planned_exam_count = (SELECT COUNT(*) FROM exams WHERE subject_id = ?) 
+        WHERE id = ?
+    `).run(subjectId, subjectId);
+}
+
 /** Create an exam under a subject and seed it with `questionCount` empty questions. */
 export function createExam(subjectId, name, questionCount = QUESTION_COUNT) {
     const info = db.prepare("INSERT INTO exams (subject_id, name) VALUES (?, ?)").run(subjectId, name);
@@ -77,6 +86,7 @@ export function createExam(subjectId, name, questionCount = QUESTION_COUNT) {
     for (let i = 0; i < questionCount; i++) {
         insertQ.run(examId, i);
     }
+    syncSubjectExamCount(subjectId);
 
     return getExamById(examId);
 }
@@ -89,8 +99,10 @@ export function renameExam(id, name) {
 export function deleteExam(id) {
     const row = db.prepare("SELECT subject_id FROM exams WHERE id = ?").get(id);
     if (!row) return null;
+    const subjectId = Number(row.subject_id);
     db.prepare("DELETE FROM exams WHERE id = ?").run(id);
-    return Number(row.subject_id);
+    syncSubjectExamCount(subjectId);
+    return subjectId;
 }
 
 /**
@@ -108,6 +120,7 @@ export function adjustExamCount(subjectId, target) {
         const toDelete = existing.slice(target).map((r) => Number(r.id));
         for (const id of toDelete) deleteExam(id);
     }
+    syncSubjectExamCount(subjectId);
     return db.prepare("SELECT * FROM exams WHERE subject_id = ? ORDER BY id")
         .all(subjectId)
         .map((row) => getExamById(Number(row.id)));
@@ -741,10 +754,11 @@ export function getFullState() {
     // to derive recommended due dates on the frontend).
     const subjectMeta = {};
     for (const s of subjects) {
+        const actualCount = exams.filter((e) => e.subjectId === Number(s.id)).length;
         subjectMeta[s.name] = {
             studyStartDate: s.study_start_date || "",
             finalExamDate: s.final_exam_date || "",
-            plannedExamCount: Number(s.planned_exam_count) || 0,
+            plannedExamCount: actualCount || Number(s.planned_exam_count) || 0,
         };
     }
 

@@ -86,7 +86,7 @@ function Toolbar() {
             <ExamCountControl subject={active} currentCount={visible.length} />
             {/* How often an exam must be completed, derived from the same math as the due dates. */}
             {(() => {
-                const count = Number(meta.plannedExamCount) || visible.length;
+                const count = visible.length || Number(meta.plannedExamCount) || 0;
                 const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
                 const label = formatExamIntervalLabel(intervalDays);
                 return label ? <span className="interval-hint">{label}</span> : null;
