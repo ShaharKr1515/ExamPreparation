@@ -499,9 +499,13 @@ function QuestionRow({
                             initialSeconds={effectiveTimerValue}
                             onSave={(secs) => updateQuestion(exam.id, qi, "timerSeconds", secs)}
                             onStart={() => {
-                                const today = todayStr();
-                                if (q.date !== today) {
-                                    updateQuestion(exam.id, qi, "date", today);
+                                if (isPurple) {
+                                    retryQuestion(exam.id, qi);
+                                } else {
+                                    const today = todayStr();
+                                    if (q.date !== today) {
+                                        updateQuestion(exam.id, qi, "date", today);
+                                    }
                                 }
                             }}
                             questionLabel={labelInfo.aria}

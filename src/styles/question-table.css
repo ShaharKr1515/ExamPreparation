@@ -59,7 +59,7 @@
 .q-group-box:has(.retry-btn:focus-visible),
 .q-group-box:has(.q-fail-badge-wrap:hover),
 .q-group-box:has(.q-fail-count-badge:focus-visible) {
-    z-index: 35;
+    z-index: 100;
 }
 
 /* Box status indicator borders (richer tone, less pale/white when filled) */
@@ -169,7 +169,7 @@
 
 .q-table th:nth-child(1),
 .q-table td:nth-child(1) {
-    width: 68px;
+    width: 76px;
     padding: 8px 4px;
 }
 
@@ -310,6 +310,11 @@ td.q-num:not(.q-num-sub) .q-cell-inner {
     justify-content: center;
 }
 
+.q-fail-badge-wrap:hover,
+.q-fail-badge-wrap:focus-within {
+    z-index: 70;
+}
+
 /* Badge for number of unsuccessful retries (shows only when failCount > 0) */
 .q-fail-count-badge {
     min-width: 16px;
@@ -367,7 +372,7 @@ td.q-num:not(.q-num-sub) .q-cell-inner {
     visibility: hidden;
     direction: rtl;
     text-align: right;
-    z-index: 100;
+    z-index: 1000;
     transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                 transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                 visibility 0.22s ease;
@@ -407,8 +412,13 @@ td.q-num:not(.q-num-sub) .q-cell-inner {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    z-index: 2;
     animation: retryBtnPopIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.retry-btn-wrap:hover,
+.retry-btn-wrap:focus-within {
+    z-index: 70;
 }
 
 @keyframes retryBtnPopIn {
@@ -446,7 +456,7 @@ td.q-num:not(.q-num-sub) .q-cell-inner {
     background: #ede9fe;
     border-color: #8b5cf6;
     color: #4c1d95;
-    transform: scale(1.1) rotate(-15deg);
+    transform: scale(1.08);
     box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25);
 }
 
@@ -504,7 +514,7 @@ td.q-num:not(.q-num-sub) .q-cell-inner {
     visibility: hidden;
     direction: rtl;
     text-align: right;
-    z-index: 100;
+    z-index: 1000;
     transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                 transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                 visibility 0.22s ease;
@@ -755,21 +765,23 @@ td.q-num.q-num-sub {
 }
 
 .sub-q-num-wrap {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
     width: 100%;
+    padding-inline-start: 30px;
+    box-sizing: border-box;
 }
 
 /* Continuous tree guide rail connecting from parent question above */
 td.q-num.q-num-sub::before {
     content: "";
     position: absolute;
-    inset-inline-start: 24px;
+    inset-inline-start: 20px;
     top: 0;
     bottom: 0;
-    width: 26px;
+    width: 14px;
     border-inline-start: 1px solid #cbd5e1;
     pointer-events: none;
     z-index: 1;
@@ -779,9 +791,9 @@ td.q-num.q-num-sub::before {
 td.q-num.q-num-sub::after {
     content: "";
     position: absolute;
-    inset-inline-start: 24px;
+    inset-inline-start: 20px;
     top: 50%;
-    width: 26px;
+    width: 14px;
     height: 1px;
     border-top: 1px solid #cbd5e1;
     pointer-events: none;
@@ -792,7 +804,7 @@ td.q-num.q-num-sub::after {
 td.q-num.q-num-sub.q-num-sub-last::before,
 .q-table tbody tr.row-sub-last td.q-num.q-num-sub::before {
     bottom: 50%;
-    width: 26px;
+    width: 14px;
     border-bottom: 1px solid #cbd5e1;
     border-bottom-inline-start-radius: 4px;
 }
@@ -802,14 +814,22 @@ td.q-num.q-num-sub.q-num-sub-last::after,
     display: none;
 }
 
-/* Sub-question chip badge - compact, prominently and deeply indented to the left */
+/* Sub-question chip badge - compact and anchored to the tree rail */
 .sub-q-indicator-wrap {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
+    justify-content: flex-start;
+    gap: 3px;
     position: relative;
-    transform: translateX(-24px);
+}
+
+.sub-q-indicator-wrap:has(.q-fail-badge-wrap:hover),
+.sub-q-indicator-wrap:has(.q-fail-count-badge:focus-visible),
+.sub-q-indicator-wrap:has(.retry-btn-wrap:hover),
+.sub-q-indicator-wrap:has(.retry-btn:focus-visible),
+.sub-q-indicator:has(.q-fail-badge-wrap:hover),
+.sub-q-indicator:has(.q-fail-count-badge:focus-visible) {
+    z-index: 70;
 }
 
 .sub-q-indicator {
@@ -826,6 +846,7 @@ td.q-num.q-num-sub.q-num-sub-last::after,
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     position: relative;
     z-index: 2;
+    flex-shrink: 0;
 }
 
 .sub-q-indicator .q-fail-badge-wrap {
@@ -841,13 +862,14 @@ td.q-num.q-num-sub.q-num-sub-last::after,
 }
 
 .sub-q-indicator-wrap .retry-btn {
-    width: 20px;
-    height: 20px;
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
 }
 
 .sub-q-indicator-wrap .retry-btn svg {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
 }
 
 .sub-q-letter {
@@ -930,11 +952,15 @@ td.q-num.q-num-sub.q-num-sub-last::after,
     color: #5b21b6;
 }
 
-/* Ensure row with hovered timer tooltip has stacking priority over rows above it */
+/* Ensure row with hovered tooltip has stacking priority over rows above it */
 .q-table tbody tr:has(.timer-cell:hover),
-.q-table tbody tr:has(.timer-btn:focus-visible) {
+.q-table tbody tr:has(.timer-btn:focus-visible),
+.q-table tbody tr:has(.retry-btn-wrap:hover),
+.q-table tbody tr:has(.retry-btn:focus-visible),
+.q-table tbody tr:has(.q-fail-badge-wrap:hover),
+.q-table tbody tr:has(.q-fail-count-badge:focus-visible) {
     position: relative;
-    z-index: 25;
+    z-index: 50;
 }
 
 /* --- Summation Indicators & Badges ---------------------------------------- */

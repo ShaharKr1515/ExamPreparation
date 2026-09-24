@@ -127,7 +127,7 @@
     visibility: hidden;
     transition: opacity 0.16s ease, transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s ease;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22);
-    z-index: 100;
+    z-index: 1000;
 }
 
 .timer-tooltip::after {

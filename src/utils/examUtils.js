@@ -65,14 +65,15 @@ export function calculateExamTargetDates(studyStartDate, finalExamDate, examCoun
 
     const startDay = parseUtcDay(studyStartDate);
     const finalDay = parseUtcDay(finalExamDate);
-    if (startDay === null || finalDay === null) return result;
+    if (startDay === null || finalDay === null || finalDay <= startDay) return result;
 
-    const firstDue = startDay + 3;
+    const firstDue = Math.min(startDay + 3, finalDay - 1);
     const interval = (finalDay - startDay - 2) / count;
 
     for (let i = 0; i < count; i++) {
-        const dueDay = Math.round(firstDue + i * interval); // exam 1: firstDue, each next: previous + interval
-        if (dueDay >= finalDay) continue;                   // would land on/after the final exam → no date
+        let dueDay = Math.round(firstDue + i * interval); // exam 1: firstDue, each next: previous + interval
+        if (dueDay >= finalDay) dueDay = finalDay - 1;     // keep before final exam
+        if (dueDay < startDay) dueDay = startDay;
         result[i] = dayToUtcStr(dueDay);
     }
     return result;
@@ -95,7 +96,7 @@ export function examIntervalDays(studyStartDate, finalExamDate, examCount) {
     if (count === 0) return null;
     const startDay = parseUtcDay(studyStartDate);
     const finalDay = parseUtcDay(finalExamDate);
-    if (startDay === null || finalDay === null) return null;
+    if (startDay === null || finalDay === null || finalDay <= startDay) return null;
     return Math.max(1, Math.floor((finalDay - startDay - 2) / count));
 }
 

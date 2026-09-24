@@ -9,12 +9,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // DATABASE_PATH env var so Docker/Unraid can mount a persistent volume elsewhere.
 function resolveDbPath() {
     const fromEnv = process.env.DATABASE_PATH;
-    if (fromEnv && fromEnv.trim()) return path.resolve(fromEnv);
+    if (fromEnv && fromEnv.trim()) return fromEnv.trim() === ":memory:" ? ":memory:" : path.resolve(fromEnv);
     return path.join(__dirname, "..", "..", "data", "exampreparation.db");
 }
 
 const dbPath = resolveDbPath();
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+if (dbPath !== ":memory:") {
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+}
 
 export const db = new DatabaseSync(dbPath);
 
@@ -74,5 +76,12 @@ if (!questionCols.includes("timer_seconds")) {
 if (!questionCols.includes("fail_count")) {
     db.exec("ALTER TABLE questions ADD COLUMN fail_count INTEGER NOT NULL DEFAULT 0");
 }
+
+// Sync existing subjects' planned_exam_count with their actual exam count
+db.exec(`
+    UPDATE subjects 
+    SET planned_exam_count = (SELECT COUNT(*) FROM exams WHERE exams.subject_id = subjects.id)
+    WHERE (SELECT COUNT(*) FROM exams WHERE exams.subject_id = subjects.id) > 0;
+`);
 
 console.log(`[db] SQLite database at ${dbPath}`);

@@ -44,7 +44,24 @@ export function ExamsProvider({ children }) {
         if (!subject) return; // no subjects → the add row can't be open anyway
         try {
             const exam = await api.addExam(subject, name);
-            setState((s) => ({ ...s, exams: [...s.exams, exam] }));
+            setState((s) => {
+                const metaKey = Object.keys(s.subjectMeta || {}).find(
+                    (k) => subjectKey(k) === subjectKey(subject),
+                ) || subject;
+                const currentMeta = s.subjectMeta[metaKey] || {};
+                const currentCount = s.exams.filter((e) => subjectKey(e.subject) === subjectKey(subject)).length;
+                return {
+                    ...s,
+                    exams: [...s.exams, exam],
+                    subjectMeta: {
+                        ...s.subjectMeta,
+                        [metaKey]: {
+                            ...currentMeta,
+                            plannedExamCount: currentCount + 1,
+                        },
+                    },
+                };
+            });
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -54,7 +71,31 @@ export function ExamsProvider({ children }) {
     async function removeExam(id) {
         try {
             await api.removeExam(id);
-            setState((s) => ({ ...s, exams: s.exams.filter((e) => e.id !== id) }));
+            setState((s) => {
+                const exam = s.exams.find((e) => e.id === id);
+                let nextMeta = s.subjectMeta;
+                if (exam) {
+                    const metaKey = Object.keys(s.subjectMeta || {}).find(
+                        (k) => subjectKey(k) === subjectKey(exam.subject),
+                    );
+                    if (metaKey) {
+                        const currentMeta = s.subjectMeta[metaKey] || {};
+                        const currentCount = s.exams.filter((e) => subjectKey(e.subject) === subjectKey(exam.subject)).length;
+                        nextMeta = {
+                            ...s.subjectMeta,
+                            [metaKey]: {
+                                ...currentMeta,
+                                plannedExamCount: Math.max(0, currentCount - 1),
+                            },
+                        };
+                    }
+                }
+                return {
+                    ...s,
+                    exams: s.exams.filter((e) => e.id !== id),
+                    subjectMeta: nextMeta,
+                };
+            });
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -86,15 +127,28 @@ export function ExamsProvider({ children }) {
     async function adjustExamCount(subjectName, target) {
         try {
             const updated = await api.adjustExamCount(subjectName, target);
-            setState((s) => ({
-                ...s,
-                exams: [
-                    // Keep every exam of other subjects in place…
-                    ...s.exams.filter((e) => subjectKey(e.subject) !== subjectKey(subjectName)),
-                    // …and swap in the server's fresh list for this subject.
-                    ...updated,
-                ],
-            }));
+            setState((s) => {
+                const metaKey = Object.keys(s.subjectMeta || {}).find(
+                    (k) => subjectKey(k) === subjectKey(subjectName),
+                ) || subjectName;
+                const currentMeta = s.subjectMeta[metaKey] || {};
+                return {
+                    ...s,
+                    exams: [
+                        // Keep every exam of other subjects in place…
+                        ...s.exams.filter((e) => subjectKey(e.subject) !== subjectKey(subjectName)),
+                        // …and swap in the server's fresh list for this subject.
+                        ...updated,
+                    ],
+                    subjectMeta: {
+                        ...s.subjectMeta,
+                        [metaKey]: {
+                            ...currentMeta,
+                            plannedExamCount: target,
+                        },
+                    },
+                };
+            });
             return true;
         } catch (e) {
             console.error(e);

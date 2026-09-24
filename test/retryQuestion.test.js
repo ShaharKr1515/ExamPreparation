@@ -125,3 +125,24 @@ test("copyExamLayout resets failCount to 0 on target exams", async () => {
     assert.equal(copied[0].questions[0].failCount, 0);
 });
 
+test("retryQuestion on a subquestion directly updates only that subquestion and increments fail_count", async () => {
+    svc.clearEverything();
+
+    const created = svc.createSubject("מבנה נתונים 2", { examCount: 1 });
+    const exam = created.exams[0];
+
+    // Add subquestion to Q0 -> subquestion is at position 1
+    svc.addQuestion(exam.id, 0);
+
+    // Set subquestion (position 1) to stale
+    svc.updateQuestion(exam.id, 1, "success", "no");
+    svc.updateQuestion(exam.id, 1, "date", "2026-09-05");
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    // Retry specifically the subquestion (position 1)
+    const retried = svc.retryQuestion(exam.id, 1);
+    assert.equal(retried.questions[1].failCount, 1);
+    assert.equal(retried.questions[1].date, todayStr);
+});
