@@ -90,6 +90,11 @@ export default function ExamCard({ exam, isEntering }) {
                             value={exam.name}
                             aria-label={`שם בחינה ${examNumber || ""}`}
                             onChange={(e) => renameExam(exam.id, e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    e.currentTarget.blur();
+                                }
+                            }}
                         />
                     </div>
 
