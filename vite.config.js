@@ -1,8 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Dev server proxies /api to the Express server (server.js) so that a future
-// persistence layer can be added without CORS headaches.
+// In development, Vite serves the UI and forwards API requests to Express.
 export default defineConfig({
     plugins: [react()],
     server: {

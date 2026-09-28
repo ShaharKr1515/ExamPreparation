@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Start server",
+            "label": "Start Express server",
             "type": "npm",
-            "script": "start",
+            "script": "server:dev",
             "isBackground": true,
             "problemMatcher": {
                 "owner": "node",
@@ -14,9 +14,35 @@
                 "background": {
                     "activeOnStart": true,
                     "beginsPattern": ".*",
-                    "endsPattern": "Server listening on port 3000"
+                    "endsPattern": "\\[server\\] Listening on http://localhost:3000"
                 }
             }
+        },
+        {
+            "label": "Start Vite server",
+            "type": "npm",
+            "script": "dev",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "vite",
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": "Local:.*http://localhost:5173"
+                }
+            }
+        },
+        {
+            "label": "Start development servers",
+            "dependsOn": [
+                "Start Express server",
+                "Start Vite server"
+            ],
+            "dependsOrder": "parallel",
+            "problemMatcher": []
         }
     ]
 }

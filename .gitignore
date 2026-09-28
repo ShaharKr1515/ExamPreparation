@@ -3,3 +3,10 @@ dist/
 data/
 .env
 .DS_Store
+
+# Local editor and AI-assisted development configuration
+.agents/
+.github/agents/
+.github/skills/impeccable/
+.impeccable/
+.vscode/settings.json

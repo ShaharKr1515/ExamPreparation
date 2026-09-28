@@ -1,155 +1,122 @@
 # Exam Preparation Tracker
 
-A personal exam preparation management application that helps students organize their study schedule and track mastery progress across multiple subjects.
+A small, single-user study tracker for planning practice exams and recording question-level progress. It is designed for local use or simple self-hosting: there are no accounts, authentication flows, or multi-user features.
 
-## Technology Stack
+## Highlights
 
-### Frontend
-- **React 18** - Modern component-based UI with hooks and Context API
-- **Vite** - Lightning-fast build tool and development server
-- **Modular CSS** - Component-scoped styling with CSS variables
+- React 18 interface with a Vite development and production build
+- Express 5 REST API backed by Node's built-in SQLite module
+- Derived practice-exam scheduling based on study dates and planned exam counts
+- Question and sub-question tracking, including outcomes, points, attempt dates, and retry counts
+- Per-question timers that persist with the rest of the study data
+- Node test suite for scheduling, countdowns, layout copying, and retry behavior
+- Multi-stage Docker image with persistent SQLite storage
+- GitHub Actions publishing to the GitHub Container Registry (GHCR) after tests and a production build pass
 
-### Backend
-- **Node.js** - Server-side JavaScript runtime
-- **Express 5** - Minimalist web framework
-- **SQLite** - Embedded relational database for local persistence
-- **RESTful API** - Clean separation between frontend and backend
+The interface is in Hebrew and uses a right-to-left layout.
 
-### DevOps
-- **Docker** - Containerization support included
-- **ES Modules** - Modern JavaScript module system
+## Architecture
 
-## Overview
+The React frontend calls an Express REST API. During development, Vite serves the frontend on port 5173 and proxies `/api` requests to Express on port 3000. In production, Express serves the compiled `dist/` assets and the API from one process.
 
-This web application combines **mastery tracking** with **intelligent scheduling** to help students prepare for exams efficiently. It tracks per-question progress while automatically calculating recommended due dates for practice exams based on your final exam schedule.
+SQLite data is stored in `data/exampreparation.db` by default. Recommended practice-exam dates are derived from each subject's study start date, final exam date, and planned exam count rather than stored as duplicate state.
 
-## Key Features
+This is intentionally a single-user application. Run it on your computer or behind the access controls of a trusted self-hosted environment; it does not implement application-level authentication or user isolation.
 
-- **Subject Organization**: Group your exams by subject, each with its own study timeline
-- **Intelligent Scheduling**: Automatically calculates recommended due dates by evenly distributing practice exams between your study start date and final exam date
-- **Question-Level Tracking**: Mark each question as successful/failed, record last attempt dates, and assign point values
-- **Visual Progress Monitoring**: See at a glance which questions need work and which exams are coming up
-- **Clean Interface**: Hebrew RTL interface designed for focused study sessions
+## Requirements
 
-## Architecture Highlights
-
-- **Derived State Pattern**: Exam due dates are computed on-the-fly from subject parameters (study start date, final exam date, exam count) rather than stored, ensuring consistency
-- **Single-User Design**: Local-first architecture with no authentication overhead
-- **Component-Based Structure**: Modular React components with clear separation of concerns
-- **Error Boundaries**: Robust error handling at the component level
-
-## Project Structure
-
-```
-├── backend/
-│   ├── app.js              # Express application setup
-│   ├── server.js           # Server entry point
-│   ├── db/
-│   │   └── database.js     # SQLite connection and queries
-│   ├── routes/             # API route handlers
-│   └── services/           # Business logic layer
-├── src/
-│   ├── components/         # Reusable UI components
-│   ├── context/            # React Context for state management
-│   ├── hooks/              # Custom React hooks
-│   ├── pages/              # Page-level components
-│   ├── services/           # API client
-│   ├── styles/             # Modular CSS files
-│   └── utils/              # Helper functions
-└── data/                   # SQLite database storage
-```
-
-## Getting Started
-
-### Prerequisites
-- Node.js (v16 or higher)
+- Node.js 24 or newer
 - npm
 
-### Installation
+Node 24 is required because the backend uses `node:sqlite`.
 
-1. Clone the repository
+## Development
+
+Install dependencies:
+
 ```bash
-git clone <repository-url>
-cd ExamPreparation
+npm ci
 ```
 
-2. Install dependencies
+Run the Express API with file watching in one terminal:
+
 ```bash
-npm install
+npm run server:dev
 ```
 
-3. Start the development servers
+Run Vite in a second terminal:
 
-For development with hot reload:
 ```bash
 npm run dev
 ```
 
-For production mode:
+Open `http://localhost:5173`. Vite provides frontend hot module replacement and proxies API calls to `http://localhost:3000`.
+
+## Tests and production build
+
 ```bash
+npm test
+npm run build
+```
+
+## Production
+
+Install exactly the locked dependencies, build the frontend, and start Express:
+
+```bash
+npm ci
 npm run build
 npm start
 ```
 
-The application will be available at `http://localhost:3000`
+Open `http://localhost:3000` unless `PORT` is set to a different value.
 
-## Usage Workflow
+### Configuration
 
-1. **Create Subjects**: Add subjects for your courses (e.g., Mathematics, Algorithms)
-2. **Set Timeline**: For each subject, define:
-   - Study start date
-   - Final exam date
-   - Number of practice exams you plan to complete
-3. **Add Exams**: Create practice exams under each subject
-4. **Track Progress**: For each question in an exam, record:
-   - Success status (yes/no)
-   - Last attempt date
-   - Point value
-5. **Follow Schedule**: Use the automatically calculated due dates to pace your study
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `3000` | Port used by the production Express server |
+| `DATABASE_PATH` | `./data/exampreparation.db` | SQLite database file; `:memory:` is also supported for temporary runs and tests |
 
-## API Endpoints
+The directory containing `DATABASE_PATH` is created automatically.
 
-### Subjects
-- `GET /api/subjects` - Fetch all subjects
-- `POST /api/subjects` - Create a new subject
-- `PUT /api/subjects/:id` - Update subject details
-- `DELETE /api/subjects/:id` - Delete a subject
+## Docker
 
-### Exams
-- `GET /api/exams` - Fetch all exams
-- `POST /api/exams` - Create a new exam
-- `PUT /api/exams/:id` - Update exam details
-- `DELETE /api/exams/:id` - Delete an exam
-
-## Docker Support
-
-The project includes a Dockerfile for containerized deployment:
+Build the image:
 
 ```bash
 docker build -t exam-preparation .
-docker run -p 3000:3000 exam-preparation
 ```
 
-## Design Philosophy
+Run it with `/data` persisted in a named volume:
 
-This application prioritizes:
-- **Clarity**: Students should instantly understand what needs attention
-- **Efficiency**: Minimal clicks to record progress and move forward
-- **Accuracy**: Derived calculations ensure dates stay consistent with study plans
-- **Simplicity**: Local-first, no-account design removes unnecessary friction
+```bash
+docker volume create exam-preparation-data
+docker run --rm \
+  -p 3000:3000 \
+  -v exam-preparation-data:/data \
+  exam-preparation
+```
 
-## Future Enhancement Possibilities
+The container sets `DATABASE_PATH=/data/exampreparation.db`. Mounting `/data` keeps the SQLite database when the container is replaced.
 
-- Statistics and progress analytics
-- Export/import functionality for backup
-- Customizable questions per exam
-- Study streak tracking
-- Mobile responsive improvements
+Pushes to `main` run the test suite and production build before publishing `ghcr.io/shaharkr1515/exampreparation:latest` to GHCR.
 
-## License
+## Project structure
 
-MIT License - Free to use, modify, and distribute
+```text
+backend/             Express app, routes, services, and SQLite access
+public/              Static assets copied by Vite
+src/                 React components, state, API client, and styles
+test/                Node test suite
+data/                Local SQLite storage (ignored by Git and Docker)
+Dockerfile           Multi-stage production image
+vite.config.js       Vite configuration and development API proxy
+```
 
----
+## Main API routes
 
-**Built with React, Node.js, and SQLite** | Single-page application with RESTful backend
+- `GET /api/state` returns the complete application state.
+- `/api/subjects` provides subject create, update, and delete operations.
+- `/api/exams` provides exam and question operations, including layout copying and timer updates.
+- `POST /api/clear-all` clears all stored study data.
