@@ -1,6 +1,14 @@
-node_modules
-dist
-.git
-data
+node_modules/
+dist/
+.git/
+data/
 .env
-npm-debug.log
+.DS_Store
+npm-debug.log*
+
+# Local editor and AI-assisted development configuration
+.agents/
+.github/agents/
+.github/skills/impeccable/
+.impeccable/
+.vscode/

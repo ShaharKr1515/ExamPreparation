@@ -1,20 +1,33 @@
-FROM node:24-alpine
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
+RUN npm ci
 
-RUN npm install
-
-COPY . .
-
-ENV DATABASE_PATH=/data/exampreparation.db
-
+COPY index.html vite.config.js ./
+COPY public ./public
+COPY src ./src
 RUN npm run build
 
-EXPOSE 3000
+FROM node:24-alpine AS runtime
 
-# SQLite data is stored in /data.
-# Mount /data to a persistent host directory, e.g.:
-# /mnt/user/appdata/exampreparation -> /data
-CMD ["node", "backend/server.js"]
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    DATABASE_PATH=/data/exampreparation.db
+
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY --chown=node:node backend ./backend
+COPY --chown=node:node --from=build /app/dist ./dist
+
+RUN mkdir -p /data && chown node:node /data
+
+USER node
+
+EXPOSE 3000
+VOLUME ["/data"]
+
+CMD ["npm", "start"]

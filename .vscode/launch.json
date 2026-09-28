@@ -4,9 +4,9 @@
         {
             "type": "editor-browser",
             "request": "launch",
-            "name": "Start Website",
-            "url": "http://localhost:3000",
-            "preLaunchTask": "Start server"
+            "name": "Open development app",
+            "url": "http://localhost:5173",
+            "preLaunchTask": "Start development servers"
         }
     ]
 }
