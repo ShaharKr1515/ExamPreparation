@@ -12,6 +12,7 @@
 @import "./styles/header.css";
 @import "./styles/subject-tabs.css";
 @import "./styles/toolbar.css";
+@import "./styles/study-summary.css";
 
 /* Exam Cards & Grid */
 @import "./styles/exam-grid.css";

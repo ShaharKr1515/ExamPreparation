@@ -8,13 +8,15 @@ import SubjectTabs from "./components/SubjectTabs.jsx";
 import NewSubjectModal from "./components/NewSubjectModal.jsx";
 import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
 import ListPage from "./pages/ListPage.jsx";
+import SaveFeedback from "./components/SaveFeedback.jsx";
+import StudySummary from "./components/StudySummary.jsx";
 
 /**
  * App shell: the header, subject tabs and the action toolbar
  * (subject-level study dates, exam count, "ניקוי הכול") above the list of exams.
  */
 function AppShell() {
-    const { state, loading } = useExams();
+    const { state, loading, loadError, reloadState } = useExams();
     const [subjectFormOpen, setSubjectFormOpen] = useState(false);
 
     const hasSubjects = state.subjects.length > 0;
@@ -27,18 +29,30 @@ function AppShell() {
     // While the backend is hydrating, show a spinner instead of flashing "no subjects".
     // (Must come AFTER all hooks — early returns before hooks break React's rules.)
     if (loading) {
-        return <div className="wrap"><p className="empty-msg">טוען…</p></div>;
+        return <div className="wrap"><p className="empty-msg" role="status">טוען את נתוני התרגול…</p></div>;
     }
+
+    if (loadError) return (
+        <div className="wrap">
+            <AppHeader />
+            <div className="save-feedback has-error load-error" role="alert">
+                <span>לא ניתן לטעון את נתוני התרגול. נסה לטעון אותם שוב.</span>
+                <button type="button" className="btn ghost" onClick={reloadState}>טעינה מחדש</button>
+            </div>
+        </div>
+    );
 
     return (
         <div className="wrap">
             <AppHeader />
+            <SaveFeedback />
 
             {hasSubjects ? (
                 <>
                     <SubjectTabs newOpen={subjectFormOpen} onNew={() => setSubjectFormOpen(true)} />
 
                     <Toolbar />
+                    <StudySummary />
 
                     {subjectFormOpen && <NewSubjectModal onClose={() => setSubjectFormOpen(false)} />}
 
@@ -100,9 +114,6 @@ function Toolbar() {
                     </span>
                 ) : null;
             })()}
-            <span className="count">
-                {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
-            </span>
             <button type="button" className="btn danger-ghost" onClick={clearAll}>
                 ניקוי הכול
             </button>

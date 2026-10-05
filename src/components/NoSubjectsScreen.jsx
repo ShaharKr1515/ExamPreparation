@@ -5,6 +5,7 @@ import { useExams } from "../context/ExamsContext.jsx";
 export default function NoSubjectsScreen() {
     const { addSubject } = useExams();
     const [name, setName] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const inputRef = useRef(null);
 
     useEffect(() => {
@@ -22,11 +23,12 @@ export default function NoSubjectsScreen() {
                 <form
                     className="subject-create-form"
                     autoComplete="off"
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                         e.preventDefault();
-                        if (!name.trim()) return;
-                        addSubject(name);
-                        setName("");
+                        if (!name.trim() || isSubmitting) return;
+                        setIsSubmitting(true);
+                        if (await addSubject(name)) setName("");
+                        setIsSubmitting(false);
                     }}
                 >
                     <input
@@ -36,8 +38,9 @@ export default function NoSubjectsScreen() {
                         onChange={(e) => setName(e.target.value)}
                         placeholder="שם המקצוע (למשל: מתמטיקה)"
                         aria-label="שם מקצוע חדש"
+                        disabled={isSubmitting}
                     />
-                    <button type="submit" className="btn primary">+ יצירת מקצוע</button>
+                    <button type="submit" className="btn primary" disabled={isSubmitting}>{isSubmitting ? "יוצר מקצוע…" : "+ יצירת מקצוע"}</button>
                 </form>
             </div>
         </section>

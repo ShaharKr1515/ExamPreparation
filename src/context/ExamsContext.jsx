@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import * as api from "../services/api.js";
+import { createSaveQueue } from "../services/saveQueue.js";
 import { subjectKey, todayStr, daysSince } from "../utils/examUtils.js";
 
 const ExamsContext = createContext(null);
@@ -17,17 +18,24 @@ export function ExamsProvider({ children }) {
     const [state, setState] = useState(emptyState());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [loadError, setLoadError] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
+    const [saveQueue] = useState(createSaveQueue);
+    const saveStatus = useSyncExternalStore(saveQueue.subscribe, saveQueue.getSnapshot);
 
     // Hydrate from the backend on mount.
     useEffect(() => {
         let cancelled = false;
+        setLoading(true);
+        setLoadError(false);
+        setError(null);
         (async () => {
             try {
                 const data = await api.fetchState();
                 if (!cancelled) setState(data);
             } catch (e) {
                 console.error("Failed to load state", e);
-                if (!cancelled) setError(e.message || "Failed to load");
+                if (!cancelled) setLoadError(true);
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -35,15 +43,29 @@ export function ExamsProvider({ children }) {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [loadAttempt]);
 
-    // --- Actions: optimistic local update + API call (errors surfaced via `error`) ---
+    useEffect(() => {
+        if (saveStatus.status !== "saved") return;
+        let cancelled = false;
+        api.fetchState().then((data) => {
+            if (cancelled || saveQueue.getSnapshot() !== saveStatus) return;
+            setState((current) => ({
+                ...data,
+                activeSubject: data.subjects.find((name) => subjectKey(name) === subjectKey(current.activeSubject))
+                    || data.activeSubject,
+            }));
+        }).catch(() => { /* The write succeeded; keep the current view if reconciliation is unavailable. */ });
+        return () => { cancelled = true; };
+    }, [saveStatus, saveQueue]);
+
+    // Optimistic edits remain visible; failed writes pause the queue until retry.
 
     async function addExam(name) {
         const subject = state.activeSubject;
         if (!subject) return; // no subjects → the add row can't be open anyway
         try {
-            const exam = await api.addExam(subject, name);
+            const exam = await saveQueue.run(() => api.addExam(subject, name), { retryable: false });
             setState((s) => {
                 const metaKey = Object.keys(s.subjectMeta || {}).find(
                     (k) => subjectKey(k) === subjectKey(subject),
@@ -70,7 +92,7 @@ export function ExamsProvider({ children }) {
 
     async function removeExam(id) {
         try {
-            await api.removeExam(id);
+            await saveQueue.run(() => api.removeExam(id));
             setState((s) => {
                 const exam = s.exams.find((e) => e.id === id);
                 let nextMeta = s.subjectMeta;
@@ -104,7 +126,7 @@ export function ExamsProvider({ children }) {
 
     async function copyExamLayout(sourceExamId, targetExamIds) {
         try {
-            const updated = await api.copyExamLayout(sourceExamId, targetExamIds);
+            const updated = await saveQueue.run(() => api.copyExamLayout(sourceExamId, targetExamIds));
             const updatedMap = new Map((updated || []).map((e) => [e.id, e]));
             setState((s) => ({
                 ...s,
@@ -126,7 +148,7 @@ export function ExamsProvider({ children }) {
     // Resolves true on success, false on failure.
     async function adjustExamCount(subjectName, target) {
         try {
-            const updated = await api.adjustExamCount(subjectName, target);
+            const updated = await saveQueue.run(() => api.adjustExamCount(subjectName, target));
             setState((s) => {
                 const metaKey = Object.keys(s.subjectMeta || {}).find(
                     (k) => subjectKey(k) === subjectKey(subjectName),
@@ -159,9 +181,9 @@ export function ExamsProvider({ children }) {
 
     // Wipe every exam AND subject — back to the "create your first subject" screen.
     async function clearAll() {
-        if (!confirm("למחוק את כל הבחינות?")) return;
+        if (!confirm("למחוק את כל המקצועות, הבחינות ונתוני התרגול? הפעולה אינה ניתנת לביטול.")) return;
         try {
-            await api.clearAll();
+            await saveQueue.run(() => api.clearAll());
             setState(emptyState());
         } catch (e) {
             console.error(e);
@@ -173,7 +195,7 @@ export function ExamsProvider({ children }) {
         // Optimistic so the inline input stays responsive while typing.
         setState((s) => ({ ...s, exams: s.exams.map((e) => (e.id === id ? { ...e, name } : e)) }));
         try {
-            await api.renameExam(id, name);
+            await saveQueue.run(() => api.renameExam(id, name));
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -181,6 +203,8 @@ export function ExamsProvider({ children }) {
     }
 
     async function updateQuestion(examId, qi, field, value) {
+        const questionId = state.exams.find((exam) => exam.id === examId)?.questions[qi]?.id;
+        if (questionId == null) return;
         setState((s) => ({
             ...s,
             exams: s.exams.map((exam) => {
@@ -197,7 +221,7 @@ export function ExamsProvider({ children }) {
             }),
         }));
         try {
-            await api.updateQuestion(examId, qi, field, value);
+            await saveQueue.run(() => api.updateQuestionById(examId, questionId, field, value));
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -206,6 +230,8 @@ export function ExamsProvider({ children }) {
 
     // Record an unsuccessful retry (stamps date to today and increments failCount).
     async function retryQuestion(examId, qi) {
+        const questionId = state.exams.find((exam) => exam.id === examId)?.questions[qi]?.id;
+        if (questionId == null) return;
         const today = todayStr();
         setState((s) => ({
             ...s,
@@ -268,7 +294,7 @@ export function ExamsProvider({ children }) {
         }));
 
         try {
-            const updated = await api.retryQuestion(examId, qi);
+            const updated = await saveQueue.run(() => api.retryQuestionById(examId, questionId), { retryable: false });
             if (updated) {
                 setState((s) => ({
                     ...s,
@@ -283,8 +309,10 @@ export function ExamsProvider({ children }) {
 
     // Add an empty sub-question to an exam (after index `afterIndex`, or at the end when null).
     async function addQuestion(examId, afterIndex) {
+        const afterQuestionId = afterIndex == null ? null : state.exams.find((exam) => exam.id === examId)?.questions[afterIndex]?.id;
+        if (afterIndex != null && afterQuestionId == null) return;
         try {
-            const updated = await api.addQuestion(examId, afterIndex ?? null);
+            const updated = await saveQueue.run(() => api.addQuestionById(examId, afterQuestionId), { retryable: false });
             setState((s) => ({
                 ...s,
                 exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
@@ -298,7 +326,7 @@ export function ExamsProvider({ children }) {
     // Add a new main question to an exam (at the end).
     async function addMainQuestion(examId) {
         try {
-            const updated = await api.addMainQuestion(examId);
+            const updated = await saveQueue.run(() => api.addMainQuestion(examId), { retryable: false });
             setState((s) => ({
                 ...s,
                 exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
@@ -314,7 +342,7 @@ export function ExamsProvider({ children }) {
     // Remove the last main question (and its sub-questions) from an exam.
     async function removeLastMainQuestion(examId) {
         try {
-            const updated = await api.removeLastMainQuestion(examId);
+            const updated = await saveQueue.run(() => api.removeLastMainQuestion(examId), { retryable: false });
             setState((s) => ({
                 ...s,
                 exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
@@ -330,14 +358,7 @@ export function ExamsProvider({ children }) {
     // Delete a question (e.g. sub-question) by question ID.
     async function deleteQuestion(examId, questionId) {
         try {
-            // Find the current position from the latest state right before the API call
-            const exam = state.exams.find((e) => e.id === examId);
-            if (!exam) return;
-
-            const position = exam.questions.findIndex((q) => q.id === questionId);
-            if (position === -1) return; // Already deleted
-
-            const updated = await api.deleteQuestion(examId, position);
+            const updated = await saveQueue.run(() => api.deleteQuestionById(examId, questionId));
             setState((s) => ({
                 ...s,
                 exams: s.exams.map((e) => (e.id === examId ? { ...updated, subject: e.subject } : e)),
@@ -356,7 +377,7 @@ export function ExamsProvider({ children }) {
         try {
             // The current API returns { subject, exams }; tolerate the legacy
             // bare-subject shape too so a stale backend can't crash the UI.
-            const res = await api.createSubject(trimmed, { examCount, studyStartDate, finalExamDate });
+            const res = await saveQueue.run(() => api.createSubject(trimmed, { examCount, studyStartDate, finalExamDate }));
             const subject = (res && res.subject) || res;
             const createdExams = Array.isArray(res?.exams)
                 ? res.exams.map((e) => ({ ...e, subject: e.subject || subject.name }))
@@ -379,9 +400,11 @@ export function ExamsProvider({ children }) {
                     },
                 };
             });
+            return true;
         } catch (e) {
             console.error(e);
             setError(e.message);
+            return false;
         }
     }
 
@@ -396,7 +419,7 @@ export function ExamsProvider({ children }) {
             },
         }));
         try {
-            await api.updateSubjectDates(name, { studyStartDate, finalExamDate });
+            await saveQueue.run(() => api.updateSubjectDates(name, { studyStartDate, finalExamDate }));
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -424,7 +447,7 @@ export function ExamsProvider({ children }) {
             };
         });
         try {
-            await api.renameSubject(oldName, trimmed);
+            await saveQueue.run(() => api.renameSubject(oldName, trimmed), { retryable: false });
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -450,7 +473,7 @@ export function ExamsProvider({ children }) {
             };
         });
         try {
-            await api.deleteSubject(name);
+            await saveQueue.run(() => api.deleteSubject(name));
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -467,6 +490,10 @@ export function ExamsProvider({ children }) {
             state,
             loading,
             error,
+            loadError,
+            saveStatus,
+            retrySave: saveQueue.retry,
+            reloadState: () => setLoadAttempt((attempt) => attempt + 1),
             addExam,
             removeExam,
             copyExamLayout,
@@ -485,7 +512,7 @@ export function ExamsProvider({ children }) {
             deleteSubject,
             setActiveSubject,
         }),
-        [state, loading, error],
+        [state, loading, error, loadError, saveStatus],
     );
 
     return <ExamsContext.Provider value={value}>{children}</ExamsContext.Provider>;

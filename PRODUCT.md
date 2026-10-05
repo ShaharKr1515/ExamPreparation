@@ -25,6 +25,8 @@ The distinguishing mechanism is coupling **per-question mastery state** with **a
 
 ## Operating Context
 
+- Desktop use is the intended workflow. Mobile adaptation is deferred.
+- The subject summary gives recommended deadlines and mastery gaps equal prominence.
 - Single local deployment. The student runs one instance against their own data; there are no accounts, logins, or sync.
 - Data lives in a local SQLite file (`data/exampreparation.db` by default). No cloud dependency.
 - Workflow: create subjects → set each subject's study-start and final-exam dates and planned exam count → add exams under a subject → drill the questions of each exam, marking success/failure, last-attempt date, and points → watch recommended due dates and per-question status to decide what to work on next.

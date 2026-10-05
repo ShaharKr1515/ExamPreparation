@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useExams } from "../context/ExamsContext.jsx";
+import SaveFeedback from "./SaveFeedback.jsx";
 
 /** Modal for creating a subject: name, number of exams to create, and the study dates. */
 export default function NewSubjectModal({ onClose }) {
@@ -9,40 +11,61 @@ export default function NewSubjectModal({ onClose }) {
     const [studyStartDate, setStudyStartDate] = useState("");
     const [finalExamDate, setFinalExamDate] = useState("");
     const [isClosing, setIsClosing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [creationError, setCreationError] = useState(false);
     const nameRef = useRef(null);
+    const dialogRef = useRef(null);
+    const closeTimer = useRef(null);
+    const titleId = useId();
 
     useEffect(() => {
+        const launcher = document.activeElement;
+        const dialog = dialogRef.current;
+        dialog.showModal();
         nameRef.current?.focus();
+        return () => {
+            clearTimeout(closeTimer.current);
+            dialog.close();
+            if (launcher?.isConnected) launcher.focus();
+        };
     }, []);
 
     const handleClose = () => {
-        if (isClosing) return;
+        if (isClosing || isSubmitting) return;
         setIsClosing(true);
-        setTimeout(() => {
+        closeTimer.current = setTimeout(() => {
             onClose();
         }, 180);
     };
 
-    // Close on Escape.
-    useEffect(() => {
-        function onKey(e) {
-            if (e.key === "Escape") handleClose();
-        }
-        document.addEventListener("keydown", onKey);
-        return () => document.removeEventListener("keydown", onKey);
-    }, [isClosing]);
-
-    function submit(e) {
+    async function submit(e) {
         e.preventDefault();
         const trimmed = name.trim();
-        if (!trimmed) return;
-        addSubject(trimmed, { examCount, studyStartDate, finalExamDate });
-        handleClose();
+        if (!trimmed || isSubmitting) return;
+        setIsSubmitting(true);
+        setCreationError(false);
+        const created = await addSubject(trimmed, { examCount, studyStartDate, finalExamDate });
+        setIsSubmitting(false);
+        if (created) onClose();
+        else setCreationError(true);
     }
 
-    return (
-        <div
+    return createPortal(
+        <dialog
+            ref={dialogRef}
+            aria-labelledby={titleId}
             className={`modal-backdrop ${isClosing ? "is-closing" : "is-entering"}`}
+            onCancel={(e) => { e.preventDefault(); handleClose(); }}
+            onKeyDown={(e) => {
+                if (e.key !== "Tab") return;
+                const controls = [...e.currentTarget.querySelectorAll("input:not(:disabled), button:not(:disabled)")];
+                const first = controls[0];
+                const last = controls[controls.length - 1];
+                if ((!e.shiftKey && document.activeElement === last) || (e.shiftKey && document.activeElement === first)) {
+                    e.preventDefault();
+                    (e.shiftKey ? last : first)?.focus();
+                }
+            }}
             onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
         >
             <form
@@ -50,7 +73,7 @@ export default function NewSubjectModal({ onClose }) {
                 onSubmit={submit}
                 aria-label="יצירת מקצוע חדש"
             >
-                <h2>מקצוע חדש</h2>
+                <h2 id={titleId}>מקצוע חדש</h2>
 
                 <label className="field">
                     <span>שם המקצוע</span>
@@ -61,6 +84,8 @@ export default function NewSubjectModal({ onClose }) {
                         onChange={(e) => setName(e.target.value)}
                         placeholder="למשל: מתמטיקה, אנגלית…"
                         aria-label="שם המקצוע"
+                        required
+                        disabled={isSubmitting}
                     />
                 </label>
 
@@ -73,6 +98,7 @@ export default function NewSubjectModal({ onClose }) {
                         value={examCount}
                         onChange={(e) => setExamCount(Math.max(0, Math.min(50, Number(e.target.value) || 0)))}
                         aria-label="מספר בחינות ליצירה"
+                        disabled={isSubmitting}
                     />
                 </label>
 
@@ -84,6 +110,7 @@ export default function NewSubjectModal({ onClose }) {
                             value={studyStartDate}
                             onChange={(e) => setStudyStartDate(e.target.value)}
                             aria-label="תאריך התחלת לימודים"
+                            disabled={isSubmitting}
                         />
                     </label>
 
@@ -94,15 +121,19 @@ export default function NewSubjectModal({ onClose }) {
                             value={finalExamDate}
                             onChange={(e) => setFinalExamDate(e.target.value)}
                             aria-label="תאריך בחינה סופית"
+                            min={studyStartDate || undefined}
+                            disabled={isSubmitting}
                         />
                     </label>
                 </div>
 
+                {isSubmitting && <SaveFeedback />}
+                {creationError && <p role="alert">לא ניתן ליצור את המקצוע. בדוק את השם והתאריכים ונסה שוב.</p>}
                 <div className="modal-actions">
-                    <button type="submit" className="btn primary">+ יצירת מקצוע</button>
-                    <button type="button" className="btn ghost" onClick={handleClose}>ביטול</button>
+                    <button type="submit" className="btn primary" disabled={isSubmitting}>{isSubmitting ? "יוצר מקצוע…" : "+ יצירת מקצוע"}</button>
+                    <button type="button" className="btn ghost" onClick={handleClose} disabled={isSubmitting}>ביטול</button>
                 </div>
             </form>
-        </div>
+        </dialog>, document.body
     );
 }

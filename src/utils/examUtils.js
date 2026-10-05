@@ -79,6 +79,48 @@ export function calculateExamTargetDates(studyStartDate, finalExamDate, examCoun
     return result;
 }
 
+/** Subject overview; question totals use the same logical problems as exam cards. */
+export function calculateStudySummary(exams = [], meta = {}, today = todayStr()) {
+    const counts = { yes: 0, half: 0, no: 0, unattempted: 0 };
+    const targetDates = calculateExamTargetDates(meta.studyStartDate, meta.finalExamDate, exams.length);
+    const todayDay = parseUtcDay(today);
+    let reviewQuestions = 0;
+    const pendingExams = [];
+
+    exams.forEach((exam, index) => {
+        const score = calculateExamScore(exam);
+        Object.keys(counts).forEach((key) => { counts[key] += score.counts[key]; });
+        if (score.totalMainQuestions > 0 && score.counts.yes < score.totalMainQuestions) {
+            pendingExams.push({ id: exam.id, name: exam.name || "", number: index + 1, dueDate: targetDates[index] });
+        }
+        const questions = exam.questions || [];
+        for (let i = 0; i < questions.length; i++) {
+            if (questions[i].sub) continue;
+            const sections = [];
+            for (let j = i + 1; j < questions.length && questions[j].sub; j++) sections.push(questions[j]);
+            const attempts = sections.length ? sections : [questions[i]];
+            if (attempts.some((q) => {
+                const day = parseUtcDay(q.date);
+                return q.success !== "yes" && day !== null && todayDay !== null && todayDay - day >= 3;
+            })) reviewQuestions++;
+        }
+    });
+
+    const totalQuestions = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    let scheduleState = "ready";
+    if (!exams.length) scheduleState = "no-exams";
+    else if (!meta.studyStartDate || !meta.finalExamDate) scheduleState = "missing-dates";
+    else if (targetDates.some((date) => !date)) scheduleState = "invalid-dates";
+    else if (!pendingExams.length) scheduleState = "complete";
+
+    const scheduled = pendingExams.filter((exam) => exam.dueDate);
+    return {
+        counts, totalQuestions, gaps: totalQuestions - counts.yes, reviewQuestions, scheduleState,
+        nextExam: scheduled[0] || null,
+        overdueExams: scheduled.filter((exam) => exam.dueDate < today).length,
+    };
+}
+
 /** Format YYYY-MM-DD as DD.MM.YYYY for display, or "" when invalid. */
 export function formatDisplayDate(dateStr) {
     const [y, m, d] = String(dateStr || "").split("-");
@@ -660,4 +702,3 @@ export function calculateExamScore(exam) {
         questionStatusMap,
     };
 }
-

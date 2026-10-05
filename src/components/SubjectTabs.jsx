@@ -75,6 +75,7 @@ export default function SubjectTabs({ newOpen, onNew }) {
                     data-subject={s}
                     aria-haspopup="menu"
                     aria-expanded={menuFor === s}
+                    aria-current={subjectKey(s) === subjectKey(state.activeSubject) ? "page" : undefined}
                     className={"subject-btn" + (subjectKey(s) === subjectKey(state.activeSubject) ? " active" : "")}
                     onClick={(e) => toggleMenu(e, s)}
                 >

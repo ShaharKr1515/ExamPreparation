@@ -65,7 +65,7 @@ export default function ExamCard({ exam, isEntering }) {
         .join(" ");
 
     return (
-        <div className={cardClass}>
+        <div id={`exam-${exam.id}`} className={cardClass}>
             {/* Header: Top bar (index badge + name input + delete button) & full-width due date strip */}
             <div className="card-head">
                 <div className="card-head-top">
