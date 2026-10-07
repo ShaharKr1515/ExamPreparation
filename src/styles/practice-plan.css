@@ -16,22 +16,23 @@
 .practice-lane-status { margin-inline-start: auto; font-size: 11px; font-weight: 500; white-space: nowrap; }
 .initial-lane .practice-lane-status { color: var(--accent); }
 .review-lane .practice-lane-status { color: var(--stale-ink); }
-.practice-links { display: flex; flex-wrap: wrap; gap: 8px; }
-.practice-link { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; max-width: 100%; padding: 9px 12px; border-radius: var(--radius-md); border: 1px solid transparent; text-decoration: none; font-size: 13px; line-height: 1.4; transition: background-color .16s ease, border-color .16s ease; }
+.practice-links { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 12px 8px; }
+.practice-link { display: inline-flex; align-items: center; gap: 9px; min-height: 58px; max-width: 100%; padding: 9px 12px; border-radius: var(--radius-md); border: 1px solid transparent; text-decoration: none; font-size: 13px; line-height: 1.4; transition: background-color .16s ease, border-color .16s ease; }
 .practice-link > svg { flex-shrink: 0; }
 .practice-link strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
 .initial-link { background: var(--accent-light); color: var(--accent); border-color: var(--accent-ring); }
 .initial-link.is-primary { background: var(--accent); color: var(--card); border-color: var(--accent); }
 .initial-link:hover { background: var(--accent-light); border-color: var(--accent); }
 .initial-link.is-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-.practice-link-action { font-size: 11px; font-weight: 400; padding-inline-start: 4px; }
 .review-link { background: var(--stale-bg); color: var(--stale-ink); border-color: var(--stale-line); }
 .review-link:hover { background: var(--stale-line); border-color: var(--stale-border-indicator); }
 .review-link.is-waiting { background: var(--card); border-color: var(--stale-line); }
 .review-link.is-waiting:hover { background: var(--stale-bg); }
 .practice-link-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .practice-link-copy small { font-size: 11px; font-weight: 400; }
-.practice-link-count { font-size: 11px; font-weight: 600; white-space: nowrap; padding-inline-start: 9px; border-inline-start: 1px solid var(--stale-line); }
+.practice-link-count { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; padding-inline-start: 9px; border-inline-start: 1px solid var(--stale-line); }
+.initial-link .practice-link-count { border-color: var(--accent-ring); }
+.initial-link.is-primary .practice-link-count { border-color: color-mix(in srgb, var(--card) 35%, transparent); }
 .practice-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .review-link:focus-visible { outline-color: var(--stale-ink); }
 .practice-lane-note { margin: 8px 0 0; color: var(--stale-ink); font-size: 11px; }

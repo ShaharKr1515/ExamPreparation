@@ -83,6 +83,9 @@ function Toolbar() {
     const visible = useVisibleExams();
     const active = state.activeSubject;
     const meta = (state.subjectMeta || {})[active] || {};
+    const count = visible.length || Number(meta.plannedExamCount) || 0;
+    const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
+    const intervalLabel = formatExamIntervalLabel(intervalDays);
 
     function setDates(studyStartDate, finalExamDate) {
         if (!active) return;
@@ -91,8 +94,11 @@ function Toolbar() {
 
     return (
         <section className="planning-panel" aria-labelledby="planning-title">
-            <div className="planning-heading"><h2 id="planning-title"><Icon name="calendar" />תוכנית הלמידה</h2></div>
-            <div className="toolbar">
+            <div className="planning-heading">
+                <h2 id="planning-title"><span className="planning-heading-icon"><Icon name="calendar" size={18} /></span>תוכנית הלמידה</h2>
+                {intervalLabel && <span className="planning-cadence"><Icon name="clock" size={16} />{intervalLabel}</span>}
+            </div>
+            <div className="toolbar planning-fields">
             <label className="date-control">
                 <span>תאריך התחלת לימודים</span>
                 <input
@@ -112,13 +118,6 @@ function Toolbar() {
                 />
             </label>
             <ExamCountControl subject={active} currentCount={visible.length} />
-            {/* How often an exam must be completed, derived from the same math as the due dates. */}
-            {(() => {
-                const count = visible.length || Number(meta.plannedExamCount) || 0;
-                const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
-                const label = formatExamIntervalLabel(intervalDays);
-                return label ? <span className="interval-hint"><Icon name="calendar" size={18} />{label}</span> : null;
-            })()}
             </div>
         </section>
     );

@@ -1,6 +1,6 @@
 import { useExams } from "../context/ExamsContext.jsx";
 import { useVisibleExams } from "../hooks/useVisibleExams.js";
-import { calculateStudySummary, calculateExamReviewCounts, daysUntil, formatDisplayDate } from "../utils/examUtils.js";
+import { calculateStudySummary, calculateExamScore, calculateExamReviewCounts, daysUntil, formatDisplayDate } from "../utils/examUtils.js";
 import Icon from "./Icon.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 import Tooltip from "./Tooltip.jsx";
@@ -27,6 +27,10 @@ export default function StudySummary() {
     const exams = useVisibleExams();
     const meta = state.subjectMeta[state.activeSubject] || {};
     const summary = calculateStudySummary(exams, meta);
+    const completionByExam = new Map(exams.map((exam) => {
+        const { answeredCount, totalMainQuestions } = calculateExamScore(exam);
+        return [exam.id, totalMainQuestions ? Math.round(answeredCount / totalMainQuestions * 100) : 0];
+    }));
     const upcoming = summary.upcomingReviewExams.filter((exam) => exam.dueDate === summary.nextReviewDate);
     const remainingDays = daysUntil(summary.nextReviewDate);
     const readyCount = summary.readyInitialExams.length;
@@ -54,10 +58,13 @@ export default function StudySummary() {
                     </div>
                     {readyCount ? <div className="practice-links">
                         {summary.readyInitialExams.map((exam, index) => (
-                            <a key={exam.id} href={`#exam-${exam.id}`} className={`practice-link initial-link${index === 0 ? " is-primary" : ""}`}>
+                            <a key={exam.id} href={`#exam-${exam.id}`} className={`practice-link initial-link${index === 0 ? " is-primary" : ""}`}
+                                aria-label={`${examName(exam)}: ${completionByExam.get(exam.id)}% מהשאלות נענו`}>
                                 <Icon name="play" size={18} />
-                                <strong>{examName(exam)}</strong>
-                                <span className="practice-link-action">להתחיל</span>
+                                <span className="practice-link-copy">
+                                    <strong>{examName(exam)}</strong>
+                                </span>
+                                <span className="practice-link-count"><bdi>{completionByExam.get(exam.id)}%</bdi></span>
                             </a>
                         ))}
                     </div> : <div className="practice-empty">

@@ -1,0 +1,20 @@
+.planning-panel { container-type: inline-size; }
+.planning-heading { align-items: center; flex-wrap: wrap; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.planning-heading-icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: var(--accent-light); border-radius: var(--radius-md); }
+.planning-heading .planning-heading-icon svg { color: var(--accent); }
+.planning-fields { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) 120px; gap: 20px; min-width: 0; }
+.planning-fields .date-control { min-width: 0; gap: 8px; }
+.planning-fields .date-control span { white-space: normal; line-height: 1.5; }
+.planning-fields .date-control input { width: 100%; min-width: 0; height: 42px; font-size: 14px; padding-inline: 12px; background: var(--card-subtle); }
+.planning-fields .date-control input:hover { border-color: var(--muted); }
+.planning-fields .date-control input:focus { background: var(--card); }
+.planning-heading .planning-cadence { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: var(--radius-sm); background: var(--accent-light); color: var(--accent); font-size: 13px; font-weight: 500; line-height: 1.5; }
+.planning-cadence svg { flex-shrink: 0; }
+@container (max-width: 470px) {
+    .planning-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 12px; }
+    .planning-fields .date-control:last-child { width: 84px; }
+    .planning-fields .date-control input { font-size: 13px; padding-inline: 8px; }
+}
+@container (max-width: 310px) {
+    .planning-fields { grid-template-columns: minmax(0, 1fr); }
+}
