@@ -11,6 +11,7 @@ import {
     distributeTimer,
     getEarliestDate,
     SUCCESS_LABELS,
+    questionHasRecordedData,
 } from "../utils/examUtils.js";
 import QuestionTimer from "./QuestionTimer.jsx";
 
@@ -232,6 +233,7 @@ function QuestionRow({
     isLastSub = false,
     isLastInGroup = false,
     isDropped = false,
+    defaultPoints,
     onDelete,
 }) {
     const { updateQuestion, retryQuestion } = useExams();
@@ -268,6 +270,9 @@ function QuestionRow({
     const effectivePointsValue = (shouldAnimateRestore && (q.points === "" || q.points == null) && restoredPoints)
         ? restoredPoints
         : (q.points ?? "");
+    const defaultPointsText = defaultPoints == null ? null : String(Math.round(defaultPoints * 100) / 100);
+    const pointsDescription = defaultPointsText == null ? `סכום נקודות הסעיפים: ${derivedPoints}`
+        : `ניקוד אוטומטי בחלוקה שווה: ${defaultPointsText}`;
     const effectiveTimerValue = (shouldAnimateRestore && !q.timerSeconds && restoredTimer)
         ? restoredTimer
         : (q.timerSeconds || 0);
@@ -519,12 +524,12 @@ function QuestionRow({
                     <div className="points-cell">
                         {hasSubQuestions ? (
                             <div
-                                className={`cell points points-sum-badge ${pointsPulse ? "sum-value-updated" : ""}`}
-                                title={`סכום נקודות הסעיפים: ${derivedPoints}`}
-                                aria-label={`סכום נקודות הסעיפים: ${derivedPoints}`}
+                                className={`cell points points-sum-badge ${defaultPointsText !== null ? "is-default-points" : ""} ${pointsPulse ? "sum-value-updated" : ""}`}
+                                title={pointsDescription}
+                                aria-label={pointsDescription}
                             >
                                 <span className="points-sum-label">סה״כ</span>
-                                <span className="points-sum-value">{derivedPoints}</span>
+                                <span className="points-sum-value">{defaultPointsText ?? derivedPoints}</span>
                                 <span className="points-sum-unit">נק'</span>
                             </div>
                         ) : (
@@ -532,10 +537,10 @@ function QuestionRow({
                                 type="number"
                                 min="0"
                                 inputMode="numeric"
-                                className={`cell points ${shouldAnimateRestore ? "cell-restore-enter" : ""}`}
-                                placeholder="נק'"
+                                className={`cell points ${defaultPointsText !== null ? "has-default-points" : ""} ${shouldAnimateRestore ? "cell-restore-enter" : ""}`}
+                                placeholder={defaultPointsText ?? "נק'"}
                                 value={effectivePointsValue}
-                                title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : undefined}
+                                title={isDropped ? "שאלה זו לא נכללת בשקלול הציון (בחירה: חושבו השאלות עם הניקוד הגבוה ביותר)" : defaultPointsText !== null ? pointsDescription : undefined}
                                 aria-label={`נקודות ל${labelInfo.aria}`}
                                 onChange={(e) => updateQuestion(exam.id, qi, "points", e.target.value)}
                             />
@@ -566,7 +571,7 @@ function QuestionRow({
 }
 
 /** The question table shown inside each exam card. */
-export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceActive = false }) {
+export default function QuestionTable({ exam, questionStatusMap = {}, defaultQuestionPoints = {}, isChoiceActive = false }) {
     const { deleteQuestion, addMainQuestion, removeLastMainQuestion } = useExams();
     const labels = getQuestionLabels(exam.questions);
 
@@ -610,6 +615,12 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
 
     const handleDeleteQuestion = async (qId, qi) => {
         if (exitingIds.has(qId)) return;
+        const question = exam.questions.find((q) => q.id === qId);
+        if (!question) return;
+        if (questionHasRecordedData(question)) {
+            const label = labels[qi]?.aria || "הסעיף";
+            if (!window.confirm(`למחוק את ${label}? הנתונים שהזנת בסעיף יימחקו.`)) return;
+        }
         setExitingIds((prev) => new Set([...prev, qId]));
 
         // Wait for exit animation
@@ -652,13 +663,7 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
         const affectedQuestions = exam.questions.slice(lastMainIndex);
 
         const hasSubQuestions = affectedQuestions.length > 1;
-        const hasData = affectedQuestions.some((q) => {
-            const hasSuccess = q.success !== "" && q.success != null;
-            const hasDate = q.date !== "" && q.date != null;
-            const hasPoints = q.points !== "" && q.points != null;
-            const hasTimer = Number(q.timerSeconds) > 0;
-            return hasSuccess || hasDate || hasPoints || hasTimer;
-        });
+        const hasData = affectedQuestions.some(questionHasRecordedData);
 
         if (hasSubQuestions || hasData) {
             const questionNumber = mainQuestions.length;
@@ -716,7 +721,7 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
                     <thead>
                         <tr>
                             {QUESTION_HEADERS.map((label) => (
-                                <th key={label}>{label}</th>
+                                <th key={label} scope="col">{label}</th>
                             ))}
                         </tr>
                     </thead>
@@ -784,6 +789,7 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
                                         isLastSub={false}
                                         isLastInGroup={group.subQuestions.length === 0}
                                         isDropped={isDropped}
+                                        defaultPoints={defaultQuestionPoints[group.mainQ.id]}
                                         onDelete={handleDeleteQuestion}
                                     />
                                     {group.subQuestions.map(({ q: subQ, qi: subQi }, subIdx) => {
@@ -816,6 +822,7 @@ export default function QuestionTable({ exam, questionStatusMap = {}, isChoiceAc
                                                 isLastSub={isLastSub}
                                                 isLastInGroup={isLastSub}
                                                 isDropped={false}
+                                                defaultPoints={defaultQuestionPoints[subQ.id]}
                                                 onDelete={handleDeleteQuestion}
                                             />
                                         );

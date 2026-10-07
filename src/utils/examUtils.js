@@ -2,6 +2,12 @@
 
 export const QUESTION_COUNT = 5;
 
+/** Recorded values warrant confirmation before a question is deleted. */
+export function questionHasRecordedData(question) {
+    return [question.success, question.date, question.points].some((value) => value !== "" && value != null)
+        || Number(question.timerSeconds) > 0 || Number(question.failCount) > 0;
+}
+
 /** Normalize a subject name for comparison (case/whitespace insensitive). */
 export function subjectKey(s) {
     return (s || "").trim().toLowerCase();
@@ -79,45 +85,80 @@ export function calculateExamTargetDates(studyStartDate, finalExamDate, examCoun
     return result;
 }
 
-/** Subject overview; question totals use the same logical problems as exam cards. */
+/** Subject overview; first attempts follow exam targets, retries follow the three-day wait. */
 export function calculateStudySummary(exams = [], meta = {}, today = todayStr()) {
     const counts = { yes: 0, half: 0, no: 0, unattempted: 0 };
     const targetDates = calculateExamTargetDates(meta.studyStartDate, meta.finalExamDate, exams.length);
     const todayDay = parseUtcDay(today);
     let reviewQuestions = 0;
-    const pendingExams = [];
+    const initialExams = [];
+    const practiceTargets = [];
 
     exams.forEach((exam, index) => {
         const score = calculateExamScore(exam);
         Object.keys(counts).forEach((key) => { counts[key] += score.counts[key]; });
-        if (score.totalMainQuestions > 0 && score.counts.yes < score.totalMainQuestions) {
-            pendingExams.push({ id: exam.id, name: exam.name || "", number: index + 1, dueDate: targetDates[index] });
-        }
+        const examTarget = { id: exam.id, name: exam.name || "", number: index + 1, dueDate: targetDates[index] };
+        let initialQuestions = 0;
+        let questionNumber = 0;
+        const reviewDates = [];
+        const reviewNumbers = [];
         const questions = exam.questions || [];
         for (let i = 0; i < questions.length; i++) {
             if (questions[i].sub) continue;
+            questionNumber++;
             const sections = [];
             for (let j = i + 1; j < questions.length && questions[j].sub; j++) sections.push(questions[j]);
             const attempts = sections.length ? sections : [questions[i]];
-            if (attempts.some((q) => {
-                const day = parseUtcDay(q.date);
-                return q.success !== "yes" && day !== null && todayDay !== null && todayDay - day >= 3;
-            })) reviewQuestions++;
+            const unfinished = attempts.filter((q) => q.success !== "yes");
+            if (unfinished.some((q) => parseUtcDay(q.date) === null)) initialQuestions++;
+            const retryDays = unfinished.map((q) => parseUtcDay(q.date))
+                .filter((day) => day !== null).map((day) => day + 3);
+            if (retryDays.length) {
+                const retryDay = Math.min(...retryDays);
+                reviewDates.push(dayToUtcStr(retryDay));
+                reviewNumbers.push(questionNumber);
+                if (todayDay !== null && retryDay <= todayDay) reviewQuestions++;
+            }
+        }
+        if (initialQuestions) {
+            initialExams.push(examTarget);
+            if (examTarget.dueDate) practiceTargets.push({ exam: examTarget, type: "initial", questions: initialQuestions });
+        }
+        if (reviewDates.length) {
+            const dueDate = reviewDates.reduce((earliest, date) => date < earliest ? date : earliest);
+            practiceTargets.push({
+                exam: { ...examTarget, dueDate }, type: "review",
+                questions: reviewDates.filter((date) => date <= today || date === dueDate).length,
+                questionNumbers: reviewNumbers.filter((number, index) => reviewDates[index] <= today || reviewDates[index] === dueDate),
+            });
         }
     });
 
+    // A future retry must not block initial practice that is already due.
+    practiceTargets.sort((a, b) => a.exam.dueDate.localeCompare(b.exam.dueDate)
+        || (a.type === b.type ? 0 : a.type === "review" ? -1 : 1));
+    const next = practiceTargets[0];
+    const reviewExams = practiceTargets.filter((target) => target.type === "review").map((target) => ({
+        ...target.exam, questionCount: target.questions, questionNumbers: target.questionNumbers,
+    }));
     const totalQuestions = Object.values(counts).reduce((sum, count) => sum + count, 0);
     let scheduleState = "ready";
     if (!exams.length) scheduleState = "no-exams";
+    else if (next) scheduleState = next.exam.dueDate > today ? "waiting" : "ready";
     else if (!meta.studyStartDate || !meta.finalExamDate) scheduleState = "missing-dates";
     else if (targetDates.some((date) => !date)) scheduleState = "invalid-dates";
-    else if (!pendingExams.length) scheduleState = "complete";
+    else scheduleState = "complete";
 
-    const scheduled = pendingExams.filter((exam) => exam.dueDate);
     return {
         counts, totalQuestions, gaps: totalQuestions - counts.yes, reviewQuestions, scheduleState,
-        nextExam: scheduled[0] || null,
-        overdueExams: scheduled.filter((exam) => exam.dueDate < today).length,
+        nextExam: next?.exam || null,
+        nextPracticeType: next?.type || null,
+        nextPracticeQuestions: next?.questions || 0,
+        readyInitialExams: initialExams.filter((exam) => exam.dueDate && exam.dueDate <= today),
+        readyReviewExams: reviewExams.filter((exam) => exam.dueDate <= today),
+        upcomingReviewExams: reviewExams.filter((exam) => exam.dueDate > today),
+        nextReviewDate: practiceTargets.find((target) => target.type === "review" && target.exam.dueDate > today)?.exam.dueDate || null,
+        overdueExams: initialExams.filter((exam) => exam.dueDate && exam.dueDate < today).length,
     };
 }
 
@@ -397,6 +438,27 @@ export function questionRowState(q) {
     return null;
 }
 
+/** Count main problems containing purple review questions, grouped by outcome. */
+export function calculateExamReviewCounts(exam, today = todayStr()) {
+    const counts = { yes: 0, half: 0, no: 0, unattempted: 0 };
+    const todayDay = parseUtcDay(today);
+    const questions = exam.questions || [];
+    for (let i = 0; i < questions.length; i++) {
+        const main = questions[i];
+        if (main.sub) continue;
+        const sections = [];
+        while (questions[i + 1]?.sub) sections.push(questions[++i]);
+        const attempts = sections.length ? sections : [main];
+        const success = sections.length ? deriveParentSuccess(sections) : main.success;
+        const needsReview = attempts.some((q) => {
+            const day = parseUtcDay(q.date);
+            return q.success !== "yes" && day !== null && todayDay !== null && todayDay - day >= 3;
+        });
+        if (needsReview) counts[success || "unattempted"]++;
+    }
+    return counts;
+}
+
 /**
  * Calculate the overall exam score and summary metrics.
  *
@@ -432,6 +494,7 @@ export function calculateExamScore(exam) {
             totalTimerSeconds: 0,
             counts: { yes: 0, half: 0, no: 0, unattempted: 0 },
             questionStatusMap: {},
+            defaultQuestionPoints: {},
         };
     }
 
@@ -463,6 +526,7 @@ export function calculateExamScore(exam) {
             totalTimerSeconds: 0,
             counts: { yes: 0, half: 0, no: 0, unattempted: 0 },
             questionStatusMap: {},
+            defaultQuestionPoints: {},
         };
     }
 
@@ -685,7 +749,19 @@ export function calculateExamScore(exam) {
         ? mainQuestionsData.filter((q) => questionStatusMap[q.id]?.isDropped)
         : [];
 
+    // Display the exact weights used by the score without storing them as edits.
+    const defaultQuestionPoints = {};
+    if (!hasAnyExplicitPoints) {
+        for (const question of mainQuestionsData) {
+            defaultQuestionPoints[question.id] = question.maxPoints;
+            for (const subId of question.subIds) {
+                defaultQuestionPoints[subId] = question.maxPoints / question.subIds.length;
+            }
+        }
+    }
+
     return {
+        defaultQuestionPoints,
         score: roundedScore,
         maxScore,
         displayScore: hasAnsweredAny ? String(roundedScore) : "—",

@@ -11,6 +11,31 @@ export default function ListPage() {
     const prevExamsRef = useRef(visible);
     const prevSubjectRef = useRef(state.activeSubject);
     const [enteringExamIds, setEnteringExamIds] = useState(() => new Set());
+    const [highlightedExamId, setHighlightedExamId] = useState(() => window.location.hash.slice(1));
+
+    useEffect(() => {
+        const highlightExamTarget = () => setHighlightedExamId(window.location.hash.slice(1));
+        const dismissExamTarget = (event) => {
+            const hash = window.location.hash;
+            if (!hash.startsWith("#exam-")) return;
+            const exam = document.getElementById(hash.slice(1));
+            if (!exam) return;
+            if (event.type === "keydown" && event.key !== "Escape") return;
+            if (event.type === "pointerdown" && exam.contains(event.target)) return;
+            // Explicit state clears the highlight even when the browser retains :target.
+            setHighlightedExamId(null);
+            window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+            if (document.activeElement === exam) exam.blur();
+        };
+        document.addEventListener("pointerdown", dismissExamTarget);
+        document.addEventListener("keydown", dismissExamTarget);
+        window.addEventListener("hashchange", highlightExamTarget);
+        return () => {
+            document.removeEventListener("pointerdown", dismissExamTarget);
+            document.removeEventListener("keydown", dismissExamTarget);
+            window.removeEventListener("hashchange", highlightExamTarget);
+        };
+    }, []);
 
     useEffect(() => {
         // If the active subject switched, don't animate existing exams
@@ -39,7 +64,11 @@ export default function ListPage() {
     }, [visible, state.activeSubject]);
 
     return (
-        <section>
+        <section className="exam-list-section" aria-labelledby="exam-list-title">
+            <div className="exam-list-heading">
+                <div><h2 id="exam-list-title">בחינות התרגול <span className="exam-list-count">{visible.length}</span></h2><p>עדכן את התוצאות בכל שאלה ועקוב אחר ההתקדמות שלך.</p></div>
+                <AddExamCard />
+            </div>
             <div className="table-card">
                 <div key={state.activeSubject} className="exam-grid exam-grid-enter">
                     {visible.map((exam) => (
@@ -47,15 +76,11 @@ export default function ListPage() {
                             key={exam.id}
                             exam={exam}
                             isEntering={enteringExamIds.has(exam.id)}
+                            isHighlighted={highlightedExamId === `exam-${exam.id}`}
                         />
                     ))}
-                    <AddExamCard
-                        key="add-exam-card"
-                        hasCardOnRight={visible.length % 2 === 1}
-                        examsCount={visible.length}
-                    />
                     {visible.length === 0 && (
-                        <div className="empty-msg">אין עדיין בחינות תחת המקצוע הזה — לחץ על כרטיס ה"+" להוספה.</div>
+                        <div className="exam-list-empty"><h3>התרגול הראשון מתחיל כאן</h3><p>הוסף בחינה, חלק אותה לשאלות והתחל לעקוב אחר התוצאות.</p></div>
                     )}
                 </div>
             </div>

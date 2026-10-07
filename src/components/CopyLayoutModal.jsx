@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useExams } from "../context/ExamsContext.jsx";
 import { computeSubQuestionsPointsSum } from "../utils/examUtils.js";
-import "../styles/copy-layout-modal.css";
 
 /**
  * Modal to copy an exam's questions layout (main questions, sub-questions, and points)
@@ -12,6 +11,8 @@ export default function CopyLayoutModal({ exam, examNumber, siblings = [], onClo
     const { copyExamLayout } = useExams();
     const [isClosing, setIsClosing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const dialogRef = useRef(null);
+    const closeTimer = useRef(null);
 
     // Candidates are all other exams in this subject
     const candidates = useMemo(() => {
@@ -60,19 +61,23 @@ export default function CopyLayoutModal({ exam, examNumber, siblings = [], onClo
     const handleClose = () => {
         if (isClosing) return;
         setIsClosing(true);
-        setTimeout(() => {
+        closeTimer.current = setTimeout(() => {
             onClose();
         }, 180);
     };
 
-    // Close on Escape
+    // Native modal behavior makes the workspace inert; return to the launcher on close.
     useEffect(() => {
-        function onKey(e) {
-            if (e.key === "Escape" && !isSubmitting) handleClose();
-        }
-        document.addEventListener("keydown", onKey);
-        return () => document.removeEventListener("keydown", onKey);
-    }, [isClosing, isSubmitting]);
+        const launcher = document.activeElement;
+        const dialog = dialogRef.current;
+        dialog.showModal();
+        dialog.querySelector("input, button")?.focus();
+        return () => {
+            clearTimeout(closeTimer.current);
+            dialog.close();
+            if (launcher?.isConnected) launcher.focus();
+        };
+    }, []);
 
     const toggleCandidate = (id) => {
         setSelectedIds((prev) => {
@@ -124,12 +129,22 @@ export default function CopyLayoutModal({ exam, examNumber, siblings = [], onClo
     );
 
     const modalContent = (
-        <div
+        <dialog
+            ref={dialogRef}
             className={`modal-backdrop ${isClosing ? "is-closing" : "is-entering"}`}
             onMouseDown={(e) => e.target === e.currentTarget && !isSubmitting && handleClose()}
-            role="dialog"
-            aria-modal="true"
             aria-labelledby="copy-modal-title"
+            onCancel={(e) => { e.preventDefault(); if (!isSubmitting) handleClose(); }}
+            onKeyDown={(e) => {
+                if (e.key !== "Tab") return;
+                const controls = [...e.currentTarget.querySelectorAll("input:not(:disabled), button:not(:disabled)")];
+                const first = controls[0];
+                const last = controls[controls.length - 1];
+                if ((!e.shiftKey && document.activeElement === last) || (e.shiftKey && document.activeElement === first)) {
+                    e.preventDefault();
+                    (e.shiftKey ? last : first)?.focus();
+                }
+            }}
         >
             <form
                 className={`copy-layout-modal ${isClosing ? "is-closing" : "is-entering"}`}
@@ -278,7 +293,7 @@ export default function CopyLayoutModal({ exam, examNumber, siblings = [], onClo
                     </button>
                 </div>
             </form>
-        </div>
+        </dialog>
     );
 
     return typeof document !== "undefined" ? createPortal(modalContent, document.body) : modalContent;

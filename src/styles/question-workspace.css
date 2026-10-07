@@ -1,0 +1,104 @@
+/* Rounded question groups retain the shared outcome washes and sub-question mechanics. */
+.q-table-wrap { container-type: inline-size; background: var(--card); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.q-table-header-wrap { padding: 10px 16px 6px; }
+.q-group-list { gap: 8px; padding: 0 16px 12px; }
+.q-group-box { border: 1px solid var(--question-group-line, var(--line-strong)); border-radius: var(--radius-lg); box-shadow: none; background: var(--card); transition: border-color .16s ease; }
+.q-group-box.group-ok { --question-group-line: var(--ok-line); }
+.q-group-box.group-bad { --question-group-line: var(--bad-line); }
+.q-group-box.group-half { --question-group-line: var(--half-line); }
+.q-group-box.group-stale { --question-group-line: var(--stale-line); }
+.q-group-box:hover, .q-group-box:is(.group-ok,.group-bad,.group-half,.group-stale):hover { border-color: var(--question-group-line, var(--line-strong)); box-shadow: none; }
+.q-group-box.group-dropped { border: 1px dashed var(--line); }
+/* Separate cell borders let the wash follow the corners without clipping tooltips. */
+.q-table { border-collapse: separate; border-spacing: 0; }
+.q-group-box tr:first-child td:first-child { border-start-start-radius: var(--radius-lg); }
+.q-group-box tr:first-child td:last-child { border-start-end-radius: var(--radius-lg); }
+.q-group-box tr:last-child td:first-child { border-end-start-radius: var(--radius-lg); }
+.q-group-box tr:last-child td:last-child { border-end-end-radius: var(--radius-lg); }
+.q-table th, .q-table td { font-size: .78rem; }
+.q-table th:nth-child(1), .q-table td:nth-child(1) { width: 72px; padding-inline: 4px; }
+.q-table th:nth-child(2), .q-table td:nth-child(2) { width: calc((100% - 72px) * .26); padding-inline: 6px; }
+.q-table th:nth-child(3), .q-table td:nth-child(3) { width: calc((100% - 72px) * .29); padding-inline: 6px; }
+.q-table th:nth-child(4), .q-table td:nth-child(4) { width: calc((100% - 72px) * .27); padding-inline: 6px; }
+.q-table th:nth-child(5), .q-table td:nth-child(5) { width: calc((100% - 72px) * .18); padding-inline: 6px; }
+.q-table thead th { font-size: .72rem; font-weight: 500; color: var(--muted); letter-spacing: normal; }
+.q-table tbody tr.row-main td { padding-block: 12px; }
+/* Preserve the established status meanings across the entire question row. */
+.q-table tbody tr.row-ok { --question-row-bg: var(--ok-bg); --question-row-ink: var(--ok-ink); --question-row-line: var(--ok-line); }
+.q-table tbody tr.row-bad { --question-row-bg: var(--bad-bg); --question-row-ink: var(--bad-ink); --question-row-line: var(--bad-line); }
+.q-table tbody tr.row-half { --question-row-bg: var(--half-bg); --question-row-ink: var(--half-ink); --question-row-line: var(--half-line); }
+.q-table tbody tr.row-stale { --question-row-bg: var(--stale-bg); --question-row-ink: var(--stale-ink); --question-row-line: var(--stale-line); }
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale) td { background: var(--question-row-bg); color: var(--question-row-ink); border-color: var(--question-row-line); }
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale):hover td { background: color-mix(in srgb, var(--question-row-bg) 94%, var(--question-row-ink)); }
+.q-table tbody tr.row-sub td { background: var(--card-subtle); border-color: var(--line); }
+.q-table tbody tr.row-sub:hover td { background: var(--card-subtle); }
+
+.q-table tbody tr.row-sub:is(.row-ok,.row-bad,.row-half,.row-stale) td:first-child { box-shadow: none; }
+.q-table tbody tr:not(.row-sub):hover:not(.row-ok):not(.row-bad):not(.row-half):not(.row-stale) td { background: var(--card-subtle); }
+.q-table .cell { height: 32px; border-color: var(--line); border-radius: var(--radius-sm); background: var(--card); font-size: .78rem; font-weight: 400; }
+.q-table input.cell.date, .q-table input.cell.points { background: transparent; border-color: var(--line); color: var(--ink-secondary); }
+.q-table tbody tr:is(.row-ok,.row-bad,.row-half,.row-stale) input.cell:is(.date,.points) { background: transparent; border-color: var(--question-row-line); color: var(--question-row-ink); }
+.q-table input.cell.date { direction: ltr; padding-inline: 4px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.q-table input.cell.date:hover, .q-table input.cell.points:hover { border-color: var(--line); background: var(--card); }
+.q-table .cell:focus { border-color: var(--accent); background-color: var(--card); box-shadow: none; outline: 2px solid var(--accent-ring); }
+.q-table select.cell { padding-inline-start: 4px; padding-inline-end: 19px; font-size: .76rem; }
+.q-table select.cell.ok { color: var(--ok-ink); background-color: var(--ok-bg); border-color: transparent; }
+.q-table select.cell.bad { color: var(--bad-ink); background-color: var(--bad-bg); border-color: transparent; }
+.q-table select.cell.half { color: var(--half-ink); background-color: var(--half-bg); border-color: transparent; }
+.q-table tbody tr.row-stale select.cell:is(.bad,.half) { color: var(--stale-ink); background-color: var(--stale-bg); border-color: transparent; }
+.q-num-val { border: 0; background: transparent; box-shadow: none; color: var(--ink-secondary); font-weight: 500; }
+.q-table tbody tr:is(.row-ok,.row-bad,.row-half,.row-stale) .q-num-val { background: transparent; border-color: transparent; color: var(--ink-secondary); }
+.q-fail-count-badge { background: var(--bad-ink); box-shadow: none; border-width: 1px; font-size: .6rem; }
+.retry-btn { box-shadow: none; border: 0; background: var(--stale-bg); }
+.retry-btn:hover { transform: none; box-shadow: none; background: var(--stale-line); }
+.timer-cell { gap: 4px; justify-content: center; }
+.timer-digits { direction: ltr; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink-secondary); font-weight: 400; }
+.timer-btn { width: 26px; height: 28px; border: 0; background: var(--card-subtle); color: var(--ink-secondary); box-shadow: none; }
+.timer-btn:hover:not(:disabled) { transform: none; box-shadow: none; }
+.timer-btn-start:hover { color: var(--accent); background: var(--accent-light); }
+.timer-btn-pause { color: var(--half-ink); background: var(--half-bg); }
+.timer-btn-reset { background: transparent; }
+.timer-btn-reset:disabled { opacity: .4; }
+.points-cell { gap: 3px; }
+.points-cell:has(.add-sub-btn:hover), .points-cell:has(.add-sub-btn:focus-visible) { gap: 3px; }
+.add-sub-btn { width: 24px; height: 28px; padding: 0; justify-content: center; flex-shrink: 0; }
+.add-sub-btn:hover { background: var(--accent-light); color: var(--accent); border-color: transparent; }
+.delete-sub-btn:hover { background: var(--bad-bg); color: var(--bad-ink); }
+.add-sub-btn .add-sub-label { display: none; }
+.points-cell .cell.points.points-sum-badge { border: 0; background: var(--card-subtle); font-size: .7rem; gap: 3px; padding-inline: 2px; }
+.points-sum-label, .points-sum-unit { font-size: .65rem; color: var(--muted); }
+.points-sum-value { color: var(--ink-secondary); }
+.timer-sum-badge { border: 0; background: transparent; gap: 4px; padding-inline: 3px; }
+.timer-sum-label { background: transparent; color: var(--muted); font-weight: 400; padding: 0; }
+.timer-sum-digits { direction: ltr; font-size: 11px; font-weight: 400; }
+.q-table tbody tr:is(.row-ok,.row-bad,.row-half,.row-stale) .timer-sum-badge { border: 0; background: transparent; }
+.q-table tbody tr:is(.row-ok,.row-bad,.row-half,.row-stale) .timer-sum-badge .timer-sum-label { background: transparent; color: var(--muted); }
+.status-sum-badge { border: 0; font-weight: 400; }
+.card-question-actions { justify-content: flex-start; gap: 8px; padding: 10px 18px; background: var(--card-subtle); border-top: 1px solid var(--line); }
+.question-count-btn { min-width: 32px; min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: none; color: var(--ink-secondary); font-size: .75rem; font-weight: 400; background: transparent; }
+.question-count-btn:is(.add-question-btn,.remove-question-btn):hover:not(:disabled) { background: var(--accent-light); color: var(--accent); border-color: var(--line-strong); box-shadow: none; }
+.question-count-btn.remove-question-btn:hover:not(:disabled) { background: var(--bad-bg); color: var(--bad-ink); }
+.question-count-btn:active:not(:disabled), .question-count-btn:is(.add-question-btn,.remove-question-btn):hover:not(:disabled) svg { transform: none; }
+.question-count-btn:disabled { color: var(--muted); opacity: .45; background: transparent; }
+
+/* Tint supporting data from the outcome ink, with neutral white controls for clarity. */
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale) :is(.q-num-val,.sub-q-indicator,.timer-digits,.timer-sum-digits,.timer-sum-label,.points-sum-label,.points-sum-value,.points-sum-unit,.add-sub-btn) { color: var(--question-row-ink); }
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale) select.cell { background-color: color-mix(in srgb, var(--question-row-bg) 65%, var(--card)); color: var(--question-row-ink); border-color: var(--question-row-line); }
+.q-table tbody tr.row-stale .status-sum-badge { background: var(--stale-bg); color: var(--stale-ink); }
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale) .timer-btn { background: var(--card); color: var(--question-row-ink); }
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale) .timer-btn-reset { background: transparent; }
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale) .timer-btn-pause { background: var(--half-bg); color: var(--half-ink); }
+.q-table tbody tr:is(.row-main,.row-sub):is(.row-ok,.row-bad,.row-half,.row-stale) .timer-btn-start:hover { background: var(--accent-light); color: var(--accent); }
+
+/* Compact exam cards reserve room for the complete Hebrew status and native date. */
+@container (max-width: 520px) {
+    .q-table th:nth-child(1), .q-table td:nth-child(1) { width: 64px; }
+    .q-table th:nth-child(2), .q-table td:nth-child(2) { width: 106px; }
+    .q-table th:nth-child(3), .q-table td:nth-child(3) { width: 122px; }
+    .q-table th:nth-child(4), .q-table td:nth-child(4) { width: 90px; }
+    .q-table th:nth-child(5), .q-table td:nth-child(5) { width: auto; }
+    .exam-card .q-table .timer-cell, .exam-card .points-cell { gap: 2px; }
+    .exam-card .q-table .timer-digits { min-width: 30px; font-size: 11px; }
+    .exam-card .q-table .timer-btn-reset { width: 16px; }
+    .exam-card .points-cell input.cell.points { min-width: 28px; }
+}

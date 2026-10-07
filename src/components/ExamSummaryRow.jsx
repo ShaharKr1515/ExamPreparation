@@ -1,5 +1,8 @@
 import { useMemo } from "react";
-import { calculateExamScore, formatTimer } from "../utils/examUtils.js";
+import { calculateExamScore, calculateExamReviewCounts, formatTimer } from "../utils/examUtils.js";
+import Icon from "./Icon.jsx";
+import Tooltip from "./Tooltip.jsx";
+import QuestionProgress, { QUESTION_OUTCOMES } from "./QuestionProgress.jsx";
 
 /**
  * Summary row displayed at the top of an exam card (under the header).
@@ -12,6 +15,8 @@ import { calculateExamScore, formatTimer } from "../utils/examUtils.js";
 export default function ExamSummaryRow({ exam, summary: propSummary }) {
     const calculated = useMemo(() => calculateExamScore(exam), [exam]);
     const summary = propSummary || calculated;
+    const reviewCounts = calculateExamReviewCounts(exam);
+    const reviewTotal = Object.values(reviewCounts).reduce((total, count) => total + count, 0);
 
     const {
         score,
@@ -23,7 +28,6 @@ export default function ExamSummaryRow({ exam, summary: propSummary }) {
         answeredCount,
         totalMainQuestions,
         chosenCount,
-        droppedCount,
         droppedLabels = [],
         totalTimerSeconds,
         counts,
@@ -49,7 +53,7 @@ export default function ExamSummaryRow({ exam, summary: propSummary }) {
         <div className="exam-summary-row" role="region" aria-label="סיכום בחינה">
             {/* Start (Right in RTL): Overall Score */}
             <div className="summary-section summary-score-section">
-                <span className="summary-label">ציון:</span>
+                <span className="summary-label">ציון</span>
                 <div
                     className={`summary-score-badge tone-${scoreTone}`}
                     title={
@@ -102,32 +106,47 @@ export default function ExamSummaryRow({ exam, summary: propSummary }) {
                     </span>
                 </div>
 
-                <span className="summary-divider" aria-hidden="true">·</span>
-
                 {/* Total time spent across questions */}
                 <div
                     className={`summary-stat-item ${totalTimerSeconds > 0 ? "has-time" : ""}`}
                     title={`זמן כולל שהושקע בבחינה: ${formatTimer(totalTimerSeconds)}`}
                     aria-label={`זמן כולל: ${formatTimer(totalTimerSeconds)}`}
                 >
-                    <svg
-                        className="stat-timer-icon"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                    >
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                    </svg>
-                    <span className="stat-value stat-timer">{formatTimer(totalTimerSeconds)}</span>
+                    <span className="stat-label">זמן תרגול</span>
+                    <span className="summary-time-value">
+                        <svg
+                            className="stat-timer-icon"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <span className="stat-value stat-timer">{formatTimer(totalTimerSeconds)}</span>
+                    </span>
                 </div>
             </div>
+            {totalMainQuestions > 0 && (
+                <div className="summary-progress">
+                    <QuestionProgress counts={counts} reviewCounts={reviewCounts} />
+                    <div className="summary-outcomes">
+                        {QUESTION_OUTCOMES.filter(({ key }) => counts[key] > 0).map(({ key, tone, label }) => (
+                            <span key={key} className={`summary-outcome outcome-${tone}`}>{counts[key]} {label}</span>
+                        ))}
+                        {reviewTotal > 0 && <Tooltip className="summary-review-count"
+                            text="הפס הסגול מציין שאלות שלא צלחו ומוכנות לחזרה">
+                            <Icon name="repeat" size={12} />{reviewTotal} לחזרה
+                        </Tooltip>}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -10,6 +10,7 @@ import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
 import ListPage from "./pages/ListPage.jsx";
 import SaveFeedback from "./components/SaveFeedback.jsx";
 import StudySummary from "./components/StudySummary.jsx";
+import Icon from "./components/Icon.jsx";
 
 /**
  * App shell: the header, subject tabs and the action toolbar
@@ -29,7 +30,7 @@ function AppShell() {
     // While the backend is hydrating, show a spinner instead of flashing "no subjects".
     // (Must come AFTER all hooks — early returns before hooks break React's rules.)
     if (loading) {
-        return <div className="wrap"><p className="empty-msg" role="status">טוען את נתוני התרגול…</p></div>;
+        return <div className="loading-workspace" role="status"><AppHeader /><p>טוען את נתוני התרגול…</p><div className="loading-line" /><div className="loading-panel" /></div>;
     }
 
     if (loadError) return (
@@ -43,31 +44,42 @@ function AppShell() {
     );
 
     return (
-        <div className="wrap">
-            <AppHeader />
-            <SaveFeedback />
-
-            {hasSubjects ? (
-                <>
-                    <SubjectTabs newOpen={subjectFormOpen} onNew={() => setSubjectFormOpen(true)} />
-
-                    <Toolbar />
-                    <StudySummary />
-
-                    {subjectFormOpen && <NewSubjectModal onClose={() => setSubjectFormOpen(false)} />}
-
-                    <ListPage />
-                </>
-            ) : (
-                <NoSubjectsScreen />
-            )}
+        <div className="app-shell">
+            <a className="skip-link" href="#study-workspace">דלג לתוכן</a>
+            <aside className="app-sidebar" aria-label="ניווט מקצועות">
+                <AppHeader />
+                {hasSubjects && <SubjectTabs newOpen={subjectFormOpen} onNew={() => setSubjectFormOpen(true)} />}
+                <div className="sidebar-footer"><Icon name="book" size={20} /><p>כל תרגול הוא צעד קדימה.<br /><span>המשך מהמקום שבו עצרת.</span></p></div>
+            </aside>
+            <main id="study-workspace" className="workspace" tabIndex={-1}>
+                <div className="workspace-topline"><SaveFeedback /></div>
+                {hasSubjects ? (
+                    <>
+                        <SubjectHeading />
+                        <Toolbar />
+                        <StudySummary />
+                        <ListPage />
+                    </>
+                ) : <NoSubjectsScreen />}
+            </main>
+            {subjectFormOpen && <NewSubjectModal onClose={() => setSubjectFormOpen(false)} />}
         </div>
     );
 }
 
-/** The action toolbar: subject-level study dates, exam count and "ניקוי הכול". */
+function SubjectHeading() {
+    const { state } = useExams();
+    const meta = state.subjectMeta[state.activeSubject] || {};
+    const countdown = formatExamCountdown(meta.finalExamDate);
+    return <header className="subject-heading">
+        <div><h1>{state.activeSubject}</h1><p>תכנון הלמידה, מעקב התקדמות ותרגול — במקום אחד.</p></div>
+        {countdown && <div className={`subject-countdown ${countdown.status}`}><Icon name="calendar" size={20} /><span>{countdown.label}</span></div>}
+    </header>;
+}
+
+/** Subject-level planning; destructive actions live in the sidebar. */
 function Toolbar() {
-    const { state, clearAll, updateSubjectDates } = useExams();
+    const { state, updateSubjectDates } = useExams();
     const visible = useVisibleExams();
     const active = state.activeSubject;
     const meta = (state.subjectMeta || {})[active] || {};
@@ -78,7 +90,9 @@ function Toolbar() {
     }
 
     return (
-        <div className="toolbar">
+        <section className="planning-panel" aria-labelledby="planning-title">
+            <div className="planning-heading"><h2 id="planning-title"><Icon name="calendar" />תוכנית הלמידה</h2></div>
+            <div className="toolbar">
             <label className="date-control">
                 <span>תאריך התחלת לימודים</span>
                 <input
@@ -103,21 +117,10 @@ function Toolbar() {
                 const count = visible.length || Number(meta.plannedExamCount) || 0;
                 const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
                 const label = formatExamIntervalLabel(intervalDays);
-                return label ? <span className="interval-hint">{label}</span> : null;
+                return label ? <span className="interval-hint"><Icon name="calendar" size={18} />{label}</span> : null;
             })()}
-            {/* Days remaining until the final exam */}
-            {(() => {
-                const countdown = formatExamCountdown(meta.finalExamDate);
-                return countdown ? (
-                    <span className={`exam-countdown-chip ${countdown.status}`}>
-                        {countdown.label}
-                    </span>
-                ) : null;
-            })()}
-            <button type="button" className="btn danger-ghost" onClick={clearAll}>
-                ניקוי הכול
-            </button>
-        </div>
+            </div>
+        </section>
     );
 }
 
