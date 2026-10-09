@@ -9,9 +9,8 @@ import Icon from "./Icon.jsx";
 
 function PlanDate({ label, value, onChange, final = false }) {
     return <label className={`date-control plan-date${final ? " plan-date-final" : ""}`}>
-        <span className="plan-date-label"><Icon name={final ? "calendar" : "book"} size={16} />{label}</span>
+        <span className="plan-date-label">{final ? "בחינה סופית" : "תחילת לימודים"}</span>
         <input type="date" aria-label={label} value={value || ""} onChange={(event) => onChange(event.target.value)} />
-        <span className="plan-date-caption">{final ? "היעד שלך" : "יוצאים לדרך"}</span>
     </label>;
 }
 
@@ -32,6 +31,8 @@ export default function LearningPlan() {
     const completed = timeline.exams.filter((exam) => exam.status === "answered" || exam.status === "mastered").length;
     const todayLabel = timeline.todayState === "before" ? "היום · לפני תחילת הלימודים"
         : timeline.todayState === "after" ? "היום · אחרי הבחינה" : "היום";
+    const todayContext = timeline.todayState === "before" ? "לפני תחילת הלימודים"
+        : timeline.todayState === "after" ? "אחרי הבחינה" : "";
     const updateDates = (field, value) => updateSubjectDates(active, {
         studyStartDate: meta.studyStartDate || "", finalExamDate: meta.finalExamDate || "", [field]: value,
     });
@@ -44,38 +45,41 @@ export default function LearningPlan() {
                 <ExamCountControl subject={active} currentCount={exams.length} />
             </div>
         </div>
-        <div className="plan-journey">
+        <div className="plan-period">
             <PlanDate label="תאריך התחלת לימודים" value={meta.studyStartDate} onChange={(value) => updateDates("studyStartDate", value)} />
+            <PlanDate label="תאריך בחינה סופית" value={meta.finalExamDate} onChange={(value) => updateDates("finalExamDate", value)} final />
+        </div>
+        <div className="plan-journey">
             <div className="plan-timeline-scroll" role="region" aria-label="ציר זמן של בחינות התרגול" tabIndex={0}>
-                {timeline.state === "ready" ? <div className="plan-timeline" style={{ minWidth: `${Math.max(320, exams.length * 88)}px` }}>
-                    <div className="plan-rail" aria-hidden="true">
-                        {timeline.todayPosition !== null && <span className="plan-rail-elapsed" style={{ width: `${timeline.todayPosition}%` }} />}
-                    </div>
-                    {timeline.todayPosition !== null && <div className={`plan-today${timeline.todayPosition < 12 ? " at-start" : timeline.todayPosition > 88 ? " at-end" : ""}`}
-                        style={{ insetInlineStart: `${timeline.todayPosition}%` }} aria-current="date">
-                        <span className="plan-today-label">{todayLabel}<time dateTime={today}>{formatDisplayDate(today).slice(0, 5)}</time></span>
-                        <span className="plan-today-line" aria-hidden="true" />
+                {timeline.state === "ready" ? <div className="plan-timeline" style={{ minWidth: `${Math.max(320, exams.length * 120)}px` }}>
+                    {timeline.todayPosition !== null && <div className="plan-today"
+                        style={{ "--today-position": `${timeline.todayPosition}%`, "--today-label-width": timeline.todayState === "before" ? "216px" : timeline.todayState === "after" ? "176px" : "84px" }}
+                        aria-current="date" aria-label={`${todayLabel}, ${formatDisplayDate(today)}`}>
+                        <span className="plan-today-label">
+                            <span className="plan-today-text">היום</span>
+                            <span className="plan-today-details">
+                                <time dateTime={today}>{formatDisplayDate(today).slice(0, 5)}</time>
+                                {todayContext && <span className="plan-today-context">{todayContext}</span>}
+                            </span>
+                        </span>
                     </div>}
                     <ol className="plan-milestones" aria-label="בחינות לפי סדר התרגול">
-                        {timeline.exams.map((exam, index) => <li key={exam.id} className={`plan-milestone is-${exam.status}`}
-                            style={{ insetInlineStart: `${exam.position}%` }}>
+                        {timeline.exams.map((exam, index) => <li key={exam.id} className={`plan-milestone is-${exam.status}`}>
+                            <QuestionProgress counts={exam.counts} reviewCounts={calculateExamReviewCounts(exams[index], today)} className="plan-exam-progress" />
                             <a className="plan-exam-link" href={`#exam-${exam.id}`}
                                 aria-label={`${exam.name}, יעד ${formatDisplayDate(exam.dueDate)}, ${exam.completion}% מהשאלות נענו`}>
-                                <span className="plan-exam-node">{exam.status === "mastered" ? <Icon name="check" size={14} /> : exam.number}</span>
                                 <strong className="plan-exam-name" title={exam.name}>{exam.name}</strong>
                                 <time className="plan-exam-date" dateTime={exam.dueDate}>{formatDisplayDate(exam.dueDate).slice(0, 5)}</time>
                             </a>
-                            <QuestionProgress counts={exam.counts} reviewCounts={calculateExamReviewCounts(exams[index], today)} className="plan-exam-progress" />
                             <span className="plan-exam-state">{exam.status === "mastered" ? "הושלמה בהצלחה" : exam.status === "answered" ? "המענה הושלם"
                                 : exam.status === "unstarted" ? "טרם התחילה" : <><bdi>{exam.completion}%</bdi> נענו</>}</span>
                         </li>)}
                     </ol>
-                    {!exams.length && <p className="plan-no-exams">הוסף בחינות כדי לבנות את ציר התרגול</p>}
+                    {!exams.length && <><div className="plan-empty-bar" aria-hidden="true" /><p className="plan-no-exams">הוסף בחינות כדי לבנות את ציר התרגול</p></>}
                 </div> : <div className="plan-timeline-empty"><Icon name="calendar" size={22} /><p>{timeline.state === "missing-dates"
                     ? "בחר תאריך התחלה ותאריך בחינה להצגת ציר התרגול"
                     : "תאריך הבחינה צריך להיות אחרי תחילת הלימודים"}</p></div>}
             </div>
-            <PlanDate label="תאריך בחינה סופית" value={meta.finalExamDate} onChange={(value) => updateDates("finalExamDate", value)} final />
         </div>
         <div className="plan-footer">
             <div className="plan-legend" aria-label="מקרא התקדמות">
