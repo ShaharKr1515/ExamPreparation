@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { ExamsProvider, useExams } from "./context/ExamsContext.jsx";
-import { examIntervalDays, formatExamIntervalLabel, formatExamCountdown } from "./utils/examUtils.js";
-import { useVisibleExams } from "./hooks/useVisibleExams.js";
+import { formatExamCountdown } from "./utils/examUtils.js";
 import AppHeader from "./components/AppHeader.jsx";
-import ExamCountControl from "./components/ExamCountControl.jsx";
+import LearningPlan from "./components/LearningPlan.jsx";
 import SubjectTabs from "./components/SubjectTabs.jsx";
 import NewSubjectModal from "./components/NewSubjectModal.jsx";
 import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
@@ -56,7 +55,7 @@ function AppShell() {
                 {hasSubjects ? (
                     <>
                         <SubjectHeading />
-                        <Toolbar />
+                        <LearningPlan />
                         <StudySummary />
                         <ListPage />
                     </>
@@ -75,52 +74,6 @@ function SubjectHeading() {
         <div><h1>{state.activeSubject}</h1><p>תכנון הלמידה, מעקב התקדמות ותרגול — במקום אחד.</p></div>
         {countdown && <div className={`subject-countdown ${countdown.status}`}><Icon name="calendar" size={20} /><span>{countdown.label}</span></div>}
     </header>;
-}
-
-/** Subject-level planning; destructive actions live in the sidebar. */
-function Toolbar() {
-    const { state, updateSubjectDates } = useExams();
-    const visible = useVisibleExams();
-    const active = state.activeSubject;
-    const meta = (state.subjectMeta || {})[active] || {};
-    const count = visible.length || Number(meta.plannedExamCount) || 0;
-    const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
-    const intervalLabel = formatExamIntervalLabel(intervalDays);
-
-    function setDates(studyStartDate, finalExamDate) {
-        if (!active) return;
-        updateSubjectDates(active, { studyStartDate, finalExamDate });
-    }
-
-    return (
-        <section className="planning-panel" aria-labelledby="planning-title">
-            <div className="planning-heading">
-                <h2 id="planning-title"><span className="planning-heading-icon"><Icon name="calendar" size={18} /></span>תוכנית הלמידה</h2>
-                {intervalLabel && <span className="planning-cadence"><Icon name="clock" size={16} />{intervalLabel}</span>}
-            </div>
-            <div className="toolbar planning-fields">
-            <label className="date-control">
-                <span>תאריך התחלת לימודים</span>
-                <input
-                    type="date"
-                    value={meta.studyStartDate || ""}
-                    onChange={(e) => setDates(e.target.value, meta.finalExamDate || "")}
-                    aria-label="תאריך התחלת לימודים"
-                />
-            </label>
-            <label className="date-control">
-                <span>תאריך בחינה סופית</span>
-                <input
-                    type="date"
-                    value={meta.finalExamDate || ""}
-                    onChange={(e) => setDates(meta.studyStartDate || "", e.target.value)}
-                    aria-label="תאריך בחינה סופית"
-                />
-            </label>
-            <ExamCountControl subject={active} currentCount={visible.length} />
-            </div>
-        </section>
-    );
 }
 
 export default function App() {

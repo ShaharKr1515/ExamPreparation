@@ -1,20 +1,52 @@
-.planning-panel { container-type: inline-size; }
-.planning-heading { align-items: center; flex-wrap: wrap; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
-.planning-heading-icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: var(--accent-light); border-radius: var(--radius-md); }
-.planning-heading .planning-heading-icon svg { color: var(--accent); }
-.planning-fields { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) 120px; gap: 20px; min-width: 0; }
-.planning-fields .date-control { min-width: 0; gap: 8px; }
-.planning-fields .date-control span { white-space: normal; line-height: 1.5; }
-.planning-fields .date-control input { width: 100%; min-width: 0; height: 42px; font-size: 14px; padding-inline: 12px; background: var(--card-subtle); }
-.planning-fields .date-control input:hover { border-color: var(--muted); }
-.planning-fields .date-control input:focus { background: var(--card); }
-.planning-heading .planning-cadence { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: var(--radius-sm); background: var(--accent-light); color: var(--accent); font-size: 13px; font-weight: 500; line-height: 1.5; }
-.planning-cadence svg { flex-shrink: 0; }
-@container (max-width: 470px) {
-    .planning-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 12px; }
-    .planning-fields .date-control:last-child { width: 84px; }
-    .planning-fields .date-control input { font-size: 13px; padding-inline: 8px; }
-}
-@container (max-width: 310px) {
-    .planning-fields { grid-template-columns: minmax(0, 1fr); }
-}
+.learning-plan .planning-heading { flex-wrap: wrap; gap: 14px; margin-bottom: 20px; }
+.plan-heading-controls { display: flex; align-items: center; gap: 20px; }
+.plan-cadence { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.plan-heading-controls .date-control { flex-direction: row; align-items: center; gap: 8px; }
+.plan-heading-controls input[type="number"] { width: 58px; height: 32px; padding: 4px 6px; font-size: 12px; }
+.plan-journey { position: relative; display: grid; grid-template-columns: 156px minmax(0, 1fr) 156px; align-items: start; gap: 18px; }
+.plan-journey::before { content: ""; position: absolute; top: 94px; inset-inline: 78px; height: 2px; background: var(--line-strong); }
+.learning-plan .plan-date { position: relative; min-height: 116px; margin-top: 36px; padding: 14px 12px; gap: 10px; background: var(--card-subtle); border: 1px solid var(--line); border-radius: var(--radius-md); }
+.learning-plan .plan-date-final { background: var(--accent-light); border-color: var(--accent-ring); }
+.plan-date .plan-date-label { display: flex; align-items: center; gap: 6px; font-size: 11px; white-space: nowrap; }
+.plan-date-label svg { flex-shrink: 0; color: var(--muted); }
+.plan-date-final .plan-date-label, .plan-date-final .plan-date-label svg { color: var(--accent); }
+.learning-plan .plan-date input[type="date"] { width: 100%; min-width: 0; height: 34px; padding: 4px 6px; font-size: 12px; background: var(--card); }
+.plan-date .plan-date-caption { color: var(--muted); font-size: 11px; }
+.plan-date-final .plan-date-caption { color: var(--accent); }
+.plan-timeline-scroll { position: relative; min-width: 0; overflow-x: auto; padding: 4px 8px 8px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.plan-timeline-scroll:focus-visible { border-radius: var(--radius-sm); }
+.plan-timeline { position: relative; height: 210px; margin-inline: 12px; }
+.plan-rail { position: absolute; top: 90px; inset-inline: 0; height: 2px; background: var(--line-strong); }
+.plan-rail-elapsed { display: block; height: 100%; background: var(--accent-ring); }
+.plan-today { position: absolute; top: 17px; bottom: 0; width: 0; pointer-events: none; z-index: 1; }
+.plan-today-label { position: absolute; inset-inline-start: 0; display: flex; align-items: center; gap: 6px; transform: translateX(50%); white-space: nowrap; padding: 4px 8px; border-radius: var(--radius-sm); background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; }
+.plan-today-label time { font-weight: 400; direction: ltr; font-variant-numeric: tabular-nums; }
+.plan-today.at-start .plan-today-label { transform: none; }
+.plan-today.at-end .plan-today-label { transform: translateX(100%); }
+.plan-today-line { position: absolute; top: 31px; height: 135px; border-inline-start: 1px dashed var(--accent); opacity: .65; }
+.plan-milestones { margin: 0; padding: 0; list-style: none; }
+.plan-milestone { position: absolute; top: 77px; width: 84px; transform: translateX(50%); text-align: center; z-index: 2; }
+.plan-exam-link { display: flex; flex-direction: column; align-items: center; color: var(--ink); text-decoration: none; border-radius: var(--radius-sm); }
+.plan-exam-node { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--card); color: var(--muted); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; transition: border-color .16s ease, background-color .16s ease, color .16s ease; }
+.is-started .plan-exam-node { color: var(--accent); border-color: var(--accent-ring); background: var(--accent-light); }
+.is-answered .plan-exam-node { color: var(--accent); border-color: var(--accent); }
+.is-mastered .plan-exam-node { color: var(--card); border-color: var(--ok-border-indicator); background: var(--ok-border-indicator); }
+.plan-exam-name { width: 100%; margin-top: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; background: var(--card); }
+.plan-exam-link:hover .plan-exam-name { color: var(--accent); text-decoration: underline; }
+.plan-exam-link:hover .plan-exam-node { border-color: var(--accent); }
+.plan-exam-date { margin-top: 2px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; direction: ltr; background: var(--card); }
+.plan-exam-progress { height: 7px; margin: 9px 6px 5px; border-radius: var(--radius-sm); }
+.plan-exam-progress .exam-progress-review { height: 3px; }
+.plan-exam-progress .exam-progress-segment + .exam-progress-segment { border-inline-start-width: 1px; }
+.plan-exam-state { display: inline-block; color: var(--muted); font-size: 11px; background: var(--card); font-variant-numeric: tabular-nums; }
+.is-mastered .plan-exam-state { color: var(--ok-ink); }
+.is-answered .plan-exam-state { color: var(--accent); }
+.plan-no-exams { position: absolute; top: 115px; inset-inline: 0; text-align: center; color: var(--muted); font-size: 12px; background: var(--card); }
+.plan-timeline-empty { position: relative; min-height: 210px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 8px; color: var(--muted); background: var(--card); }
+.plan-timeline-empty p { max-width: 32ch; margin: 0; font-size: 12px; line-height: 1.7; }
+.plan-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-top: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.plan-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.plan-legend-item { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+.plan-legend-item i { width: 12px; height: 5px; border-radius: var(--radius-sm); }
+.plan-legend-review { background: var(--stale-ink); }
+.plan-completion { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
