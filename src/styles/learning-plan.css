@@ -1,18 +1,20 @@
 .planning-panel.study-plan { padding: 0; margin-bottom: 26px; }
 .study-plan .learning-plan { padding: 16px 24px 12px; container-type: inline-size; container-name: learning-plan; }
-.plan-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; margin-bottom: 8px; }
-.plan-toolbar h2 { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--ink); font-size: 18px; font-weight: 600; white-space: nowrap; }
+.plan-toolbar { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; margin-bottom: 8px; padding-block: 4px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.plan-toolbar h2 { display: flex; flex-shrink: 0; align-items: center; gap: 8px; margin: 0; color: var(--ink); font-size: 18px; font-weight: 600; white-space: nowrap; }
 .plan-toolbar h2 svg { color: var(--muted); flex-shrink: 0; }
-.plan-cadence { display: flex; align-items: center; gap: 8px; max-width: 220px; margin-inline-start: auto; padding-inline-start: 20px; border-inline-start: 1px solid var(--line); color: var(--accent); font-size: 13px; font-weight: 500; line-height: 1.6; }
+.plan-cadence { display: flex; flex-shrink: 0; align-items: center; gap: 8px; margin-inline-start: auto; padding-inline-start: 20px; border-inline-start: 1px solid var(--line); color: var(--accent); font-size: 13px; font-weight: 500; line-height: 1.6; white-space: nowrap; }
 .plan-cadence svg { flex-shrink: 0; }
-.plan-controls { display: grid; grid-template-columns: repeat(2, 160px) 64px; align-items: start; gap: 16px; }
-.plan-controls .date-control { flex-direction: column; align-items: stretch; gap: 4px; }
+.plan-controls { display: flex; flex-shrink: 0; align-items: center; gap: 16px; }
+.plan-date-range { display: flex; align-items: center; gap: 8px; }
+.plan-date-arrow { flex-shrink: 0; color: var(--muted); }
+.plan-controls .date-control { flex-direction: row; align-items: center; gap: 8px; }
 .plan-controls .date-control > span { white-space: nowrap; }
 .plan-controls .date-control input { width: 100%; height: 36px; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--ink); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; caret-color: var(--accent); transition: border-color .16s ease, background-color .16s ease; }
-.plan-controls input[type="number"] { text-align: center; }
+.plan-controls input[type="date"] { width: 148px; }
+.plan-controls input[type="number"] { width: 64px; text-align: center; }
 .plan-journey { position: relative; min-width: 0; }
 .learning-plan .plan-date { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
-.learning-plan .plan-date-label { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .plan-controls .date-control input:hover { border-color: var(--accent); background: var(--card-subtle); }
 .plan-controls .date-control input:focus { background: var(--accent-light); }
 .plan-timeline-scroll { position: relative; min-width: 0; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
@@ -55,15 +57,15 @@
 .plan-completion { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-secondary); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .plan-completion bdi { color: var(--ink); font-weight: 600; }
 .plan-completion svg { flex-shrink: 0; }
-@container learning-plan (max-width: 820px) {
-    .plan-toolbar { display: grid; grid-template-columns: 1fr auto; gap: 12px 24px; }
-    .plan-controls { grid-column: 1 / -1; grid-row: 2; }
-    .plan-cadence { grid-column: 2; grid-row: 1; padding-inline-start: 0; border-inline-start: 0; }
+@container learning-plan (max-width: 900px) {
+    .plan-toolbar { gap: 12px; }
+    .plan-controls { gap: 12px; }
+    .plan-controls input[type="date"] { width: 136px; }
+    .plan-cadence { padding-inline-start: 12px; }
 }
 @media (max-width: 760px) {
     .study-plan .learning-plan { padding-inline: 16px; }
     .plan-footer { padding-inline: 16px; }
-    .plan-controls { grid-template-columns: repeat(2, minmax(128px, 1fr)) 64px; gap: 12px; max-width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
     .plan-controls .date-control input, .plan-milestone { transition: none; }

@@ -8,9 +8,8 @@ import QuestionProgress, { QUESTION_OUTCOMES } from "./QuestionProgress.jsx";
 import Icon from "./Icon.jsx";
 import StudySummary from "./StudySummary.jsx";
 
-function PlanDate({ label, value, onChange, final = false }) {
-    return <label className={`date-control plan-date${final ? " plan-date-final" : ""}`}>
-        <span className="plan-date-label">{final ? "בחינה סופית" : "תחילת לימודים"}</span>
+function PlanDate({ label, value, onChange }) {
+    return <label className="date-control plan-date">
         <input type="date" aria-label={label} value={value || ""} onChange={(event) => onChange(event.target.value)} />
     </label>;
 }
@@ -39,8 +38,11 @@ export default function LearningPlan() {
         <div className="plan-toolbar">
             <h2 id="planning-title"><Icon name="calendar" size={18} />תוכנית הלמידה</h2>
             <div className="plan-controls">
-                <PlanDate label="תאריך התחלת לימודים" value={meta.studyStartDate} onChange={(value) => updateDates("studyStartDate", value)} />
-                <PlanDate label="תאריך בחינה סופית" value={meta.finalExamDate} onChange={(value) => updateDates("finalExamDate", value)} final />
+                <div className="plan-date-range" role="group" aria-label="תקופת הלמידה">
+                    <PlanDate label="תאריך התחלת לימודים" value={meta.studyStartDate} onChange={(value) => updateDates("studyStartDate", value)} />
+                    <Icon name="arrow" size={18} className="plan-date-arrow" />
+                    <PlanDate label="תאריך בחינה סופית" value={meta.finalExamDate} onChange={(value) => updateDates("finalExamDate", value)} />
+                </div>
                 <ExamCountControl subject={active} currentCount={exams.length} />
             </div>
             {intervalLabel && <div className="plan-cadence"><Icon name="clock" size={18} /><span>{intervalLabel}</span></div>}
