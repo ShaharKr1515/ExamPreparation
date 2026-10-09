@@ -51,3 +51,28 @@ test("one unanswered question never rounds a large exam into full completion", (
     assert.equal(result.exams[0].completion, 99);
     assert.equal(result.exams[0].status, "started");
 });
+
+test("the pace target stays on the exam due next and advances only after its deadline", () => {
+    const exams = Array.from({ length: 6 }, (_, index) => exam(index + 1, [""]));
+    const plan = { studyStartDate: "2026-09-05", finalExamDate: "2026-10-27" };
+    for (const [today, expectedId] of [
+        ["2026-09-01", 1], ["2026-09-08", 1], ["2026-09-09", 2],
+        ["2026-10-09", 5], ["2026-10-11", 5], ["2026-10-12", 6],
+        ["2026-10-27", 6], ["2026-10-28", 6],
+    ]) {
+        assert.equal(calculateStudyTimeline(exams, plan, today).paceExamId, expectedId, today);
+    }
+});
+
+test("a shared deadline targets the last exam due that day without skipping completed targets", () => {
+    const exams = [exam(1, ["yes"]), exam(2, ["yes"]), exam(3, [""])];
+    const plan = { studyStartDate: "2026-10-09", finalExamDate: "2026-10-10" };
+    assert.equal(calculateStudyTimeline(exams, plan, "2026-10-09").paceExamId, 3);
+    assert.equal(calculateStudyTimeline(exams, meta, "2026-09-08").paceExamId, 1);
+});
+
+test("empty plans and invalid dates have no pace target", () => {
+    assert.equal(calculateStudyTimeline([], meta, "2026-10-09").paceExamId, null);
+    assert.equal(calculateStudyTimeline([exam(1, [""])], {}, "2026-10-09").paceExamId, null);
+    assert.equal(calculateStudyTimeline([exam(1, [""])], meta, "invalid").paceExamId, null);
+});

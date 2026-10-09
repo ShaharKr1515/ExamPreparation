@@ -1,9 +1,7 @@
 import { useExams } from "../context/ExamsContext.jsx";
 import { useVisibleExams } from "../hooks/useVisibleExams.js";
-import { calculateStudySummary, calculateExamScore, calculateExamReviewCounts, daysUntil, formatDisplayDate } from "../utils/examUtils.js";
+import { calculateStudySummary, calculateExamScore, daysUntil, formatDisplayDate } from "../utils/examUtils.js";
 import Icon from "./Icon.jsx";
-import QuestionProgress from "./QuestionProgress.jsx";
-import Tooltip from "./Tooltip.jsx";
 
 const examName = (exam) => exam.name || `בחינה ${exam.number}`;
 const questionCount = (count) => count === 1 ? "שאלה אחת" : `${count} שאלות`;
@@ -34,12 +32,6 @@ export default function StudySummary() {
     const upcoming = summary.upcomingReviewExams.filter((exam) => exam.dueDate === summary.nextReviewDate);
     const remainingDays = daysUntil(summary.nextReviewDate);
     const readyCount = summary.readyInitialExams.length;
-    const needsPractice = summary.counts.no + summary.counts.half;
-    const reviewCounts = exams.reduce((totals, exam) => {
-        const counts = calculateExamReviewCounts(exam);
-        Object.keys(totals).forEach((key) => { totals[key] += counts[key]; });
-        return totals;
-    }, { yes: 0, half: 0, no: 0, unattempted: 0 });
     const guidance = {
         "missing-dates": "הגדר תאריכי לימודים ובחינה לתכנון התרגול.",
         "invalid-dates": "תאריך הבחינה צריך להיות אחרי תחילת הלימודים.",
@@ -95,22 +87,6 @@ export default function StudySummary() {
                         </div>
                     </> : <div className="practice-empty"><Icon name="check" size={18} />אין שאלות שממתינות לחזרה</div>}
                 </div>
-            </div>
-
-            <div className="practice-progress">
-                <span className="practice-progress-title">שליטה בחומר</span>
-                {summary.totalQuestions > 0 ? <>
-                    <QuestionProgress className="practice-progress-track" counts={summary.counts} reviewCounts={reviewCounts} />
-                    <div className="practice-progress-stats">
-                        <span className="progress-stat-mastered"><Icon name="check" size={14} /><strong>{summary.counts.yes}</strong> בהצלחה</span>
-                        <span className="progress-stat-practice"><Icon name="repeat" size={14} /><strong>{needsPractice}</strong> לחיזוק</span>
-                        <span><Icon name="book" size={14} /><strong>{summary.counts.unattempted}</strong> טרם נענו</span>
-                        {summary.reviewQuestions > 0 && <Tooltip className="progress-stat-review"
-                            text="הפס הסגול מציין שאלות שלא צלחו ומוכנות לחזרה">
-                            <Icon name="repeat" size={14} /><strong>{summary.reviewQuestions}</strong> מוכנות לחזרה
-                        </Tooltip>}
-                    </div>
-                </> : <span className="practice-progress-empty">אין עדיין שאלות</span>}
             </div>
         </section>
     );

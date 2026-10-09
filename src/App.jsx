@@ -8,7 +8,6 @@ import NewSubjectModal from "./components/NewSubjectModal.jsx";
 import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
 import ListPage from "./pages/ListPage.jsx";
 import SaveFeedback from "./components/SaveFeedback.jsx";
-import StudySummary from "./components/StudySummary.jsx";
 import Icon from "./components/Icon.jsx";
 
 /**
@@ -55,8 +54,9 @@ function AppShell() {
                 {hasSubjects ? (
                     <>
                         <SubjectHeading />
-                        <LearningPlan />
-                        <StudySummary />
+                        <section className="planning-panel study-plan" aria-labelledby="planning-title">
+                            <LearningPlan />
+                        </section>
                         <ListPage />
                     </>
                 ) : <NoSubjectsScreen />}

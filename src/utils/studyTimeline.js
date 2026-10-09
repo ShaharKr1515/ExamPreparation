@@ -14,7 +14,7 @@ export function calculateStudyTimeline(exams = [], meta = {}, today = todayStr()
     const current = utcDay(today);
     const state = !meta.studyStartDate || !meta.finalExamDate ? "missing-dates"
         : start === null || end === null || end <= start ? "invalid-dates" : "ready";
-    if (state !== "ready") return { state, exams: [], todayPosition: null, todayState: null };
+    if (state !== "ready") return { state, exams: [], todayPosition: null, todayState: null, paceExamId: null };
 
     const targets = calculateExamTargetDates(meta.studyStartDate, meta.finalExamDate, exams.length);
     const milestones = exams.map((exam, index) => {
@@ -46,5 +46,10 @@ export function calculateStudyTimeline(exams = [], meta = {}, today = todayStr()
                 * (current - before.day) / (after.day - before.day);
         }
     }
-    return { state, exams: milestones, todayPosition, todayState };
+    // The pace target is an exam deadline, so it snaps to that exam rather than
+    // drifting between columns. All exams sharing a deadline are due together.
+    const nextDeadline = current === null ? null : milestones.find((exam) => utcDay(exam.dueDate) >= current)?.dueDate;
+    const paceExam = current === null ? null : nextDeadline
+        ? milestones.findLast((exam) => exam.dueDate === nextDeadline) : milestones.at(-1);
+    return { state, exams: milestones, todayPosition, todayState, paceExamId: paceExam?.id ?? null };
 }
