@@ -1,4 +1,4 @@
-import { calculateExamTargetDates, calculateExamScore, todayStr } from "./examUtils.js";
+import { calculateExamTargetDates, calculateExamScore, calculateExamReviewCounts, todayStr } from "./examUtils.js";
 
 function utcDay(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return null;
@@ -24,9 +24,12 @@ export function calculateStudyTimeline(exams = [], meta = {}, today = todayStr()
         const status = totalMainQuestions && counts.yes === totalMainQuestions ? "mastered"
             : totalMainQuestions && answeredCount === totalMainQuestions ? "answered"
             : answeredCount > 0 ? "started" : "unstarted";
+        const reviewCounts = calculateExamReviewCounts(exam, today);
+        const paceAction = Object.values(reviewCounts).some((count) => count > 0) ? "review"
+            : status === "mastered" || status === "answered" ? "complete" : "initial";
         return { id: exam.id, name: exam.name || `בחינה ${index + 1}`, number: index + 1,
             dueDate: targets[index], position: (index + 0.5) / exams.length * 100,
-            completion, status, counts, answeredCount, totalMainQuestions };
+            completion, status, counts, reviewCounts, paceAction, answeredCount, totalMainQuestions };
     });
 
     const todayState = current === null ? null : current < start ? "before" : current > end ? "after" : "within";

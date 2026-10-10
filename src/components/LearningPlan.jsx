@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
 import { useVisibleExams } from "../hooks/useVisibleExams.js";
-import { calculateExamReviewCounts, calculateStudySummary, examIntervalDays, formatExamIntervalLabel, formatDisplayDate, todayStr } from "../utils/examUtils.js";
+import { calculateStudySummary, examIntervalDays, formatExamIntervalLabel, formatDisplayDate, todayStr } from "../utils/examUtils.js";
 import { calculateStudyTimeline } from "../utils/studyTimeline.js";
 import ExamCountControl from "./ExamCountControl.jsx";
 import QuestionProgress, { QUESTION_OUTCOMES } from "./QuestionProgress.jsx";
@@ -51,13 +51,15 @@ export default function LearningPlan() {
             <div className="plan-timeline-scroll" role="region" aria-label="ציר זמן של בחינות התרגול" tabIndex={0}>
                 {timeline.state === "ready" ? <div className="plan-timeline" style={{ minWidth: `${Math.max(320, exams.length * 120)}px` }}>
                     <ol className="plan-milestones" aria-label="בחינות לפי סדר התרגול">
-                        {timeline.exams.map((exam, index) => <li key={exam.id} className={`plan-milestone is-${exam.status}`}>
+                        {timeline.exams.map((exam) => <li key={exam.id} className={`plan-milestone is-${exam.status}`}>
                             {exam.id === timeline.paceExamId && <span className="plan-pace-marker"
-                                aria-label={`${exam.name}: יעד להשלמה עד ${formatDisplayDate(exam.dueDate)} כדי לשמור על הקצב`}>
-                                <strong>{exam.status === "mastered" || exam.status === "answered" ? "היעד הושלם" : "להשלמה"}</strong>
+                                aria-label={exam.paceAction === "review" ? `${exam.name}: יש לחזור על השאלות והסעיפים הסגולים כדי לשמור על הקצב`
+                                    : exam.paceAction === "complete" ? `${exam.name}: היעד הושלם`
+                                    : `${exam.name}: יעד להשלמה עד ${formatDisplayDate(exam.dueDate)} כדי לשמור על הקצב`}>
+                                <strong>{exam.paceAction === "review" ? "חזרה על טעויות" : exam.paceAction === "complete" ? "היעד הושלם" : "להשלמה"}</strong>
                                 <span>לשמירה על הקצב</span>
                             </span>}
-                            <QuestionProgress counts={exam.counts} reviewCounts={calculateExamReviewCounts(exams[index], today)} className="plan-exam-progress" />
+                            <QuestionProgress counts={exam.counts} reviewCounts={exam.reviewCounts} className="plan-exam-progress" />
                             <a className="plan-exam-link" href={`#exam-${exam.id}`}
                                 aria-label={`${exam.name}, יעד ${formatDisplayDate(exam.dueDate)}, ${exam.completion}% מהשאלות נענו`}>
                                 <strong className="plan-exam-name" title={exam.name}>{exam.name}</strong>

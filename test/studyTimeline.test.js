@@ -15,6 +15,43 @@ test("milestones preserve exam targets and distinguish completion from mastery",
     assert.equal(result.exams[0].counts.no, 1);
 });
 
+test("an answered pace target still requires its purple questions to be reviewed", () => {
+    const exams = [1, 2].map((id) => exam(id, ["yes"]));
+    exams.push({ id: 3, questions: [
+        { success: "half", date: "2026-10-07" },
+        { success: "no", date: "2026-10-06" },
+        { success: "yes", date: "2026-09-01" },
+    ] });
+    exams.push(exam(4, [""]), exam(5, [""]));
+    const result = calculateStudyTimeline(exams,
+        { studyStartDate: "2026-09-05", finalExamDate: "2026-11-27" }, "2026-10-10");
+    assert.equal(result.paceExamId, 3);
+    assert.equal(result.exams[2].status, "answered");
+    assert.equal(result.exams[2].completion, 100);
+    assert.equal(result.exams[2].paceAction, "review");
+    assert.deepEqual(result.exams[2].reviewCounts, { yes: 0, half: 1, no: 1, unattempted: 0 });
+});
+
+test("the pace action changes when an unsuccessful section becomes purple", () => {
+    const exams = [{ id: 1, questions: [
+        { success: "yes", date: "2026-09-01" },
+        { sub: true, success: "yes", date: "2026-09-01" },
+        { sub: true, success: "no", date: "2026-10-07" },
+    ] }];
+    assert.equal(calculateStudyTimeline(exams, meta, "2026-10-09").exams[0].paceAction, "complete");
+    const ready = calculateStudyTimeline(exams, meta, "2026-10-10").exams[0];
+    assert.equal(ready.paceAction, "review");
+    assert.equal(ready.reviewCounts.half, 1);
+});
+
+test("mastered and unstarted pace targets keep their completion and initial practice actions", () => {
+    const result = calculateStudyTimeline([
+        { id: 1, questions: [{ success: "yes", date: "2026-09-01" }] },
+        exam(2, [""]),
+    ], meta, "2026-10-10");
+    assert.deepEqual(result.exams.map((item) => item.paceAction), ["complete", "initial"]);
+});
+
 test("today coincides with its exam and interpolates between neighboring targets", () => {
     const exams = Array.from({ length: 6 }, (_, index) => exam(index, [""]));
     const result = calculateStudyTimeline(exams, meta, "2026-10-09");
