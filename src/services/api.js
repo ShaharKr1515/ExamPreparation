@@ -14,7 +14,7 @@ async function request(path, options = {}) {
         } catch {
             /* non-JSON error body — keep the generic message */
         }
-        throw new Error(message);
+        throw Object.assign(new Error(message), { status: res.status });
     }
     // DELETE / clear-all return 204 or a JSON body; handle both.
     if (res.status === 204) return null;
@@ -120,4 +120,35 @@ export function deleteQuestion(examId, position) {
 
 export function clearAll() {
     return request("/api/clear-all", json({}));
+}
+
+// Structural edits shift positions. Resolve identities when the queued request runs.
+async function currentQuestion(examId, questionId) {
+    const state = await fetchState();
+    const exam = state.exams.find((item) => item.id === examId);
+    if (!exam) throw Object.assign(new Error("Exam no longer exists"), { status: 404 });
+    return { exam, position: exam.questions.findIndex((q) => q.id === questionId) };
+}
+
+async function questionPosition(examId, questionId) {
+    const { position } = await currentQuestion(examId, questionId);
+    if (position < 0) throw Object.assign(new Error("Question no longer exists"), { status: 404 });
+    return position;
+}
+
+export async function updateQuestionById(examId, questionId, field, value) {
+    return updateQuestion(examId, await questionPosition(examId, questionId), field, value);
+}
+
+export async function retryQuestionById(examId, questionId) {
+    return retryQuestion(examId, await questionPosition(examId, questionId));
+}
+
+export async function addQuestionById(examId, afterQuestionId) {
+    return addQuestion(examId, afterQuestionId == null ? null : await questionPosition(examId, afterQuestionId));
+}
+
+export async function deleteQuestionById(examId, questionId) {
+    const { exam, position } = await currentQuestion(examId, questionId);
+    return position < 0 ? exam : deleteQuestion(examId, position);
 }

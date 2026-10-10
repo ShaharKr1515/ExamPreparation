@@ -1,6 +1,6 @@
 /* ==========================================================================
    ExamPreparation — Main Stylesheet Manifest
-   Creative North Star: "The Focused Scholar's Desk"
+   Graphite navigation, paper workspace, blue actions
    ========================================================================== */
 
 /* Design Tokens & Base Shell */
@@ -12,12 +12,13 @@
 @import "./styles/header.css";
 @import "./styles/subject-tabs.css";
 @import "./styles/toolbar.css";
+@import "./styles/study-summary.css";
 
 /* Exam Cards & Grid */
 @import "./styles/exam-grid.css";
 @import "./styles/exam-card.css";
 @import "./styles/exam-summary.css";
-@import "./styles/add-exam-card.css";
+
 
 /* Question Table & Interactive Cells */
 @import "./styles/question-table.css";
@@ -28,6 +29,12 @@
 @import "./styles/subject-menu.css";
 @import "./styles/no-subjects.css";
 @import "./styles/new-subject-modal.css";
+@import "./styles/copy-layout-modal.css";
 
 /* Responsive & Accessibility */
 @import "./styles/responsive.css";
+@import "./styles/question-workspace.css";
+@import "./styles/workspace.css";
+@import "./styles/exam-workspace.css";
+@import "./styles/practice-plan.css";
+@import "./styles/learning-plan.css";

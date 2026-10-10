@@ -59,6 +59,8 @@ npm test
 npm run build
 ```
 
+`npm test` always uses an isolated in-memory SQLite database; integration tests never use the application's stored study data.
+
 ## Production
 
 Install exactly the locked dependencies, build the frontend, and start Express:

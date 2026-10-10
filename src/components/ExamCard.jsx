@@ -6,7 +6,7 @@ import CopyLayoutModal from "./CopyLayoutModal.jsx";
 import { calculateExamScore, calculateExamTargetDates, daysSince, dueLabel, formatDisplayDate, subjectKey } from "../utils/examUtils.js";
 
 /** A list-view card: editable name header + recommended due date + question table. */
-export default function ExamCard({ exam, isEntering }) {
+export default function ExamCard({ exam, isEntering, isHighlighted }) {
     const { state, renameExam, removeExam } = useExams();
     const [isExiting, setIsExiting] = useState(false);
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
@@ -58,6 +58,7 @@ export default function ExamCard({ exam, isEntering }) {
 
     const cardClass = [
         "exam-card",
+        isHighlighted ? "is-highlighted" : "",
         isEntering ? "exam-card-enter" : "",
         isExiting ? "exam-card-exit" : "",
     ]
@@ -65,7 +66,7 @@ export default function ExamCard({ exam, isEntering }) {
         .join(" ");
 
     return (
-        <div className={cardClass}>
+        <article id={`exam-${exam.id}`} className={cardClass} tabIndex={-1} aria-label={`בחינה ${examNumber || ""}`}>
             {/* Header: Top bar (index badge + name input + delete button) & full-width due date strip */}
             <div className="card-head">
                 <div className="card-head-top">
@@ -76,7 +77,7 @@ export default function ExamCard({ exam, isEntering }) {
                                 title={`בחינה מספר ${examNumber} מתוך ${siblings.length}`}
                                 aria-label={`בחינה ${examNumber}`}
                             >
-                                מבחן {examNumber}
+                                {examNumber}
                             </span>
                         )}
                     </div>
@@ -85,7 +86,7 @@ export default function ExamCard({ exam, isEntering }) {
                         <input
                             type="text"
                             className="cell exam-name"
-                            placeholder="שם הבחינה (למשל: 2024 מועד א')"
+                            placeholder={`שם בחינה ${examNumber || ""}`}
                             value={exam.name}
                             aria-label={`שם בחינה ${examNumber || ""}`}
                             onChange={(e) => renameExam(exam.id, e.target.value)}
@@ -171,8 +172,8 @@ export default function ExamCard({ exam, isEntering }) {
                                 </svg>
                             )}
                         </span>
-                        <span className="due-main">יעד מומלץ: <strong>{formatDisplayDate(dueDate)}</strong></span>
-                        {relLabel && <span className="due-rel">({relLabel})</span>}
+                        <span className="due-main">יעד מומלץ: <strong dir="ltr">{formatDisplayDate(dueDate)}</strong></span>
+                        {relLabel && <span className="due-rel">{relLabel}</span>}
                     </div>
                 )}
             </div>
@@ -183,6 +184,7 @@ export default function ExamCard({ exam, isEntering }) {
             <QuestionTable
                 exam={exam}
                 questionStatusMap={summary.questionStatusMap}
+                defaultQuestionPoints={summary.defaultQuestionPoints}
                 isChoiceActive={summary.isChoiceActive}
             />
 
@@ -194,6 +196,6 @@ export default function ExamCard({ exam, isEntering }) {
                     onClose={() => setIsCopyModalOpen(false)}
                 />
             )}
-        </div>
+        </article>
     );
 }

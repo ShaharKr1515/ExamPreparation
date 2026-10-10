@@ -804,14 +804,6 @@ td.q-num.q-num-sub::after {
 td.q-num.q-num-sub.q-num-sub-last::before,
 .q-table tbody tr.row-sub-last td.q-num.q-num-sub::before {
     bottom: 50%;
-    width: 14px;
-    border-bottom: 1px solid #cbd5e1;
-    border-bottom-inline-start-radius: 4px;
-}
-
-td.q-num.q-num-sub.q-num-sub-last::after,
-.q-table tbody tr.row-sub-last td.q-num.q-num-sub::after {
-    display: none;
 }
 
 /* Sub-question chip badge - compact and anchored to the tree rail */

@@ -1,0 +1,72 @@
+.planning-panel.study-plan { padding: 0; margin-bottom: 26px; }
+.study-plan .learning-plan { padding: 16px 24px 12px; container-type: inline-size; container-name: learning-plan; }
+.plan-toolbar { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; margin-bottom: 8px; padding-block: 4px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.plan-toolbar h2 { display: flex; flex-shrink: 0; align-items: center; gap: 8px; margin: 0; color: var(--ink); font-size: 18px; font-weight: 600; white-space: nowrap; }
+.plan-toolbar h2 svg { color: var(--muted); flex-shrink: 0; }
+.plan-cadence { display: flex; flex-shrink: 0; align-items: center; gap: 8px; margin-inline-start: auto; padding-inline-start: 20px; border-inline-start: 1px solid var(--line); color: var(--accent); font-size: 13px; font-weight: 500; line-height: 1.6; white-space: nowrap; }
+.plan-cadence svg { flex-shrink: 0; }
+.plan-controls { display: flex; flex-shrink: 0; align-items: center; gap: 16px; }
+.plan-date-range { display: flex; align-items: center; gap: 8px; }
+.plan-date-arrow { flex-shrink: 0; color: var(--muted); }
+.plan-controls .date-control { flex-direction: row; align-items: center; gap: 8px; }
+.plan-controls .date-control > span { white-space: nowrap; }
+.plan-controls .date-control input { width: 100%; height: 36px; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--ink); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; caret-color: var(--accent); transition: border-color .16s ease, background-color .16s ease; }
+.plan-controls input[type="date"] { width: 148px; }
+.plan-controls input[type="number"] { width: 64px; text-align: center; }
+.plan-journey { position: relative; min-width: 0; }
+.learning-plan .plan-date { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.plan-controls .date-control input:hover { border-color: var(--accent); background: var(--card-subtle); }
+.plan-controls .date-control input:focus { background: var(--accent-light); }
+.plan-timeline-scroll { position: relative; min-width: 0; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.plan-timeline-scroll:focus-visible { border-radius: var(--radius-sm); }
+.plan-timeline { position: relative; min-height: 148px; padding-top: 48px; }
+.plan-pace-marker { position: absolute; bottom: 100%; inset-inline: 0; margin-inline: auto; width: max-content; max-width: calc(100% - 12px); display: flex; flex-direction: column; align-items: center; gap: 0; padding: 5px 10px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; color: var(--card); background: var(--accent); text-align: center; line-height: 16px; z-index: 2; }
+.plan-pace-marker strong { font-size: 12px; font-weight: 600; }
+.plan-pace-marker > span { font-size: 11px; white-space: nowrap; }
+.plan-milestones { display: flex; margin: 0; padding: 0; list-style: none; }
+.plan-milestone { position: relative; flex: 1; min-width: 0; padding-bottom: 6px; text-align: center; transition: background-color .16s ease; }
+.plan-milestone:has(.plan-exam-link:hover, .plan-exam-link:focus-visible) { background: var(--card-subtle); }
+.plan-milestone + .plan-milestone::before { content: ""; position: absolute; top: 30px; bottom: 6px; right: 0; transform: translateX(50%); width: 1px; border-radius: 1px; background: var(--line); pointer-events: none; }
+.plan-milestone + .plan-milestone::after { content: ""; position: absolute; top: -4px; right: 0; transform: translateX(50%); width: 2px; height: 28px; border-radius: 1px; background: var(--muted); pointer-events: none; z-index: 1; }
+.plan-exam-link { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-inline: 4px; padding: 12px 6px 2px; color: var(--ink); text-decoration: none; text-underline-offset: 3px; border-radius: var(--radius-sm); }
+.plan-exam-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.plan-exam-link:hover .plan-exam-name { color: var(--accent); text-decoration: underline; }
+.plan-exam-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.plan-exam-date { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; direction: ltr; }
+.plan-exam-progress { height: 20px; margin: 0 4px; border-radius: var(--radius-sm); }
+.plan-milestone:first-child .plan-exam-progress { margin-inline-start: 0; }
+.plan-milestone:last-child .plan-exam-progress { margin-inline-end: 0; }
+.plan-exam-progress .exam-progress-review { height: 6px; }
+.plan-exam-progress .exam-progress-segment + .exam-progress-segment { border-inline-start-width: 1px; }
+.plan-exam-state { display: block; margin-top: 4px; padding-inline: 6px; color: var(--muted); font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.is-mastered .plan-exam-state { color: var(--ok-ink); }
+.is-answered .plan-exam-state { color: var(--accent); }
+.plan-no-exams { position: absolute; top: 91px; inset-inline: 0; text-align: center; color: var(--muted); font-size: 12px; background: var(--card); }
+.plan-empty-bar { position: absolute; top: 48px; inset-inline: 0; height: 20px; border-radius: var(--radius-sm); background: var(--line); }
+.plan-timeline-empty { position: relative; min-height: 144px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 8px; color: var(--muted); background: var(--card); }
+.plan-timeline-empty p { max-width: 32ch; margin: 0; font-size: 12px; line-height: 1.7; }
+.plan-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; padding: 10px 24px; border-top: 1px solid var(--line); border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: var(--card-subtle); }
+.plan-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin-inline-start: auto; }
+.plan-legend-item { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.plan-legend-item strong { font-weight: 600; font-variant-numeric: tabular-nums; }
+.plan-legend-item.outcome-ok { color: var(--ok-ink); }
+.plan-legend-item.outcome-half { color: var(--half-ink); }
+.plan-legend-item.outcome-bad { color: var(--bad-ink); }
+.plan-legend-item.outcome-review { color: var(--stale-ink); }
+.plan-legend-item svg { flex-shrink: 0; }
+.plan-completion { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-secondary); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plan-completion bdi { color: var(--ink); font-weight: 600; }
+.plan-completion svg { flex-shrink: 0; }
+@container learning-plan (max-width: 900px) {
+    .plan-toolbar { gap: 12px; }
+    .plan-controls { gap: 12px; }
+    .plan-controls input[type="date"] { width: 136px; }
+    .plan-cadence { padding-inline-start: 12px; }
+}
+@media (max-width: 760px) {
+    .study-plan .learning-plan { padding-inline: 16px; }
+    .plan-footer { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .plan-controls .date-control input, .plan-milestone { transition: none; }
+}

@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { ExamsProvider, useExams } from "./context/ExamsContext.jsx";
-import { examIntervalDays, formatExamIntervalLabel, formatExamCountdown } from "./utils/examUtils.js";
-import { useVisibleExams } from "./hooks/useVisibleExams.js";
+import { formatExamCountdown } from "./utils/examUtils.js";
 import AppHeader from "./components/AppHeader.jsx";
-import ExamCountControl from "./components/ExamCountControl.jsx";
+import LearningPlan from "./components/LearningPlan.jsx";
 import SubjectTabs from "./components/SubjectTabs.jsx";
 import NewSubjectModal from "./components/NewSubjectModal.jsx";
 import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
 import ListPage from "./pages/ListPage.jsx";
+import SaveFeedback from "./components/SaveFeedback.jsx";
+import Icon from "./components/Icon.jsx";
 
 /**
  * App shell: the header, subject tabs and the action toolbar
  * (subject-level study dates, exam count, "ניקוי הכול") above the list of exams.
  */
 function AppShell() {
-    const { state, loading } = useExams();
+    const { state, loading, loadError, reloadState } = useExams();
     const [subjectFormOpen, setSubjectFormOpen] = useState(false);
 
     const hasSubjects = state.subjects.length > 0;
@@ -27,87 +28,52 @@ function AppShell() {
     // While the backend is hydrating, show a spinner instead of flashing "no subjects".
     // (Must come AFTER all hooks — early returns before hooks break React's rules.)
     if (loading) {
-        return <div className="wrap"><p className="empty-msg">טוען…</p></div>;
+        return <div className="loading-workspace" role="status"><AppHeader /><p>טוען את נתוני התרגול…</p><div className="loading-line" /><div className="loading-panel" /></div>;
     }
 
-    return (
+    if (loadError) return (
         <div className="wrap">
             <AppHeader />
+            <div className="save-feedback has-error load-error" role="alert">
+                <span>לא ניתן לטעון את נתוני התרגול. נסה לטעון אותם שוב.</span>
+                <button type="button" className="btn ghost" onClick={reloadState}>טעינה מחדש</button>
+            </div>
+        </div>
+    );
 
-            {hasSubjects ? (
-                <>
-                    <SubjectTabs newOpen={subjectFormOpen} onNew={() => setSubjectFormOpen(true)} />
-
-                    <Toolbar />
-
-                    {subjectFormOpen && <NewSubjectModal onClose={() => setSubjectFormOpen(false)} />}
-
-                    <ListPage />
-                </>
-            ) : (
-                <NoSubjectsScreen />
-            )}
+    return (
+        <div className="app-shell">
+            <a className="skip-link" href="#study-workspace">דלג לתוכן</a>
+            <aside className="app-sidebar" aria-label="ניווט מקצועות">
+                <AppHeader />
+                {hasSubjects && <SubjectTabs newOpen={subjectFormOpen} onNew={() => setSubjectFormOpen(true)} />}
+                <div className="sidebar-footer"><Icon name="book" size={20} /><p>כל תרגול הוא צעד קדימה.<br /><span>המשך מהמקום שבו עצרת.</span></p></div>
+            </aside>
+            <main id="study-workspace" className="workspace" tabIndex={-1}>
+                <div className="workspace-topline"><SaveFeedback /></div>
+                {hasSubjects ? (
+                    <>
+                        <SubjectHeading />
+                        <section className="planning-panel study-plan" aria-labelledby="planning-title">
+                            <LearningPlan />
+                        </section>
+                        <ListPage />
+                    </>
+                ) : <NoSubjectsScreen />}
+            </main>
+            {subjectFormOpen && <NewSubjectModal onClose={() => setSubjectFormOpen(false)} />}
         </div>
     );
 }
 
-/** The action toolbar: subject-level study dates, exam count and "ניקוי הכול". */
-function Toolbar() {
-    const { state, clearAll, updateSubjectDates } = useExams();
-    const visible = useVisibleExams();
-    const active = state.activeSubject;
-    const meta = (state.subjectMeta || {})[active] || {};
-
-    function setDates(studyStartDate, finalExamDate) {
-        if (!active) return;
-        updateSubjectDates(active, { studyStartDate, finalExamDate });
-    }
-
-    return (
-        <div className="toolbar">
-            <label className="date-control">
-                <span>תאריך התחלת לימודים</span>
-                <input
-                    type="date"
-                    value={meta.studyStartDate || ""}
-                    onChange={(e) => setDates(e.target.value, meta.finalExamDate || "")}
-                    aria-label="תאריך התחלת לימודים"
-                />
-            </label>
-            <label className="date-control">
-                <span>תאריך בחינה סופית</span>
-                <input
-                    type="date"
-                    value={meta.finalExamDate || ""}
-                    onChange={(e) => setDates(meta.studyStartDate || "", e.target.value)}
-                    aria-label="תאריך בחינה סופית"
-                />
-            </label>
-            <ExamCountControl subject={active} currentCount={visible.length} />
-            {/* How often an exam must be completed, derived from the same math as the due dates. */}
-            {(() => {
-                const count = visible.length || Number(meta.plannedExamCount) || 0;
-                const intervalDays = examIntervalDays(meta.studyStartDate, meta.finalExamDate, count);
-                const label = formatExamIntervalLabel(intervalDays);
-                return label ? <span className="interval-hint">{label}</span> : null;
-            })()}
-            {/* Days remaining until the final exam */}
-            {(() => {
-                const countdown = formatExamCountdown(meta.finalExamDate);
-                return countdown ? (
-                    <span className={`exam-countdown-chip ${countdown.status}`}>
-                        {countdown.label}
-                    </span>
-                ) : null;
-            })()}
-            <span className="count">
-                {visible.length === 1 ? "בחינה אחת" : `${visible.length} בחינות`}
-            </span>
-            <button type="button" className="btn danger-ghost" onClick={clearAll}>
-                ניקוי הכול
-            </button>
-        </div>
-    );
+function SubjectHeading() {
+    const { state } = useExams();
+    const meta = state.subjectMeta[state.activeSubject] || {};
+    const countdown = formatExamCountdown(meta.finalExamDate);
+    return <header className="subject-heading">
+        <div><h1>{state.activeSubject}</h1><p>תכנון הלמידה, מעקב התקדמות ותרגול — במקום אחד.</p></div>
+        {countdown && <div className={`subject-countdown ${countdown.status}`}><Icon name="calendar" size={20} /><span>{countdown.label}</span></div>}
+    </header>;
 }
 
 export default function App() {

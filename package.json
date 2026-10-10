@@ -9,7 +9,7 @@
         "preview": "vite preview --port 3000",
         "start": "node backend/server.js",
         "server:dev": "node --watch backend/server.js",
-        "test": "node --test --test-concurrency=1 test/*.test.js"
+        "test": "node --import ./test/setup.js --test --test-concurrency=1 test/*.test.js"
     },
     "engines": {
         "node": ">=24"

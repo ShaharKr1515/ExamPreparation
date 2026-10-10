@@ -12,6 +12,13 @@
 
 html {
     color-scheme: light;
+    overflow: hidden;
+}
+
+/* An RTL scroll container consistently places the page scrollbar on the left. */
+#root {
+    height: 100dvh;
+    overflow: auto;
 }
 
 body {

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useExams } from "../context/ExamsContext.jsx";
 import { subjectKey } from "../utils/examUtils.js";
+import Icon from "./Icon.jsx";
 
 /** The tab bar: one tab per subject + the "+ מקצוע חדש" button. */
 export default function SubjectTabs({ newOpen, onNew }) {
-    const { state, setActiveSubject, renameSubject, deleteSubject } = useExams();
+    const { state, setActiveSubject, deleteSubject, clearAll } = useExams();
     // Which subject's popup menu is open (null = closed).
     const [menuFor, setMenuFor] = useState(null);
     const [isMenuClosing, setIsMenuClosing] = useState(false);
@@ -26,18 +28,11 @@ export default function SubjectTabs({ newOpen, onNew }) {
             closeMenu();
             return;
         }
-        // First click on an inactive tab only switches to it — the menu opens
-        // on a second click of the already-active tab.
-        if (subjectKey(subject) !== subjectKey(state.activeSubject)) {
-            setActiveSubject(subject);
-            closeMenu();
-            return;
-        }
         setIsMenuClosing(false);
         const rect = e.currentTarget.getBoundingClientRect();
         // Flip above the tab when there isn't room below.
-        const top = window.innerHeight - rect.bottom > 170 ? rect.bottom + 6 : Math.max(8, rect.top - 6);
-        setAnchor({ right: window.innerWidth - rect.right, top });
+        const top = window.innerHeight - rect.bottom > 170 ? rect.bottom + 6 : Math.max(8, rect.top - 170);
+        setAnchor({ right: Math.max(8, Math.min(window.innerWidth - 264, window.innerWidth - rect.right)), top });
         setMenuFor(subject);
     }
 
@@ -47,15 +42,14 @@ export default function SubjectTabs({ newOpen, onNew }) {
         function onClick(e) {
             const inOpenMenu = e.target.closest(".subject-menu");
             if (inOpenMenu) return; // interacting with the menu itself
-            const otherTab = e.target.closest(".subject-btn:not(.add-tab)");
-            if (otherTab && otherTab.dataset.subject !== menuFor) return; // its click switches menus
+            if (e.target.closest(".subject-more")) return;
             closeMenu();
         }
         function onKey(e) {
             if (e.key === "Escape") {
                 const subject = menuFor;
                 closeMenu();
-                document.querySelector(`.subject-btn[data-subject="${CSS.escape(subject)}"]`)?.focus();
+                document.querySelector(`.subject-more[data-subject="${CSS.escape(subject)}"]`)?.focus();
             }
         }
         document.addEventListener("mousedown", onClick);
@@ -67,26 +61,37 @@ export default function SubjectTabs({ newOpen, onNew }) {
     }, [menuFor, isMenuClosing]);
 
     return (
-        <div className="subject-bar" aria-label="סינון לפי מקצוע">
-            {state.subjects.map((s) => (
+        <nav className="subjects-navigation" aria-label="סינון לפי מקצוע">
+            <h2 className="subjects-label">המקצועות שלי <span>{state.subjects.length}</span></h2>
+            <div className="subject-bar">
+            {state.subjects.map((s) => {
+                const isActive = subjectKey(s) === subjectKey(state.activeSubject);
+                const count = state.exams.filter(e => subjectKey(e.subject) === subjectKey(s)).length;
+                return <div key={s} className={`subject-item${isActive ? " active" : ""}`}>
                 <button
-                    key={s}
                     type="button"
                     data-subject={s}
-                    aria-haspopup="menu"
-                    aria-expanded={menuFor === s}
-                    className={"subject-btn" + (subjectKey(s) === subjectKey(state.activeSubject) ? " active" : "")}
-                    onClick={(e) => toggleMenu(e, s)}
+                    aria-current={isActive ? "page" : undefined}
+                    className="subject-btn"
+                    onClick={() => { setActiveSubject(s); closeMenu(); }}
                 >
-                    {s}
+                    <Icon name="book" size={17} />
+                    <span className="subject-copy">
+                        <span className="subject-name">{s}</span>
+                        <span className="subject-exam-count">{count} בחינות</span>
+                    </span>
                 </button>
-            ))}
+                <button type="button" className="subject-more" data-subject={s} title={`אפשרויות עבור ${s}`} aria-label={`אפשרויות עבור ${s}`} aria-haspopup="menu" aria-expanded={menuFor === s} onClick={(e) => toggleMenu(e, s)}><Icon name="settings" size={17} /></button>
+                </div>;
+            })}
+            </div>
 
             <button type="button" className={"subject-btn add-tab" + (newOpen ? " active" : "")} onClick={onNew}>
-                + מקצוע חדש
+                <Icon name="plus" size={17} />מקצוע חדש
             </button>
+            <button type="button" className="sidebar-clear" onClick={clearAll}><Icon name="trash" size={15} />ניקוי הכול</button>
 
-            {menuFor && anchor && (
+            {menuFor && anchor && createPortal(
                 <div
                     className={`subject-menu ${isMenuClosing ? "is-closing" : ""}`}
                     role="menu"
@@ -102,7 +107,7 @@ export default function SubjectTabs({ newOpen, onNew }) {
                     }}
                 >
                     <span className="menu-label">שם המקצוע</span>
-                    <RenameMenuItem subject={menuFor} onDone={closeMenu} />
+                    <RenameMenuItem key={menuFor} subject={menuFor} onDone={closeMenu} />
                     <button
                         type="button"
                         role="menuitem"
@@ -114,9 +119,9 @@ export default function SubjectTabs({ newOpen, onNew }) {
                     >
                         מחיקת מקצוע
                     </button>
-                </div>
+                </div>, document.body
             )}
-        </div>
+        </nav>
     );
 }
 
@@ -146,7 +151,11 @@ function RenameMenuItem({ subject, onDone }) {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
                 if (e.key === "Enter") save();
-                else if (e.key === "Escape") onDone();
+                else if (e.key === "Escape") {
+                    e.stopPropagation();
+                    onDone();
+                    document.querySelector(`.subject-more[data-subject="${CSS.escape(subject)}"]`)?.focus();
+                }
             }}
         />
     );

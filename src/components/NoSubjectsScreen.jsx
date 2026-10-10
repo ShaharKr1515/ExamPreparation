@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useExams } from "../context/ExamsContext.jsx";
+import Icon from "./Icon.jsx";
 
 /** Shown while there are no subjects at all: the "create your first subject" card. */
 export default function NoSubjectsScreen() {
     const { addSubject } = useExams();
     const [name, setName] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const inputRef = useRef(null);
 
     useEffect(() => {
@@ -14,19 +16,21 @@ export default function NoSubjectsScreen() {
     return (
         <section>
             <div className="table-card empty-state">
-                <h2>📚 אין עדיין מקצועות</h2>
+                <Icon name="book" size={40} />
+                <h1>מתחילים ללמוד, עם תוכנית.</h1>
                 <p>
-                    כדי להתחיל, צור מקצוע ראשון (למשל: מתמטיקה, אנגלית, פיזיקה…).<br />
-                    לאחר מכן תוכל להוסיף בחינות תחתיו — כל בחינה תקבל את המקצוע אוטומטית.
+                    צור את המקצוע הראשון שלך. לאחר מכן תוכל לתכנן את הלמידה,
+                    להוסיף בחינות ולעקוב אחר ההתקדמות בכל שאלה.
                 </p>
                 <form
                     className="subject-create-form"
                     autoComplete="off"
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                         e.preventDefault();
-                        if (!name.trim()) return;
-                        addSubject(name);
-                        setName("");
+                        if (!name.trim() || isSubmitting) return;
+                        setIsSubmitting(true);
+                        if (await addSubject(name)) setName("");
+                        setIsSubmitting(false);
                     }}
                 >
                     <input
@@ -36,8 +40,9 @@ export default function NoSubjectsScreen() {
                         onChange={(e) => setName(e.target.value)}
                         placeholder="שם המקצוע (למשל: מתמטיקה)"
                         aria-label="שם מקצוע חדש"
+                        disabled={isSubmitting}
                     />
-                    <button type="submit" className="btn primary">+ יצירת מקצוע</button>
+                    <button type="submit" className="btn primary" disabled={isSubmitting || !name.trim()}><Icon name="plus" size={17} />{isSubmitting ? "יוצר מקצוע…" : "יצירת מקצוע"}</button>
                 </form>
             </div>
         </section>

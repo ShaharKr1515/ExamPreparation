@@ -1,0 +1,44 @@
+.practice-plan {
+    border-top: 1px solid var(--line);
+}
+.practice-plan-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.practice-lane { padding: 12px 24px; min-width: 0; }
+.practice-lane + .practice-lane { border-inline-start: 1px solid var(--line); }
+.practice-lane-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.practice-lane-heading h2 { margin: 0; font-size: 14px; line-height: 1.5; font-weight: 600; }
+.practice-lane-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
+.initial-lane .practice-lane-icon { color: var(--accent); }
+.review-lane .practice-lane-icon { color: var(--stale-ink); }
+.practice-lane-status { margin-inline-start: auto; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.initial-lane .practice-lane-status { color: var(--accent); }
+.review-lane .practice-lane-status { color: var(--stale-ink); }
+.practice-links { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+.practice-link { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; max-width: 100%; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid transparent; text-decoration: none; font-size: 13px; line-height: 1.4; transition: background-color .16s ease, border-color .16s ease; }
+.practice-link > svg { flex-shrink: 0; }
+.practice-link strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.initial-link { background: var(--accent-light); color: var(--accent); border-color: var(--accent-ring); }
+.initial-link.is-primary { background: var(--accent); color: var(--card); border-color: var(--accent); }
+.initial-link:hover { background: var(--accent-light); border-color: var(--accent); }
+.initial-link.is-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.review-link { background: var(--stale-bg); color: var(--stale-ink); border-color: var(--stale-line); }
+.review-link:hover { background: var(--stale-line); border-color: var(--stale-border-indicator); }
+.review-link.is-waiting { background: var(--card); border-color: var(--stale-line); }
+.review-link.is-waiting:hover { background: var(--stale-bg); }
+.practice-link-copy { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; min-width: 0; }
+.practice-link-copy small { font-size: 11px; font-weight: 400; }
+.practice-link-count { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; padding-inline-start: 9px; border-inline-start: 1px solid var(--stale-line); }
+.initial-link .practice-link-count { border-color: var(--accent-ring); }
+.initial-link.is-primary .practice-link-count { border-color: color-mix(in srgb, var(--card) 35%, transparent); }
+.practice-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.review-link:focus-visible { outline-color: var(--stale-ink); }
+.practice-lane-note { margin: 6px 0 0; color: var(--stale-ink); font-size: 11px; }
+.practice-wait-label { display: flex; align-items: center; gap: 6px; margin-block: -3px 8px; color: var(--stale-ink); font-size: 11px; }
+.practice-wait-label time, .practice-empty time { font-variant-numeric: tabular-nums; }
+.practice-empty { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; min-height: 40px; color: var(--muted); font-size: 12px; }
+.practice-empty > svg { flex-shrink: 0; }
+@media (max-width: 760px) {
+    .practice-plan-actions { grid-template-columns: 1fr; }
+    .practice-lane { padding: 16px; }
+    .practice-lane + .practice-lane { border-inline-start: 0; border-top: 1px solid var(--line); }
+}
+@media (prefers-reduced-motion: reduce) { .practice-link { transition: none; } }
