@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as svc from "../services/examService.js";
+import * as semester from "../services/semesterService.js";
 
 const router = Router();
 
@@ -16,7 +17,33 @@ router.post("/", (req, res) => {
     const examCount = Math.max(0, Math.min(50, Number(req.body?.examCount) || 0));
     const studyStartDate = String(req.body?.studyStartDate ?? "");
     const finalExamDate = String(req.body?.finalExamDate ?? "");
-    res.status(201).json(svc.createSubject(name, { examCount, studyStartDate, finalExamDate }));
+    res.status(201).json(svc.createSubject(name, {
+        examCount, studyStartDate, finalExamDate,
+        mode: req.body?.mode,
+        semesterStartDate: req.body?.semesterStartDate,
+        semesterEndDate: req.body?.semesterEndDate,
+    }));
+});
+
+router.use("/:id/semester", (req, res, next) => {
+    req.subject = svc.findSubjectByName(req.params.id);
+    if (!req.subject) return res.status(404).json({ error: "הקורס לא נמצא." });
+    next();
+});
+router.patch("/:id/semester", (req, res) => res.json(semester.updateSemester(req.subject, req.body || {})));
+
+router.use("/:id/assignments", (req, res, next) => {
+    req.subject = svc.findSubjectByName(req.params.id);
+    if (!req.subject) return res.status(404).json({ error: "הקורס לא נמצא." });
+    next();
+});
+router.post("/:id/assignments", (req, res) => res.status(201).json(semester.createAssignment(req.subject, req.body || {})));
+router.patch("/:id/assignments/:assignmentId", (req, res) => {
+    res.json(semester.updateAssignment(req.subject, Number(req.params.assignmentId), req.body || {}));
+});
+router.delete("/:id/assignments/:assignmentId", (req, res) => {
+    semester.deleteAssignment(req.subject, Number(req.params.assignmentId));
+    res.json({ ok: true });
 });
 
 // Update the subject-level dates (study start / final exam) of a subject.

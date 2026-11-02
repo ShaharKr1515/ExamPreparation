@@ -57,6 +57,23 @@ db.exec(`
 
 // Migration: add the subject-level date columns to databases created before they existed.
 const subjectCols = db.prepare("PRAGMA table_info(subjects)").all().map((c) => c.name);
+for (const [column, declaration] of Object.entries({
+    mode: "TEXT NOT NULL DEFAULT 'exam'",
+    semester_start_date: "TEXT NOT NULL DEFAULT ''",
+    semester_end_date: "TEXT NOT NULL DEFAULT ''",
+})) {
+    if (!subjectCols.includes(column)) db.exec(`ALTER TABLE subjects ADD COLUMN ${column} ${declaration}`);
+}
+db.exec(`
+    CREATE TABLE IF NOT EXISTS assignments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subject_id INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        due_date TEXT NOT NULL,
+        completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1))
+    );
+    CREATE INDEX IF NOT EXISTS idx_assignments_subject_date ON assignments(subject_id, due_date);
+`);
 if (!subjectCols.includes("study_start_date")) {
     db.exec("ALTER TABLE subjects ADD COLUMN study_start_date TEXT NOT NULL DEFAULT ''");
 }

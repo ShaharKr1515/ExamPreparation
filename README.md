@@ -1,11 +1,13 @@
 # Exam Preparation Tracker
 
-A small, single-user study tracker for planning practice exams and recording question-level progress. It is designed for local use or simple self-hosting: there are no accounts, authentication flows, or multi-user features.
+A small, single-user study tracker for semester assignments, practice-exam planning, and question-level progress. It is designed for local use or simple self-hosting: there are no accounts, authentication flows, or multi-user features.
 
 ## Highlights
 
 - React 18 interface with a Vite development and production build
 - Express 5 REST API backed by Node's built-in SQLite module
+- Per-course persisted לימוד (`study`) and הכנה למבחן (`exam`) modes; existing courses default to exam preparation
+- Separate semester dates, dated assignment creation/editing/deletion/completion, and a chronological timeline for the selected course
 - Derived practice-exam scheduling based on study dates and planned exam counts
 - Question and sub-question tracking, including outcomes, points, attempt dates, and retry counts
 - Per-question timers that persist with the rest of the study data
@@ -19,9 +21,11 @@ The interface is in Hebrew and uses a right-to-left layout.
 
 The React frontend calls an Express REST API. During development, Vite serves the frontend on port 5173 and proxies `/api` requests to Express on port 3000. In production, Express serves the compiled `dist/` assets and the API from one process.
 
-SQLite data is stored in `data/exampreparation.db` by default. Recommended practice-exam dates are derived from each subject's study start date, final exam date, and planned exam count rather than stored as duplicate state.
+SQLite data is stored in `data/exampreparation.db` by default, including course modes, semester dates, and assignment deadlines/completion. Semester dates are separate from exam-preparation dates. Recommended practice-exam dates are derived from each subject's study start date, final exam date, and planned exam count rather than stored as duplicate state.
 
 This is intentionally a single-user application. Run it on your computer or behind the access controls of a trusted self-hosted environment; it does not implement application-level authentication or user isolation.
+
+Select a course, then choose לימוד to set semester dates and manage its assignments. A prompt explains that dates are needed to display the semester rail. The rail shows elapsed time and individual assignment markers numbered in deadline order; hover or focus a marker to see its name. The dated timeline shows completion and overdue status, including assignments outside the semester bounds. Choose הכנה למבחן for the practice-exam workflow. Each course remembers its mode across reloads, and switching preserves its exam and assignment data. New study-mode courses start without practice exams.
 
 ## Requirements
 
@@ -120,5 +124,10 @@ vite.config.js       Vite configuration and development API proxy
 
 - `GET /api/state` returns the complete application state.
 - `/api/subjects` provides subject create, update, and delete operations.
+- `PATCH /api/subjects/:name/semester` updates `mode`, `semesterStartDate`, and/or `semesterEndDate`.
+- `POST /api/subjects/:name/assignments` creates an assignment with `title` and `dueDate`; `completed` defaults to `false`.
+- `PATCH /api/subjects/:name/assignments/:assignmentId` updates its title, deadline, and/or completion; `DELETE` on the same path removes it. Assignment reads are included in `GET /api/state`.
 - `/api/exams` provides exam and question operations, including layout copying and timer updates.
 - `POST /api/clear-all` clears all stored study data.
+
+`:name` is the URL-encoded course name. Semester and assignment dates use `YYYY-MM-DD`.

@@ -9,6 +9,8 @@ import NoSubjectsScreen from "./components/NoSubjectsScreen.jsx";
 import ListPage from "./pages/ListPage.jsx";
 import SaveFeedback from "./components/SaveFeedback.jsx";
 import Icon from "./components/Icon.jsx";
+import CourseModeSwitch from "./components/CourseModeSwitch.jsx";
+import SemesterWorkspace from "./components/SemesterWorkspace.jsx";
 
 /**
  * App shell: the header, subject tabs and the action toolbar
@@ -19,6 +21,7 @@ function AppShell() {
     const [subjectFormOpen, setSubjectFormOpen] = useState(false);
 
     const hasSubjects = state.subjects.length > 0;
+    const studyMode = state.subjectMeta[state.activeSubject]?.mode === "study";
 
     // When the last subject disappears (clear-all), close any open modal.
     useEffect(() => {
@@ -42,7 +45,7 @@ function AppShell() {
     );
 
     return (
-        <div className="app-shell">
+        <div className={`app-shell${hasSubjects && studyMode ? " has-study-workspace" : ""}`}>
             <a className="skip-link" href="#study-workspace">דלג לתוכן</a>
             <aside className="app-sidebar" aria-label="ניווט מקצועות">
                 <AppHeader />
@@ -54,10 +57,13 @@ function AppShell() {
                 {hasSubjects ? (
                     <>
                         <SubjectHeading />
+                        <CourseModeSwitch key={`mode-${state.activeSubject}`} />
+                        {studyMode ? <SemesterWorkspace key={`semester-${state.activeSubject}`} /> : <>
                         <section className="planning-panel study-plan" aria-labelledby="planning-title">
                             <LearningPlan />
                         </section>
                         <ListPage />
+                        </>}
                     </>
                 ) : <NoSubjectsScreen />}
             </main>
@@ -69,7 +75,7 @@ function AppShell() {
 function SubjectHeading() {
     const { state } = useExams();
     const meta = state.subjectMeta[state.activeSubject] || {};
-    const countdown = formatExamCountdown(meta.finalExamDate);
+    const countdown = meta.mode === "study" ? null : formatExamCountdown(meta.finalExamDate);
     return <header className="subject-heading">
         <div><h1>{state.activeSubject}</h1><p>תכנון הלמידה, מעקב התקדמות ותרגול — במקום אחד.</p></div>
         {countdown && <div className={`subject-countdown ${countdown.status}`}><Icon name="calendar" size={20} /><span>{countdown.label}</span></div>}

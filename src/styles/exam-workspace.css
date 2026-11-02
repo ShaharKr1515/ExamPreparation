@@ -161,6 +161,7 @@
     inset-inline-start: auto;
     max-width: min(380px, calc(100vw - 24px));
     white-space: pre-line;
+    overflow-wrap: anywhere;
     line-height: 1.6;
     transform: translateY(6px) scale(.92);
     transform-origin: var(--tooltip-arrow) bottom;

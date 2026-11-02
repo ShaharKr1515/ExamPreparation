@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 /** The existing dark tooltip, positioned outside clipped cards and bar tracks. */
-export default function Tooltip({ text, children, className, style }) {
+export default function Tooltip({ text, children, className, style, as: Trigger = "span", href, onActivate }) {
     const id = useId();
     const triggerRef = useRef(null);
     const tooltipRef = useRef(null);
@@ -16,6 +16,10 @@ export default function Tooltip({ text, children, className, style }) {
         event.currentTarget.blur();
         setFocused(false);
         setDismissed(true);
+    };
+    const activate = (event) => {
+        dismissOnClick(event);
+        onActivate?.();
     };
 
     useLayoutEffect(() => {
@@ -54,19 +58,19 @@ export default function Tooltip({ text, children, className, style }) {
     }, [visible, text]);
 
     return <>
-        <span ref={triggerRef} className={className} style={style} tabIndex={0}
+        <Trigger ref={triggerRef} href={href} className={className} style={style} tabIndex={0}
             aria-label={text} aria-describedby={visible ? id : undefined}
             onMouseEnter={() => { setDismissed(false); setHovered(true); }}
             onMouseLeave={() => setHovered(false)}
             onPointerDown={dismissOnClick}
-            onClick={dismissOnClick}
+            onClick={activate}
             onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") dismissOnClick(event);
+                if (event.key === "Enter" || event.key === " ") activate(event);
             }}
             onFocus={() => { if (!dismissed) setFocused(true); }}
             onBlur={() => setFocused(false)}>
             {children}
-        </span>
+        </Trigger>
         {(visible || position) && createPortal(<span ref={tooltipRef} id={id} role="tooltip"
             className={`q-fail-tooltip exam-progress-tooltip${visible && position ? " is-visible" : ""}${position?.below ? " is-below" : ""}`}
             style={{ left: position?.left ?? 0, top: position?.top ?? 0, "--tooltip-arrow": `${position?.arrow ?? 10}px` }}>

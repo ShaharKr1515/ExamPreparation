@@ -78,7 +78,7 @@ export default function SubjectTabs({ newOpen, onNew }) {
                     <Icon name="book" size={17} />
                     <span className="subject-copy">
                         <span className="subject-name">{s}</span>
-                        <span className="subject-exam-count">{count} בחינות</span>
+                        <span className="subject-exam-count">{state.subjectMeta[s]?.mode === "study" ? `לימוד · ${(state.assignments || []).filter(a => subjectKey(a.subject) === subjectKey(s) && !a.completed).length} מטלות להשלמה` : `הכנה למבחן · ${count} בחינות`}</span>
                     </span>
                 </button>
                 <button type="button" className="subject-more" data-subject={s} title={`אפשרויות עבור ${s}`} aria-label={`אפשרויות עבור ${s}`} aria-haspopup="menu" aria-expanded={menuFor === s} onClick={(e) => toggleMenu(e, s)}><Icon name="settings" size={17} /></button>

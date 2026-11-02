@@ -7,6 +7,9 @@ import SaveFeedback from "./SaveFeedback.jsx";
 export default function NewSubjectModal({ onClose }) {
     const { addSubject } = useExams();
     const [name, setName] = useState("");
+    const [mode, setMode] = useState("exam");
+    const [semesterStartDate, setSemesterStartDate] = useState("");
+    const [semesterEndDate, setSemesterEndDate] = useState("");
     const [examCount, setExamCount] = useState(1);
     const [studyStartDate, setStudyStartDate] = useState("");
     const [finalExamDate, setFinalExamDate] = useState("");
@@ -44,7 +47,7 @@ export default function NewSubjectModal({ onClose }) {
         if (!trimmed || isSubmitting) return;
         setIsSubmitting(true);
         setCreationError(false);
-        const created = await addSubject(trimmed, { examCount, studyStartDate, finalExamDate });
+        const created = await addSubject(trimmed, { mode, examCount: mode === "study" ? 0 : examCount, studyStartDate, finalExamDate, semesterStartDate, semesterEndDate });
         setIsSubmitting(false);
         if (created) onClose();
         else setCreationError(true);
@@ -89,7 +92,15 @@ export default function NewSubjectModal({ onClose }) {
                     />
                 </label>
 
-                <label className="field">
+                <fieldset className="new-course-mode" disabled={isSubmitting}>
+                    <legend>מצב הקורס</legend>
+                    <div className="course-mode-switch">
+                        <label><input type="radio" name="course-mode" value="study" checked={mode === "study"} onChange={() => setMode("study")} />לימוד</label>
+                        <label><input type="radio" name="course-mode" value="exam" checked={mode === "exam"} onChange={() => setMode("exam")} />הכנה למבחן</label>
+                    </div>
+                </fieldset>
+
+                {mode === "exam" && <><label className="field">
                     <span>כמה בחינות ליצור</span>
                     <input
                         type="number"
@@ -125,7 +136,12 @@ export default function NewSubjectModal({ onClose }) {
                             disabled={isSubmitting}
                         />
                     </label>
-                </div>
+                </div></>}
+
+                {mode === "study" && <div className="field-row">
+                    <label className="field"><span>תחילת סמסטר</span><input type="date" value={semesterStartDate} onChange={e => setSemesterStartDate(e.target.value)} disabled={isSubmitting} /></label>
+                    <label className="field"><span>סיום סמסטר</span><input type="date" min={semesterStartDate || undefined} value={semesterEndDate} onChange={e => setSemesterEndDate(e.target.value)} disabled={isSubmitting} /></label>
+                </div>}
 
                 {isSubmitting && <SaveFeedback />}
                 {creationError && <p role="alert">לא ניתן ליצור את המקצוע. בדוק את השם והתאריכים ונסה שוב.</p>}

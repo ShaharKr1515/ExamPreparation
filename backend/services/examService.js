@@ -1,4 +1,5 @@
 import { db } from "../db/database.js";
+import { listAssignments, updateSemester } from "./semesterService.js";
 
 /**
  * Data access for subjects, exams and questions.
@@ -12,7 +13,7 @@ const QUESTION_COUNT = 5;
 
 export function listSubjects() {
     return db
-        .prepare("SELECT id, name, study_start_date, final_exam_date, planned_exam_count FROM subjects ORDER BY id")
+        .prepare("SELECT * FROM subjects ORDER BY id")
         .all();
 }
 
@@ -22,17 +23,24 @@ export function listSubjects() {
  * derive recommended due dates later. If a subject with the same name already exists
  * it is returned instead (no duplicates, no new exams).
  */
-export function createSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "" } = {}) {
+export function createSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "", ...semester } = {}) {
     const existing = db.prepare("SELECT * FROM subjects WHERE name = ? COLLATE NOCASE").get(name);
     if (existing) return { subject: existing, exams: [] };
+    if (semester.mode === "study") examCount = 0;
 
     const info = db.prepare(
         "INSERT INTO subjects (name, study_start_date, final_exam_date, planned_exam_count) VALUES (?, ?, ?, ?)",
     ).run(name, studyStartDate || "", finalExamDate || "", Math.max(0, Math.min(50, Number(examCount) || 0)));
     const subjectId = Number(info.lastInsertRowid);
+    try {
+        updateSemester(db.prepare("SELECT * FROM subjects WHERE id = ?").get(subjectId), semester);
+    } catch (error) {
+        db.prepare("DELETE FROM subjects WHERE id = ?").run(subjectId);
+        throw error;
+    }
 
     const exams = [];
-    for (let i = 1; i <= examCount; i++) {
+    for (let i = 1; i <= (semester.mode === "study" ? 0 : examCount); i++) {
         exams.push(createExam(subjectId, `בחינה ${i}`, QUESTION_COUNT));
     }
     return { subject: db.prepare("SELECT * FROM subjects WHERE id = ?").get(subjectId), exams };
@@ -756,6 +764,9 @@ export function getFullState() {
     for (const s of subjects) {
         const actualCount = exams.filter((e) => e.subjectId === Number(s.id)).length;
         subjectMeta[s.name] = {
+            mode: s.mode || "exam",
+            semesterStartDate: s.semester_start_date || "",
+            semesterEndDate: s.semester_end_date || "",
             studyStartDate: s.study_start_date || "",
             finalExamDate: s.final_exam_date || "",
             plannedExamCount: actualCount || Number(s.planned_exam_count) || 0,
@@ -765,6 +776,7 @@ export function getFullState() {
     return {
         subjects: subjects.map((s) => s.name),
         exams,
+        assignments: listAssignments(),
         activeSubject,
         subjectMeta,
     };

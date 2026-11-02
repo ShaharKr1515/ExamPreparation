@@ -11,7 +11,7 @@ const ExamsContext = createContext(null);
 //   subjectMeta: { [subjectName]: { studyStartDate, finalExamDate, plannedExamCount } }
 //     (subject-level data; due dates are derived from these, never stored)
 function emptyState() {
-    return { exams: [], subjects: [], activeSubject: null, subjectMeta: {} };
+    return { exams: [], assignments: [], subjects: [], activeSubject: null, subjectMeta: {} };
 }
 
 export function ExamsProvider({ children }) {
@@ -371,13 +371,13 @@ export function ExamsProvider({ children }) {
 
     // Duplicate names are handled consistently: an existing subject is never duplicated —
     // we just switch to it. Creates `examCount` exams under the new subject.
-    async function addSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "" } = {}) {
+    async function addSubject(name, { examCount = 0, studyStartDate = "", finalExamDate = "", ...semester } = {}) {
         const trimmed = String(name || "").trim();
         if (!trimmed) return;
         try {
             // The current API returns { subject, exams }; tolerate the legacy
             // bare-subject shape too so a stale backend can't crash the UI.
-            const res = await saveQueue.run(() => api.createSubject(trimmed, { examCount, studyStartDate, finalExamDate }));
+            const res = await saveQueue.run(() => api.createSubject(trimmed, { examCount, studyStartDate, finalExamDate, ...semester }));
             const subject = (res && res.subject) || res;
             const createdExams = Array.isArray(res?.exams)
                 ? res.exams.map((e) => ({ ...e, subject: e.subject || subject.name }))
@@ -393,6 +393,9 @@ export function ExamsProvider({ children }) {
                     subjectMeta: {
                         ...s.subjectMeta,
                         [subject.name]: {
+                            mode: subject.mode || "exam",
+                            semesterStartDate: subject.semester_start_date || "",
+                            semesterEndDate: subject.semester_end_date || "",
                             studyStartDate: subject.study_start_date || "",
                             finalExamDate: subject.final_exam_date || "",
                             plannedExamCount: Number(subject.planned_exam_count) || 0,
@@ -439,6 +442,7 @@ export function ExamsProvider({ children }) {
                 ...s,
                 subjects: s.subjects.map((x) => (subjectKey(x) === subjectKey(oldName) ? trimmed : x)),
                 exams: s.exams.map((e) => (subjectKey(e.subject) === subjectKey(oldName) ? { ...e, subject: trimmed } : e)),
+                assignments: (s.assignments || []).map((a) => subjectKey(a.subject) === subjectKey(oldName) ? { ...a, subject: trimmed } : a),
                 activeSubject:
                     s.activeSubject && subjectKey(s.activeSubject) === subjectKey(oldName)
                         ? trimmed
@@ -465,6 +469,7 @@ export function ExamsProvider({ children }) {
                 ...s,
                 subjects: s.subjects.filter((x) => subjectKey(x) !== subjectKey(name)),
                 exams: s.exams.filter((e) => subjectKey(e.subject) !== subjectKey(name)),
+                assignments: (s.assignments || []).filter((a) => subjectKey(a.subject) !== subjectKey(name)),
                 activeSubject:
                     s.activeSubject && subjectKey(s.activeSubject) === subjectKey(name)
                         ? null
@@ -481,6 +486,24 @@ export function ExamsProvider({ children }) {
     }
 
     // Pure UI state — which tab is selected. Never persisted server-side.
+    async function updateSemester(name, changes) {
+        const meta = await saveQueue.run(() => api.updateSemester(name, changes));
+        setState(s => ({ ...s, subjectMeta: { ...s.subjectMeta, [name]: { ...s.subjectMeta[name], ...meta } } }));
+        return true;
+    }
+
+    async function saveAssignment(name, id, changes) {
+        const assignment = await saveQueue.run(() => api.saveAssignment(name, id, changes), { retryable: id != null });
+        setState(s => ({ ...s, assignments: id == null ? [...(s.assignments || []), assignment]
+            : (s.assignments || []).map(a => a.id === id ? assignment : a) }));
+        return assignment;
+    }
+
+    async function removeAssignment(name, id) {
+        await saveQueue.run(() => api.deleteAssignment(name, id), { retryable: false });
+        setState(s => ({ ...s, assignments: (s.assignments || []).filter(a => a.id !== id) }));
+    }
+
     function setActiveSubject(subject) {
         setState((s) => ({ ...s, activeSubject: subject }));
     }
@@ -508,6 +531,9 @@ export function ExamsProvider({ children }) {
             deleteQuestion,
             addSubject,
             updateSubjectDates,
+            updateSemester,
+            saveAssignment,
+            removeAssignment,
             renameSubject,
             deleteSubject,
             setActiveSubject,
